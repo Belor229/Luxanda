@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Détails Produit - Luxanda</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="top-bar-container">
+                <div class="top-bar-left">
+                    <span>📞 +229 01 93 38 95 63</span>
+                    <span>📧 contact@luxanda.bj</span>
+                </div>
+                <div class="top-bar-right">
+                    <a href="auth/inscription.html" class="top-bar-link">Devenir Vendeur</a>
+                    <a href="auth/connexion.html" class="top-bar-link">Se connecter</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Header -->
+        <div class="main-header">
+            <a href="../index.html" class="logo">
+                <span class="logo-orange">Luxanda</span><span class="logo-blue">.bj</span>
+            </a>
+
+            <div class="search-container">
+                <input type="text" class="search-input" placeholder="Rechercher des produits, marques ou catégories...">
+                <button class="search-btn">Rechercher</button>
+            </div>
+
+            <div class="header-icons">
+                <button class="icon-btn" title="Favoris" onclick="toggleFavorite()">❤️</button>
+                <button class="icon-btn" title="Panier">
+                    🛒
+                    <span class="cart-badge" id="cartCount">0</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="nav-bar">
+            <div class="nav-container">
+                <a href="../index.html" class="nav-link">Accueil</a>
+                <a href="produits.html" class="nav-link">Produits</a>
+                <a href="boutiques.html" class="nav-link">Boutiques</a>
+                <a href="promotions.html" class="nav-link">Promotions</a>
+                <a href="nouveautes.html" class="nav-link">Nouveautés</a>
+                <a href="meilleures-ventes.html" class="nav-link">Meilleures Ventes</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="section">
+        <div class="container">
+            <!-- Breadcrumb -->
+            <div class="breadcrumb" style="margin-bottom: 1rem;">
+                <span>Accueil</span>
+                <span>›</span>
+                <span>Produits</span>
+                <span>›</span>
+                <span id="productCategory">Électronique</span>
+                <span>›</span>
+                <span id="productName">Smartphone Samsung A54</span>
+            </div>
+
+            <!-- Product Details -->
+            <div class="card" style="margin-bottom: 2rem;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: start;">
+                    <!-- Product Images -->
+                    <div>
+                        <div id="mainImage" style="width: 100%; height: 400px; background: #f9fafb; border-radius: 12px; margin-bottom: 1rem; overflow: hidden;">
+                            <img id="mainImageSrc" src="../Média/img/téléphone.jpg" alt="Produit" style="width: 100%; height: 100%; object-fit: cover;">
+                        </div>
+                        <div style="display: flex; gap: 1rem;">
+                            <div class="thumbnail" onclick="changeMainImage('../Média/img/téléphone.jpg')" style="width: 80px; height: 80px; background: #f9fafb; border-radius: 8px; cursor: pointer; overflow: hidden; border: 2px solid #e5e7eb;">
+                                <img src="../Média/img/téléphone.jpg" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <div class="thumbnail" onclick="changeMainImage('../Média/img/téléphone.jpg')" style="width: 80px; height: 80px; background: #f9fafb; border-radius: 8px; cursor: pointer; overflow: hidden; border: 2px solid transparent;">
+                                <img src="../Média/img/téléphone.jpg" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <div class="thumbnail" onclick="changeMainImage('../Média/img/téléphone.jpg')" style="width: 80px; height: 80px; background: #f9fafb; border-radius: 8px; cursor: pointer; overflow: hidden; border: 2px solid transparent;">
+                                <img src="../Média/img/téléphone.jpg" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Product Info -->
+                    <div>
+                        <div style="margin-bottom: 1rem;">
+                            <span class="status-badge active" style="margin-bottom: 1rem; display: inline-block;">En stock</span>
+                            <h1 id="productTitle" style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">Smartphone Samsung A54</h1>
+                            <div class="product-rating" style="margin-bottom: 1rem;">
+                                <span class="stars">⭐⭐⭐⭐⭐</span>
+                                <span>4.5</span>
+                                <span>(234 avis)</span>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 2rem;">
+                            <div style="font-size: 2.5rem; font-weight: 700; color: #FF6600; margin-bottom: 1rem;">
+                                185 000 FCFA
+                            </div>
+                            <div style="color: #6b7280; text-decoration: line-through; font-size: 1.25rem;">
+                                220 000 FCFA
+                            </div>
+                        </div>
+
+                        <!-- Quantity Selector -->
+                        <div style="margin-bottom: 2rem;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Quantité:</label>
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <button onclick="changeQuantity(-1)" style="width: 40px; height: 40px; border: 2px solid #e5e7eb; background: white; border-radius: 8px; cursor: pointer; font-size: 1.25rem;">-</button>
+                                <span id="quantity" style="font-size: 1.25rem; font-weight: 600; min-width: 50px; text-align: center;">1</span>
+                                <button onclick="changeQuantity(1)" style="width: 40px; height: 40px; border: 2px solid #e5e7eb; background: white; border-radius: 8px; cursor: pointer; font-size: 1.25rem;">+</button>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+                            <button class="btn btn-primary" style="flex: 1; padding: 1rem 2rem; font-size: 1.125rem;" onclick="addToCart()">
+                                🛒 Ajouter au panier
+                            </button>
+                            <button class="btn btn-secondary" style="flex: 1; padding: 1rem 2rem; font-size: 1.125rem;" onclick="buyNow()">
+                                💳 Acheter maintenant
+                            </button>
+                        </div>
+
+                        <!-- Seller Info -->
+                        <div style="background: #f9fafb; padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
+                            <h3 style="margin-bottom: 1rem; color: #111827;">Vendu par</h3>
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <div style="width: 50px; height: 50px; background: #FF6600; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                                    EP
+                                </div>
+                                <div>
+                                    <div style="font-weight: 600; margin-bottom: 0.25rem;">Électro Plus</div>
+                                    <div style="font-size: 0.875rem; color: #6b7280;">⭐ 4.8 (1,234 avis vendeur)</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Delivery Info -->
+                        <div style="background: #eff6ff; padding: 1.5rem; border-radius: 12px;">
+                            <h3 style="margin-bottom: 1rem; color: #111827;">Livraison</h3>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                <span>🚚</span>
+                                <span>Livraison gratuite dès 50 000 FCFA</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                <span>⏰</span>
+                                <span>Délai de livraison: 2-5 jours ouvrés</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span>📍</span>
+                                <span>Livraison dans tout le Bénin</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Tabs -->
+            <div class="card">
+                <div style="display: flex; border-bottom: 2px solid #e5e7eb; margin-bottom: 2rem;">
+                    <button class="tab-btn active" onclick="showTab('description')" style="padding: 1rem 2rem; border: none; background: none; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent;">
+                        Description
+                    </button>
+                    <button class="tab-btn" onclick="showTab('specifications')" style="padding: 1rem 2rem; border: none; background: none; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent;">
+                        Spécifications
+                    </button>
+                    <button class="tab-btn" onclick="showTab('reviews')" style="padding: 1rem 2rem; border: none; background: none; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent;">
+                        Avis clients (234)
+                    </button>
+                </div>
+
+                <!-- Description Tab -->
+                <div id="description" class="tab-content">
+                    <h3 style="margin-bottom: 1rem;">Description du produit</h3>
+                    <p style="line-height: 1.8; color: #6b7280; margin-bottom: 1rem;">
+                        Le Samsung Galaxy A54 est un smartphone Android haut de gamme qui combine performance et design moderne. 
+                        Équipé d'un écran Super AMOLED de 6.4 pouces, d'un processeur octa-core et d'un triple appareil photo, 
+                        il offre une expérience utilisateur exceptionnelle.
+                    </p>
+                    <ul style="line-height: 1.8; color: #6b7280;">
+                        <li>Écran Super AMOLED 6.4" Full HD+</li>
+                        <li>Processeur Exynos 1380 octa-core</li>
+                        <li>128GB de stockage + 8GB RAM</li>
+                        <li>Triple caméra 50MP + 12MP + 5MP</li>
+                        <li>Caméra selfie 32MP</li>
+                        <li>Batterie 5000mAh avec charge rapide</li>
+                        <li>Android 13 avec One UI 5.1</li>
+                        <li>Certification IP67</li>
+                    </ul>
+                </div>
+
+                <!-- Specifications Tab -->
+                <div id="specifications" class="tab-content" style="display: none;">
+                    <h3 style="margin-bottom: 1rem;">Spécifications techniques</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                        <div>
+                            <h4 style="margin-bottom: 1rem; color: #111827;">Général</h4>
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <tr style="border-bottom: 1px solid #e5e7eb;">
+                                    <td style="padding: 0.75rem 0; font-weight: 600;">Marque</td>
+                                    <td style="padding: 0.75rem 0;">Samsung</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #e5e7eb;">
+                                    <td style="padding: 0.75rem 0; font-weight: 600;">Modèle</td>
+                                    <td style="padding: 0.75rem 0;">Galaxy A54</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #e5e7eb;">
+                                    <td style="padding: 0.75rem 0; font-weight: 600;">Couleur</td>
+                                    <td style="padding: 0.75rem 0;">Noir</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div>
+                            <h4 style="margin-bottom: 1rem; color: #111827;">Écran</h4>
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <tr style="border-bottom: 1px solid #e5e7eb;">
+                                    <td style="padding: 0.75rem 0; font-weight: 600;">Taille</td>
+                                    <td style="padding: 0.75rem 0;">6.4 pouces</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #e5e7eb;">
+                                    <td style="padding: 0.75rem 0; font-weight: 600;">Résolution</td>
+                                    <td style="padding: 0.75rem 0;">1080 x 2400 pixels</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #e5e7eb;">
+                                    <td style="padding: 0.75rem 0; font-weight: 600;">Type</td>
+                                    <td style="padding: 0.75rem 0;">Super AMOLED</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reviews Tab -->
+                <div id="reviews" class="tab-content" style="display: none;">
+                    <h3 style="margin-bottom: 1rem;">Avis clients</h3>
+                    
+                    <!-- Review Summary -->
+                    <div style="background: #f9fafb; padding: 2rem; border-radius: 12px; margin-bottom: 2rem;">
+                        <div style="display: flex; align-items: center; gap: 2rem; margin-bottom: 1rem;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 3rem; font-weight: 700; color: #FF6600;">4.5</div>
+                                <div class="stars" style="font-size: 1.5rem;">⭐⭐⭐⭐⭐</div>
+                                <div style="font-size: 0.875rem; color: #6b7280;">Basé sur 234 avis</div>
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                                    <span>5</span>
+                                    <div style="flex: 1; height: 8px; background: #e5e7eb; border-radius: 4px;">
+                                        <div style="width: 70%; height: 100%; background: #FF6600; border-radius: 4px;"></div>
+                                    </div>
+                                    <span>164</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                                    <span>4</span>
+                                    <div style="flex: 1; height: 8px; background: #e5e7eb; border-radius: 4px;">
+                                        <div style="width: 20%; height: 100%; background: #FF6600; border-radius: 4px;"></div>
+                                    </div>
+                                    <span>47</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                                    <span>3</span>
+                                    <div style="flex: 1; height: 8px; background: #e5e7eb; border-radius: 4px;">
+                                        <div style="width: 5%; height: 100%; background: #FF6600; border-radius: 4px;"></div>
+                                    </div>
+                                    <span>12</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                                    <span>2</span>
+                                    <div style="flex: 1; height: 8px; background: #e5e7eb; border-radius: 4px;">
+                                        <div style="width: 3%; height: 100%; background: #FF6600; border-radius: 4px;"></div>
+                                    </div>
+                                    <span>7</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                    <span>1</span>
+                                    <div style="flex: 1; height: 8px; background: #e5e7eb; border-radius: 4px;">
+                                        <div style="width: 2%; height: 100%; background: #FF6600; border-radius: 4px;"></div>
+                                    </div>
+                                    <span>4</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Individual Reviews -->
+                    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                        <div style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem;">
+                            <div style="display: flex; justify-content: between; align-items: start; margin-bottom: 1rem;">
+                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                    <div style="width: 40px; height: 40px; background: #FF6600; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                                        M
+                                    </div>
+                                    <div>
+                                        <div style="font-weight: 600;">Marie Dossou</div>
+                                        <div class="stars">⭐⭐⭐⭐⭐</div>
+                                    </div>
+                                </div>
+                                <div style="font-size: 0.875rem; color: #6b7280;">Il y a 2 jours</div>
+                            </div>
+                            <p style="line-height: 1.6; color: #6b7280;">
+                                Excellent smartphone ! La qualité de l'écran est exceptionnelle et la batterie tient toute la journée. 
+                                Je recommande vivement ce produit.
+                            </p>
+                        </div>
+
+                        <div style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem;">
+                            <div style="display: flex; justify-content: between; align-items: start; margin-bottom: 1rem;">
+                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                    <div style="width: 40px; height: 40px; background: #003366; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                                        P
+                                    </div>
+                                    <div>
+                                        <div style="font-weight: 600;">Paul Agbodji</div>
+                                        <div class="stars">⭐⭐⭐⭐</div>
+                                    </div>
+                                </div>
+                                <div style="font-size: 0.875rem; color: #6b7280;">Il y a 1 semaine</div>
+                            </div>
+                            <p style="line-height: 1.6; color: #6b7280;">
+                                Très bon rapport qualité-prix. L'appareil photo est performant et l'interface utilisateur est fluide. 
+                                Petite déception sur l'autonomie mais dans l'ensemble très satisfait.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Similar Products -->
+            <div style="margin-top: 3rem;">
+                <h2 style="margin-bottom: 2rem; font-size: 1.875rem; font-weight: 700;">Produits similaires</h2>
+                <div class="products-grid">
+                    <div class="product-card">
+                        <div class="product-image">
+                            <img src="../Média/img/montre.jpg" alt="Montre Connectée" style="width: 100%; height: 200px; object-fit: cover;">
+                        </div>
+                        <div class="product-info">
+                            <div class="product-name">Montre Connectée</div>
+                            <div class="product-rating">
+                                <span class="stars">⭐⭐⭐⭐⭐</span>
+                                <span>4.6</span>
+                                <span>(123)</span>
+                            </div>
+                            <div class="product-price">45 000 FCFA</div>
+                            <button class="add-to-cart-btn">Ajouter au panier</button>
+                        </div>
+                    </div>
+
+                    <div class="product-card">
+                        <div class="product-image">
+                            <img src="../Média/img/airpord.jpg" alt="Écouteurs Bluetooth" style="width: 100%; height: 200px; object-fit: cover;">
+                        </div>
+                        <div class="product-info">
+                            <div class="product-name">Écouteurs Bluetooth</div>
+                            <div class="product-rating">
+                                <span class="stars">⭐⭐⭐⭐</span>
+                                <span>4.2</span>
+                                <span>(89)</span>
+                            </div>
+                            <div class="product-price">15 500 FCFA</div>
+                            <button class="add-to-cart-btn">Ajouter au panier</button>
+                        </div>
+                    </div>
+
+                    <div class="product-card">
+                        <div class="product-image">
+                            <img src="../Média/img/chaussure.jpg" alt="Chaussures Sport" style="width: 100%; height: 200px; object-fit: cover;">
+                        </div>
+                        <div class="product-info">
+                            <div class="product-name">Chaussures Sport</div>
+                            <div class="product-rating">
+                                <span class="stars">⭐⭐⭐⭐</span>
+                                <span>4.4</span>
+                                <span>(201)</span>
+                            </div>
+                            <div class="product-price">28 500 FCFA</div>
+                            <button class="add-to-cart-btn">Ajouter au panier</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-section">
+                <h3>Luxanda.</h3>
+                <p>La marketplace qui connecte l'Afrique au monde du commerce en ligne.</p>
+            </div>
+            <div class="footer-section">
+                <h3>À Propos</h3>
+                <ul class="footer-links">
+                    <li><a href="a-propos.html" class="footer-link">Qui sommes-nous</a></li>
+                    <li><a href="#" class="footer-link">Nos Services</a></li>
+                    <li><a href="auth/inscription.html" class="footer-link">Devenir Vendeur</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Support</h3>
+                <ul class="footer-links">
+                    <li><a href="faq.html" class="footer-link">Centre d'aide</a></li>
+                    <li><a href="#" class="footer-link">Livraison</a></li>
+                    <li><a href="#" class="footer-link">Retours</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Contact</h3>
+                <p>📞 +229 01 41 75 75 59</p>
+                <p>📧 contact@luxanda.bj</p>
+                <p>📍 Cotonou, Bénin</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2025 Luxanda.bj - Tous droits réservés</p>
+        </div>
+    </footer>
+
+    <script>
+        let quantity = 1;
+        let isFavorite = false;
+
+        function changeQuantity(delta) {
+            quantity = Math.max(1, quantity + delta);
+            document.getElementById('quantity').textContent = quantity;
+        }
+
+        function changeMainImage(src) {
+            document.getElementById('mainImageSrc').src = src;
+            
+            // Update thumbnail borders
+            document.querySelectorAll('.thumbnail').forEach(thumb => {
+                thumb.style.borderColor = 'transparent';
+            });
+            event.target.closest('.thumbnail').style.borderColor = '#FF6600';
+        }
+
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.display = 'none';
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.style.borderBottomColor = 'transparent';
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName).style.display = 'block';
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+            event.target.style.borderBottomColor = '#FF6600';
+        }
+
+        function addToCart() {
+            const cartCount = document.getElementById('cartCount');
+            cartCount.textContent = parseInt(cartCount.textContent) + quantity;
+            
+            // Show success message
+            alert(`${quantity} produit(s) ajouté(s) au panier !`);
+        }
+
+        function buyNow() {
+            // Redirect to checkout
+            window.location.href = 'checkout.html';
+        }
+
+        function toggleFavorite() {
+            isFavorite = !isFavorite;
+            const heartBtn = document.querySelector('[onclick="toggleFavorite()"]');
+            heartBtn.textContent = isFavorite ? '❤️' : '🤍';
+            
+            if (isFavorite) {
+                alert('Produit ajouté aux favoris !');
+            } else {
+                alert('Produit retiré des favoris !');
+            }
+        }
+
+        // Load product data based on URL parameter
+        function loadProduct() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = urlParams.get('id');
+            
+            // In a real app, you would fetch product data from an API
+            // For now, we'll use the existing product data
+            console.log('Loading product:', productId);
+        }
+
+        // Initialize
+        loadProduct();
+    </script>
+
+    <style>
+        .tab-btn.active {
+            color: #FF6600;
+            border-bottom-color: #FF6600 !important;
+        }
+        
+        .thumbnail:hover {
+            border-color: #FF6600 !important;
+        }
+    </style>
+</body>
+</html>

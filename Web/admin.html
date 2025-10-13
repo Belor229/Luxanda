@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Administration - Luxanda</title>
+    <link rel="icon" type="image/png" href="Média/img/logoluxanda.png" />
+    <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+    <!-- Admin Auth Overlay -->
+    <div id="adminAuthOverlay" style="position:fixed;inset:0;background:rgba(17,24,39,.85);display:none;align-items:center;justify-content:center;z-index:9999;">
+      <div style="background:#fff;border-radius:16px;padding:2rem;max-width:420px;width:94%;box-shadow:var(--shadow-xl);text-align:center;">
+        <h2 style="margin-bottom:.25rem;color:#111827;">Connexion administrateur</h2>
+        <p style="color:#6b7280;margin-bottom:1rem;font-size:.95rem;">Saisissez votre mot de passe pour accéder au tableau de bord.</p>
+        <input id="adminPassword" type="password" placeholder="Mot de passe" style="width:100%;padding:.9rem 1rem;border:2px solid #e5e7eb;border-radius:12px;font-size:1rem;margin-bottom:1rem;" />
+        <button id="adminLoginBtn" class="btn btn-primary" style="width:100%;">Se connecter</button>
+        <p style="margin-top:.75rem;color:#9ca3af;font-size:.8rem;">Démonstration: ce mécanisme est côté client (localStorage). Pour la production, utilisez une API sécurisée.</p>
+      </div>
+    </div>
+
+    <!-- Header (sans logo image) -->
+    <header class="admin-header">
+        <div class="admin-header-container">
+            <div class="admin-logo">
+                <span style="font-weight:900; letter-spacing:.5px;">LUXANDA</span>
+                <span class="logo-badge">ADMIN</span>
+            </div>
+            <div class="header-right">
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" class="search-input admin" placeholder="Rechercher dans la section courante..." id="adminSearch">
+                </div>
+                <button class="icon-btn admin" id="exportBtn" title="Exporter la base">
+                    <span style="font-size: 1.1rem;">⬇️</span>
+                </button>
+                <label class="icon-btn admin" title="Importer une base" for="importFile" style="cursor:pointer;">
+                    <span style="font-size: 1.1rem;">⬆️</span>
+                    <input type="file" id="importFile" accept="application/json" style="display:none;" />
+                </label>
+                <div class="admin-profile" id="adminProfile">
+                    <div class="avatar">AD</div>
+                    <div style="text-align: left;">
+                        <div style="font-weight: 600; font-size: 0.875rem;">Admin</div>
+                        <div style="font-size: 0.75rem; opacity: 0.8;">Super utilisateur</div>
+                    </div>
+                    <span>▼</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="menu-section">
+                <div class="menu-section-title">Principal</div>
+                <a class="menu-item active" onclick="showSection('dashboard', this)">
+                    <span>📊</span><span>Tableau de bord</span>
+                </a>
+                <a class="menu-item" onclick="showSection('analytics', this)">
+                    <span>📈</span><span>Analytics</span>
+                </a>
+            </div>
+
+            <div class="menu-section">
+                <div class="menu-section-title">Gestion</div>
+                <a class="menu-item" onclick="showSection('users', this)"><span>👥</span><span>Utilisateurs</span></a>
+                <a class="menu-item" onclick="showSection('sellers', this)"><span>🏪</span><span>Vendeurs</span></a>
+                <a class="menu-item" onclick="showSection('products', this)"><span>📦</span><span>Produits</span></a>
+                <a class="menu-item" onclick="showSection('orders', this)"><span>🛒</span><span>Commandes</span></a>
+                <a class="menu-item" onclick="showSection('categories', this)"><span>🏷️</span><span>Catégories</span></a>
+                <a class="menu-item" onclick="showSection('promotions', this)"><span>🔥</span><span>Promotions</span></a>
+            </div>
+
+            <div class="menu-section">
+                <div class="menu-section-title">Finance</div>
+                <a class="menu-item" onclick="showSection('payments', this)"><span>💳</span><span>Paiements</span></a>
+                <a class="menu-item" onclick="showSection('subscriptions', this)"><span>👑</span><span>Abonnements</span></a>
+                <a class="menu-item" onclick="showSection('commissions', this)"><span>💰</span><span>Commissions</span></a>
+                <a class="menu-item" onclick="showSection('affiliations', this)"><span>🤝</span><span>Affiliation</span></a>
+            </div>
+
+            <div class="menu-section">
+                <div class="menu-section-title">Configuration</div>
+                <a class="menu-item" onclick="showSection('settings', this)"><span>⚙️</span><span>Paramètres</span></a>
+                <a class="menu-item" onclick="showSection('reports', this)"><span>📋</span><span>Rapports</span></a>
+                <a class="menu-item" onclick="showSection('logs', this)"><span>📝</span><span>Logs système</span></a>
+            </div>
+
+            <div class="menu-section">
+                <a class="menu-item" style="color: #dc2626;" onclick="logout()">
+                    <span>🚪</span><span>Déconnexion</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content">
+            <!-- Dashboard -->
+            <section id="dashboard" class="page-section active">
+                <div class="page-header">
+                    <div>
+                        <div class="breadcrumb"><span>Admin</span><span>›</span><span>Tableau de bord</span></div>
+                        <h1 class="page-title">Tableau de bord</h1>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon-wrapper">💰</div>
+                            <div class="stat-trend up"><span>↑</span><span id="sumRevenuesTrend">+0%</span></div>
+                        </div>
+                        <div class="stat-value" id="sumRevenues">0</div>
+                        <div class="stat-label">FCFA - Revenus totaux</div>
+                        <div class="stat-footer" id="sumRevenuesFooter">—</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon-wrapper">👥</div>
+                            <div class="stat-trend up"><span>↑</span><span id="usersTrend">+0%</span></div>
+                        </div>
+                        <div class="stat-value" id="usersCount">0</div>
+                        <div class="stat-label">Utilisateurs actifs</div>
+                        <div class="stat-footer" id="usersFooter">—</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon-wrapper">🛒</div>
+                            <div class="stat-trend up"><span>↑</span><span id="ordersTrend">+0%</span></div>
+                        </div>
+                        <div class="stat-value" id="ordersCount">0</div>
+                        <div class="stat-label">Commandes ce mois</div>
+                        <div class="stat-footer" id="ordersFooter">—</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon-wrapper">🏪</div>
+                            <div class="stat-trend up"><span>↑</span><span id="sellersTrend">+0%</span></div>
+                        </div>
+                        <div class="stat-value" id="sellersCount">0</div>
+                        <div class="stat-label">Vendeurs actifs</div>
+                        <div class="stat-footer" id="sellersFooter">—</div>
+                    </div>
+                </div>
+
+                <div class="content-grid">
+                    <div class="card">
+                        <div class="card-header"><h3 class="card-title">Activités Récentes</h3></div>
+                        <div class="activity-feed" id="activityFeed"></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><h3 class="card-title">État du Système</h3></div>
+                        <div style="display:flex;flex-direction:column;gap:1rem;">
+                            <div style="display:flex;justify-content:space-between;"><span>Serveur Web</span><span style="color:var(--success);">● En ligne</span></div>
+                            <div style="display:flex;justify-content:space-between;"><span>Base de données</span><span style="color:var(--success);">● En ligne</span></div>
+                            <div style="display:flex;justify-content:space-between;"><span>API Paiement</span><span style="color:var(--success);">● En ligne</span></div>
+                            <div style="display:flex;justify-content:space-between;"><span>Livraison</span><span style="color:var(--success);">● En ligne</span></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Analytics placeholder -->
+            <section id="analytics" class="page-section">
+                <div class="page-header"><h1 class="page-title">Analytics</h1></div>
+                <div class="card"><p>Tableaux et graphiques (placeholder)</p></div>
+            </section>
+
+            <!-- Users Management -->
+            <section id="users" class="page-section">
+                <div class="page-header"><h1 class="page-title">Utilisateurs</h1></div>
+                <div class="card">
+                    <div class="card-header"><h3 class="card-title">Ajouter un utilisateur</h3></div>
+                    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;">
+                        <input id="userName" class="form-input" placeholder="Nom complet" />
+                        <input id="userEmail" class="form-input" placeholder="Email" type="email" />
+                        <select id="userRole" class="form-input">
+                            <option value="buyer">Acheteur</option>
+                            <option value="seller">Vendeur</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="addUser()">Ajouter</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><h3 class="card-title">Liste des utilisateurs</h3></div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr><th>#</th><th>Nom</th><th>Email</th><th>Rôle</th><th>Statut</th><th>Actions</th></tr>
+                            </thead>
+                            <tbody id="usersTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sellers Management -->
+            <section id="sellers" class="page-section">
+                <div class="page-header"><h1 class="page-title">Vendeurs</h1></div>
+                <div class="card">
+                    <div class="card-header"><h3 class="card-title">Gestion des vendeurs</h3></div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr><th>#</th><th>Boutique</th><th>Plan</th><th>Statut</th><th>Produits</th><th>Actions</th></tr>
+                            </thead>
+                            <tbody id="sellersTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Products Management -->
+            <section id="products" class="page-section">
+                <div class="page-header"><h1 class="page-title">Produits</h1></div>
+                <div class="card">
+                    <div class="card-header"><h3 class="card-title">Ajouter / Éditer un produit</h3></div>
+                    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:1rem;">
+                        <input id="productId" class="form-input" placeholder="ID (laisser vide pour créer)" />
+                        <input id="productName" class="form-input" placeholder="Nom" />
+                        <input id="productPrice" class="form-input" placeholder="Prix (FCFA)" type="number" />
+                        <select id="productCategory" class="form-input"></select>
+                        <input id="productStock" class="form-input" placeholder="Stock" type="number" />
+                        <button class="btn btn-primary" onclick="saveProduct()">Enregistrer</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><h3 class="card-title">Catalogue</h3></div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr><th>ID</th><th>Nom</th><th>Prix</th><th>Catégorie</th><th>Stock</th><th>État</th><th>Promo</th><th>Actions</th></tr>
+                            </thead>
+                            <tbody id="productsTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Orders Management -->
+            <section id="orders" class="page-section">
+                <div class="page-header"><h1 class="page-title">Commandes</h1></div>
+                <div class="card">
+                    <div class="card-header"><h3 class="card-title">Liste des commandes</h3></div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr><th>#</th><th>Client</th><th>Total</th><th>Statut</th><th>Date</th><th>Actions</th></tr>
+                            </thead>
+                            <tbody id="ordersTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Categories Management -->
+            <section id="categories" class="page-section">
+                <div class="page-header"><h1 class="page-title">Catégories</h1></div>
+                <div class="card">
+                    <div class="card-header"><h3 class="card-title">Ajouter une catégorie</h3></div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:1rem;">
+                        <input id="categoryName" class="form-input" placeholder="Nom" />
+                        <input id="categorySlug" class="form-input" placeholder="Slug (ex: electronique)" />
+                        <button class="btn btn-primary" onclick="addCategory()">Ajouter</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><h3 class="card-title">Liste des catégories</h3></div>
+                    <div class="table-container">
+                        <table>
+                            <thead><tr><th>#</th><th>Nom</th><th>Slug</th><th>Actions</th></tr></thead>
+                            <tbody id="categoriesTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Promotions Management -->
+            <section id="promotions" class="page-section">
+                <div class="page-header"><h1 class="page-title">Promotions</h1></div>
+                <div class="card">
+                    <div class="card-header"><h3 class="card-title">Créer / Éditer une promotion</h3></div>
+                    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:1rem;">
+                        <input id="promoId" class="form-input" placeholder="ID (laisser vide pour créer)" />
+                        <input id="promoTitle" class="form-input" placeholder="Titre" />
+                        <input id="promoDiscount" class="form-input" placeholder="Réduction (%)" type="number" />
+                        <input id="promoStart" class="form-input" type="date" />
+                        <input id="promoEnd" class="form-input" type="date" />
+                        <button class="btn btn-primary" onclick="savePromotion()">Enregistrer</button>
+                    </div>
+                    <div style="margin-top:.75rem; font-size:.85rem; color:#6b7280;">Astuce: associez des produits à la promotion depuis le catalogue (colonne Promo).</div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><h3 class="card-title">Liste des promotions</h3></div>
+                    <div class="table-container">
+                        <table>
+                            <thead><tr><th>ID</th><th>Titre</th><th>Réduction</th><th>Période</th><th>Active</th><th>Actions</th></tr></thead>
+                            <tbody id="promotionsTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Finance/Settings placeholders -->
+            <section id="payments" class="page-section"><div class="page-header"><h1 class="page-title">Paiements</h1></div><div class="card"><p>Historique et rapprochement (placeholder)</p></div></section>
+            <section id="subscriptions" class="page-section"><div class="page-header"><h1 class="page-title">Abonnements</h1></div><div class="card"><p>Plans et adhésions (placeholder)</p></div></section>
+            <section id="commissions" class="page-section"><div class="page-header"><h1 class="page-title">Commissions</h1></div><div class="card"><p>Paramètres de commission (placeholder)</p></div></section>
+            <section id="affiliations" class="page-section"><div class="page-header"><h1 class="page-title">Affiliation</h1></div><div class="card"><p>Suivi des parrainages (placeholder)</p></div></section>
+            <section id="settings" class="page-section"><div class="page-header"><h1 class="page-title">Paramètres</h1></div><div class="card"><p>Configuration générale (placeholder)</p></div></section>
+            <section id="reports" class="page-section"><div class="page-header"><h1 class="page-title">Rapports</h1></div><div class="card"><p>Exports et reporting (placeholder)</p></div></section>
+            <section id="logs" class="page-section"><div class="page-header"><h1 class="page-title">Logs système</h1></div><div class="card"><p>Historique des actions (placeholder)</p></div></section>
+        </main>
+    </div>
+
+    <script>
+    // ===== Simple Admin Data Layer (localStorage) =====
+    const DB_KEY = 'lux_admin_db_v1';
+
+    function genId(prefix='ID'){return prefix + '-' + Math.random().toString(36).slice(2,8).toUpperCase();}
+    function getDB(){
+        const raw = localStorage.getItem(DB_KEY);
+        if(!raw){
+            const seed = {
+                users:[{id:genId('USR'),name:'Jean Dupont',email:'jean.dupont@email.com',role:'buyer',status:'active'},{id:genId('USR'),name:'Admin',email:'admin@luxanda.bj',role:'admin',status:'active'}],
+                sellers:[{id:genId('SEL'),name:'TechBénin Store',plan:'Pro',status:'approved',productsCount:12},{id:genId('SEL'),name:'Mode Africaine',plan:'Starter',status:'pending',productsCount:3}],
+                categories:[{id:genId('CAT'),name:'Électronique',slug:'electronique'},{id:genId('CAT'),name:'Mode',slug:'mode'},{id:genId('CAT'),name:'Accessoires',slug:'accessoires'}],
+                products:[{id:genId('PRD'),name:'Smartphone Samsung A54',price:185000,category:'electronique',stock:12,status:'active',discount:15},{id:genId('PRD'),name:'Robe Africaine Premium',price:25000,category:'mode',stock:25,status:'active',discount:25},{id:genId('PRD'),name:'Écouteurs Bluetooth',price:15500,category:'electronique',stock:0,status:'inactive',discount:20}],
+                orders:[{id:genId('ORD'),customer:'Jean Dupont',total:250500,status:'pending',date:new Date().toISOString()},{id:genId('ORD'),customer:'Marie Dossou',total:45000,status:'shipped',date:new Date().toISOString()}],
+                promotions:[{id:genId('PRM'),title:'Ventes Flash',discount:20,active:true,start:new Date().toISOString().slice(0,10),end:'',products:[]}],
+                activities:[{title:'Initialisation',desc:'Base de données locale créée',time:new Date().toLocaleString()}]
+            };
+            localStorage.setItem(DB_KEY, JSON.stringify(seed));
+            return seed;
+        }
+        return JSON.parse(raw);
+    }
+    function setDB(db){localStorage.setItem(DB_KEY, JSON.stringify(db));}
+    function logActivity(title, desc){
+        const db = getDB();
+        db.activities.unshift({title,desc,time:new Date().toLocaleString()});
+        db.activities = db.activities.slice(0,25);
+        setDB(db); renderActivities();
+    }
+
+    // ===== UI Helpers =====
+    function showSection(id, link){
+        document.querySelectorAll('.page-section').forEach(s=>s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        document.querySelectorAll('.menu-item').forEach(m=>m.classList.remove('active'));
+        if(link) link.classList.add('active');
+        document.getElementById('adminSearch').value='';
+        applySearchFilter();
+    }
+    function logout(){ localStorage.removeItem('lux_admin_auth'); location.reload(); }
+
+    // ===== Renderers =====
+    function formatFCFA(v){return (v||0).toLocaleString('fr-FR') + ' FCFA';}
+
+    function renderDashboard(){
+        const db = getDB();
+        const sumRev = db.orders.reduce((a,o)=>a+(o.total||0),0);
+        document.getElementById('sumRevenues').textContent = sumRev.toLocaleString('fr-FR');
+        document.getElementById('usersCount').textContent = db.users.length;
+        document.getElementById('ordersCount').textContent = db.orders.length;
+        document.getElementById('sellersCount').textContent = db.sellers.filter(s=>s.status==='approved').length;
+        document.getElementById('sumRevenuesFooter').textContent = '+ ' + formatFCFA(Math.round(sumRev*0.1)) + ' estimé ce mois';
+        document.getElementById('usersFooter').textContent = '+ ' + Math.floor(db.users.length*0.05) + ' nouveaux cette semaine';
+        document.getElementById('ordersFooter').textContent = '+ ' + Math.floor(db.orders.length*0.1) + ' aujourd\'hui';
+        document.getElementById('sellersFooter').textContent = '+ ' + Math.max(1,Math.floor(db.sellers.length*0.05)) + ' nouveaux vendeurs';
+        renderActivities();
+    }
+    function renderActivities(){
+        const db = getDB();
+        const c = document.getElementById('activityFeed');
+        if(!c) return;
+        if(!db.activities.length){ c.innerHTML = '<div class="activity-item"><div class="activity-content"><div class="activity-title">Aucune activité</div></div></div>'; return; }
+        c.innerHTML = db.activities.slice(0,8).map(a=>`
+            <div class="activity-item">
+                <div class="activity-icon">⏱️</div>
+                <div class="activity-content">
+                    <div class="activity-title">${a.title}</div>
+                    <div class="activity-description">${a.desc||''}</div>
+                    <div class="activity-time">${a.time}</div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // Users
+    function renderUsers(){
+        const db = getDB();
+        const tbody = document.getElementById('usersTable');
+        tbody.innerHTML = db.users.map((u,i)=>`
+            <tr>
+                <td>${i+1}</td><td>${u.name}</td><td>${u.email}</td><td>${u.role}</td>
+                <td><span class="status-badge ${u.status==='active'?'active':'suspended'}">${u.status}</span></td>
+                <td class="action-buttons">
+                    <button class="btn-icon view" title="Voir" onclick="alert('${u.name} - ${u.email}')">👁️</button>
+                    <button class="btn-icon edit" title="Basculer statut" onclick="toggleUserStatus('${u.id}')">🔁</button>
+                    <button class="btn-icon delete" title="Supprimer" onclick="deleteUser('${u.id}')">🗑️</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+    function addUser(){
+        const name = document.getElementById('userName').value.trim();
+        const email = document.getElementById('userEmail').value.trim();
+        const role = document.getElementById('userRole').value;
+        if(!name||!email) return alert('Nom et email requis');
+        const db = getDB();
+        db.users.push({id:genId('USR'), name, email, role, status:'active'});
+        setDB(db); renderUsers(); logActivity('Utilisateur ajouté', name);
+        document.getElementById('userName').value=''; document.getElementById('userEmail').value='';
+    }
+    function toggleUserStatus(id){
+        const db = getDB();
+        const u = db.users.find(x=>x.id===id); if(!u) return;
+        u.status = u.status==='active' ? 'suspended' : 'active';
+        setDB(db); renderUsers(); logActivity('Statut utilisateur', `${u.name} → ${u.status}`);
+    }
+    function deleteUser(id){
+        if(!confirm('Supprimer cet utilisateur ?')) return;
+        const db = getDB(); db.users = db.users.filter(u=>u.id!==id); setDB(db); renderUsers(); logActivity('Utilisateur supprimé', id);
+    }
+
+    // Sellers
+    function renderSellers(){
+        const db = getDB();
+        const tbody = document.getElementById('sellersTable');
+        tbody.innerHTML = db.sellers.map((s,i)=>`
+            <tr>
+                <td>${i+1}</td><td>${s.name}</td><td>${s.plan}</td>
+                <td><span class="status-badge ${s.status==='approved'?'active':'pending'}">${s.status}</span></td>
+                <td>${s.productsCount||0}</td>
+                <td class="action-buttons">
+                    <button class="btn-icon edit" title="Approuver" onclick="approveSeller('${s.id}')">✅</button>
+                    <button class="btn-icon edit" title="Plan" onclick="changeSellerPlan('${s.id}')">👑</button>
+                    <button class="btn-icon delete" title="Supprimer" onclick="deleteSeller('${s.id}')">🗑️</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+    function approveSeller(id){
+        const db = getDB(); const s = db.sellers.find(x=>x.id===id); if(!s) return; s.status='approved'; setDB(db); renderSellers(); logActivity('Vendeur approuvé', s.name);
+    }
+    function changeSellerPlan(id){
+        const plan = prompt('Nouveau plan (Starter/Pro/Premium):','Pro'); if(!plan) return;
+        const db = getDB(); const s = db.sellers.find(x=>x.id===id); if(!s) return; s.plan = plan; setDB(db); renderSellers(); logActivity('Plan vendeur modifié', `${s.name} → ${plan}`);
+    }
+    function deleteSeller(id){
+        if(!confirm('Supprimer ce vendeur ?')) return;
+        const db = getDB(); db.sellers = db.sellers.filter(s=>s.id!==id); setDB(db); renderSellers(); logActivity('Vendeur supprimé', id);
+    }
+
+    // Categories
+    function renderCategories(){
+        const db = getDB();
+        const tbody = document.getElementById('categoriesTable');
+        tbody.innerHTML = db.categories.map((c,i)=>`
+            <tr>
+                <td>${i+1}</td><td>${c.name}</td><td>${c.slug}</td>
+                <td class="action-buttons"><button class="btn-icon delete" onclick="deleteCategory('${c.id}')">🗑️</button></td>
+            </tr>
+        `).join('');
+        const sel = document.getElementById('productCategory'); if(sel){ sel.innerHTML = db.categories.map(c=>`<option value="${c.slug}">${c.name}</option>`).join(''); }
+    }
+    function addCategory(){
+        const name = document.getElementById('categoryName').value.trim();
+        const slug = document.getElementById('categorySlug').value.trim();
+        if(!name||!slug) return alert('Nom et slug requis');
+        const db = getDB(); db.categories.push({id:genId('CAT'), name, slug}); setDB(db); renderCategories(); logActivity('Catégorie ajoutée', name);
+        document.getElementById('categoryName').value=''; document.getElementById('categorySlug').value='';
+    }
+    function deleteCategory(id){
+        if(!confirm('Supprimer cette catégorie ?')) return;
+        const db = getDB(); db.categories = db.categories.filter(c=>c.id!==id); setDB(db); renderCategories(); logActivity('Catégorie supprimée', id);
+    }
+
+    // Products
+    function renderProducts(){
+        const db = getDB();
+        const tbody = document.getElementById('productsTable');
+        tbody.innerHTML = db.products.map(p=>{
+            const cat = db.categories.find(c=>c.slug===p.category);
+            return `<tr>
+                <td>${p.id}</td><td>${p.name}</td><td>${formatFCFA(p.price)}</td>
+                <td>${cat?cat.name:p.category}</td>
+                <td>${p.stock}</td>
+                <td><span class="status-badge ${p.status==='active'?'active':'suspended'}">${p.status}</span></td>
+                <td>${p.discount?'-'+p.discount+'%':'—'}</td>
+                <td class="action-buttons">
+                    <button class="btn-icon view" title="Éditer" onclick="editProduct('${p.id}')">✏️</button>
+                    <button class="btn-icon edit" title="Basculer état" onclick="toggleProductStatus('${p.id}')">🔁</button>
+                    <button class="btn-icon edit" title="Réduction" onclick="setProductDiscount('${p.id}')">🏷️</button>
+                    <button class="btn-icon delete" title="Supprimer" onclick="deleteProduct('${p.id}')">🗑️</button>
+                </td>
+            </tr>`;
+        }).join('');
+    }
+    function saveProduct(){
+        const id = document.getElementById('productId').value.trim();
+        const name = document.getElementById('productName').value.trim();
+        const price = Number(document.getElementById('productPrice').value);
+        const category = document.getElementById('productCategory').value;
+        const stock = Number(document.getElementById('productStock').value||0);
+        if(!name||!price||!category) return alert('Champs requis manquants');
+        const db = getDB();
+        if(id){
+            const p = db.products.find(x=>x.id===id); if(!p) return alert('Produit introuvable');
+            Object.assign(p,{name,price,category,stock}); logActivity('Produit édité', name);
+        }else{
+            db.products.push({id:genId('PRD'),name,price,category,stock,status:'active',discount:0}); logActivity('Produit ajouté', name);
+        }
+        setDB(db); renderProducts(); document.getElementById('productId').value=''; document.getElementById('productName').value=''; document.getElementById('productPrice').value=''; document.getElementById('productStock').value='';
+    }
+    function editProduct(id){
+        const db = getDB(); const p = db.products.find(x=>x.id===id); if(!p) return;
+        document.getElementById('productId').value=p.id;
+        document.getElementById('productName').value=p.name;
+        document.getElementById('productPrice').value=p.price;
+        document.getElementById('productCategory').value=p.category;
+        document.getElementById('productStock').value=p.stock;
+        showSection('products');
+    }
+    function toggleProductStatus(id){ const db = getDB(); const p = db.products.find(x=>x.id===id); if(!p) return; p.status = p.status==='active'?'inactive':'active'; setDB(db); renderProducts(); }
+    function setProductDiscount(id){ const d = prompt('Réduction (%)', '10'); if(d===null) return; const db = getDB(); const p = db.products.find(x=>x.id===id); if(!p) return; p.discount = Number(d)||0; setDB(db); renderProducts(); logActivity('Promo produit', `${p.name} → -${p.discount}%`); }
+    function deleteProduct(id){ if(!confirm('Supprimer ce produit ?')) return; const db = getDB(); db.products = db.products.filter(p=>p.id!==id); setDB(db); renderProducts(); logActivity('Produit supprimé', id); }
+
+    // Orders
+    function renderOrders(){
+        const db = getDB();
+        const tbody = document.getElementById('ordersTable');
+        tbody.innerHTML = db.orders.map((o,i)=>`
+            <tr>
+                <td>${o.id}</td><td>${o.customer}</td><td>${formatFCFA(o.total)}</td>
+                <td>
+                    <select onchange="updateOrderStatus('${o.id}', this.value)" class="form-input" style="padding:.25rem .5rem;">
+                        ${['pending','processing','shipped','delivered','cancelled'].map(s=>`<option ${o.status===s?'selected':''} value="${s}">${s}</option>`).join('')}
+                    </select>
+                </td>
+                <td>${new Date(o.date).toLocaleString()}</td>
+                <td class="action-buttons">
+                    <button class="btn-icon delete" onclick="deleteOrder('${o.id}')">🗑️</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+    function updateOrderStatus(id, status){ const db=getDB(); const o = db.orders.find(x=>x.id===id); if(!o) return; o.status=status; setDB(db); logActivity('Statut commande', `${id} → ${status}`); }
+    function deleteOrder(id){ if(!confirm('Supprimer cette commande ?')) return; const db=getDB(); db.orders=db.orders.filter(o=>o.id!==id); setDB(db); renderOrders(); logActivity('Commande supprimée', id); }
+
+    // Promotions
+    function renderPromotions(){
+        const db = getDB();
+        const tbody = document.getElementById('promotionsTable');
+        tbody.innerHTML = db.promotions.map(p=>{
+            const period = `${p.start||'—'} → ${p.end||'—'}`;
+            return `<tr>
+                <td>${p.id}</td><td>${p.title}</td><td>-${p.discount}%</td><td>${period}</td>
+                <td><input type="checkbox" ${p.active?'checked':''} onchange="togglePromotion('${p.id}', this.checked)" /></td>
+                <td class="action-buttons">
+                    <button class="btn-icon view" onclick="editPromotion('${p.id}')">✏️</button>
+                    <button class="btn-icon delete" onclick="deletePromotion('${p.id}')">🗑️</button>
+                </td>
+            </tr>`;
+        }).join('');
+    }
+    function savePromotion(){
+        const id = document.getElementById('promoId').value.trim();
+        const title = document.getElementById('promoTitle').value.trim();
+        const discount = Number(document.getElementById('promoDiscount').value||0);
+        const start = document.getElementById('promoStart').value;
+        const end = document.getElementById('promoEnd').value;
+        if(!title||!discount) return alert('Titre et réduction requis');
+        const db = getDB();
+        if(id){ const p = db.promotions.find(x=>x.id===id); if(!p) return; Object.assign(p,{title,discount,start,end}); logActivity('Promotion éditée', title); }
+        else { db.promotions.push({id:genId('PRM'), title, discount, start, end, active:true, products:[]}); logActivity('Promotion créée', title); }
+        setDB(db); renderPromotions(); document.getElementById('promoId').value=''; document.getElementById('promoTitle').value=''; document.getElementById('promoDiscount').value=''; document.getElementById('promoStart').value=''; document.getElementById('promoEnd').value='';
+    }
+    function editPromotion(id){ const db=getDB(); const p=db.promotions.find(x=>x.id===id); if(!p) return; document.getElementById('promoId').value=p.id; document.getElementById('promoTitle').value=p.title; document.getElementById('promoDiscount').value=p.discount; document.getElementById('promoStart').value=p.start||''; document.getElementById('promoEnd').value=p.end||''; showSection('promotions'); }
+    function togglePromotion(id, active){ const db=getDB(); const p=db.promotions.find(x=>x.id===id); if(!p) return; p.active=active; setDB(db); logActivity('Promotion', `${p.title} → ${active?'active':'inactive'}`); }
+    function deletePromotion(id){ if(!confirm('Supprimer cette promotion ?')) return; const db=getDB(); db.promotions=db.promotions.filter(p=>p.id!==id); setDB(db); renderPromotions(); logActivity('Promotion supprimée', id); }
+
+    // ===== Search in current section =====
+    function applySearchFilter(){
+        const q = document.getElementById('adminSearch').value.toLowerCase();
+        const active = document.querySelector('.page-section.active'); if(!active) return;
+        active.querySelectorAll('tbody tr').forEach(tr=>{
+            tr.style.display = tr.textContent.toLowerCase().includes(q) ? '' : 'none';
+        });
+    }
+
+    // ===== Export / Import =====
+    document.getElementById('exportBtn').addEventListener('click', ()=>{
+        const data = localStorage.getItem(DB_KEY)||'{}';
+        const blob = new Blob([data], {type:'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href=url; a.download='luxanda_admin_export.json'; a.click(); URL.revokeObjectURL(url);
+    });
+    document.getElementById('importFile').addEventListener('change', (e)=>{
+        const file = e.target.files[0]; if(!file) return;
+        const reader = new FileReader();
+        reader.onload = ()=>{ try{ localStorage.setItem(DB_KEY, reader.result); init(); alert('Import réussi'); }catch(err){ alert('Import invalide'); } };
+        reader.readAsText(file);
+    });
+
+    // ===== Init =====
+    function init(){
+        // Simple client-side auth gate
+        const overlay = document.getElementById('adminAuthOverlay');
+        const main = document.querySelector('.main-container');
+        const isAuth = localStorage.getItem('lux_admin_auth') === '1';
+        if(!isAuth){
+            overlay.style.display = 'flex';
+            if(main) main.style.display = 'none';
+            const btn = document.getElementById('adminLoginBtn');
+            const input = document.getElementById('adminPassword');
+            const doLogin = ()=>{
+                // MOT DE PASSE DEMO (à changer): LuxAdmin2025!
+                if(input.value === 'LuxAdmin2025!'){
+                    localStorage.setItem('lux_admin_auth','1');
+                    overlay.style.display='none'; if(main) main.style.display='';
+                    startApp();
+                }else{
+                    alert('Mot de passe incorrect'); input.focus();
+                }
+            };
+            btn.addEventListener('click', doLogin);
+            input.addEventListener('keypress', (e)=>{ if(e.key==='Enter') doLogin(); });
+        } else {
+            startApp();
+        }
+    }
+    function startApp(){
+        getDB();
+        renderDashboard(); renderUsers(); renderSellers(); renderCategories(); renderProducts(); renderOrders(); renderPromotions();
+    }
+    document.getElementById('adminSearch').addEventListener('input', applySearchFilter);
+    document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mot de Passe Oublié - Luxanda</title>
+    <link rel="icon" type="image/png" href="../Média/img/logoluxanda.png">
+    <link rel="stylesheet" href="../css/styles.css">
+    <style>
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary-orange-light) 0%, var(--primary-blue-light) 100%);
+            padding: var(--space-4);
+        }
+
+        .auth-card {
+            background: var(--white);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            padding: var(--space-8);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .auth-logo {
+            margin-bottom: var(--space-6);
+        }
+
+        .auth-logo h1 {
+            font-size: var(--font-size-3xl);
+            font-weight: bold;
+        }
+
+        .auth-logo .logo-orange {
+            color: var(--primary-orange);
+        }
+
+        .auth-logo .logo-blue {
+            color: var(--primary-blue);
+        }
+
+        .auth-title {
+            font-size: var(--font-size-2xl);
+            font-weight: bold;
+            color: var(--gray-800);
+            margin-bottom: var(--space-2);
+        }
+
+        .auth-subtitle {
+            color: var(--gray-600);
+            margin-bottom: var(--space-8);
+        }
+
+        .form-group {
+            margin-bottom: var(--space-6);
+            text-align: left;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 500;
+            color: var(--gray-700);
+            margin-bottom: var(--space-2);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: var(--space-3);
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius);
+            font-size: var(--font-size-base);
+            transition: var(--transition);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-orange);
+            box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.1);
+        }
+
+        .auth-btn {
+            width: 100%;
+            padding: var(--space-4);
+            background: var(--primary-orange);
+            color: var(--white);
+            border: none;
+            border-radius: var(--radius);
+            font-size: var(--font-size-lg);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: var(--space-6);
+        }
+
+        .auth-btn:hover {
+            background: var(--primary-orange-hover);
+            transform: translateY(-1px);
+        }
+
+        .auth-switch {
+            color: var(--gray-600);
+            font-size: var(--font-size-sm);
+        }
+
+        .auth-switch a {
+            color: var(--primary-orange);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .auth-switch a:hover {
+            text-decoration: underline;
+        }
+
+        .back-to-home {
+            position: absolute;
+            top: var(--space-6);
+            left: var(--space-6);
+            color: var(--gray-600);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .back-to-home:hover {
+            color: var(--primary-orange);
+        }
+
+        .success-message {
+            background: var(--success-light);
+            border: 1px solid var(--success);
+            color: var(--success);
+            padding: var(--space-4);
+            border-radius: var(--radius);
+            margin-bottom: var(--space-6);
+            display: none;
+        }
+
+        .steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: var(--space-8);
+            position: relative;
+        }
+
+        .step {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: var(--gray-600);
+            position: relative;
+            z-index: 2;
+        }
+
+        .step.active {
+            background: var(--primary-orange);
+            color: var(--white);
+        }
+
+        .step.completed {
+            background: var(--success);
+            color: var(--white);
+        }
+
+        .steps::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 15px;
+            right: 15px;
+            height: 2px;
+            background: var(--gray-200);
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <a href="../index.html" class="back-to-home">
+        ← Retour à l'accueil
+    </a>
+
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-logo">
+                <img src="../Média/img/logoluxanda.png" alt="Luxanda" style="height: 60px; width: auto; margin-bottom: 1rem;">
+            </div>
+
+            <h2 class="auth-title">Mot de Passe Oublié</h2>
+            <p class="auth-subtitle">Nous allons vous aider à récupérer votre compte</p>
+
+            <!-- Steps -->
+            <div class="steps">
+                <div class="step active" id="step1">1</div>
+                <div class="step" id="step2">2</div>
+                <div class="step" id="step3">3</div>
+            </div>
+
+            <!-- Step 1: Email -->
+            <div id="form-step1" class="form-step">
+                <form class="auth-form">
+                    <div class="form-group">
+                        <label for="email" class="form-label">Adresse email ou numéro de téléphone</label>
+                        <input type="text" id="email" class="form-input" placeholder="votre@email.com" required>
+                    </div>
+
+                    <button type="submit" class="auth-btn">Envoyer le code de récupération</button>
+                </form>
+            </div>
+
+            <!-- Step 2: Code Verification -->
+            <div id="form-step2" class="form-step" style="display: none;">
+                <form class="auth-form">
+                    <div class="success-message" id="email-sent">
+                        Un code de récupération a été envoyé à votre adresse email.
+                    </div>
+
+                    <div class="form-group">
+                        <label for="code" class="form-label">Code de vérification</label>
+                        <input type="text" id="code" class="form-input" placeholder="Entrez le code à 6 chiffres" maxlength="6" required>
+                    </div>
+
+                    <button type="submit" class="auth-btn">Vérifier le code</button>
+
+                    <div style="text-align: center; margin-top: var(--space-4);">
+                        <button type="button" class="auth-switch" onclick="resendCode()">
+                            Renvoyer le code
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Step 3: New Password -->
+            <div id="form-step3" class="form-step" style="display: none;">
+                <form class="auth-form">
+                    <div class="success-message" id="code-verified">
+                        Code vérifié avec succès. Vous pouvez maintenant créer un nouveau mot de passe.
+                    </div>
+
+                    <div class="form-group">
+                        <label for="newPassword" class="form-label">Nouveau mot de passe</label>
+                        <input type="password" id="newPassword" class="form-input" placeholder="Créez un nouveau mot de passe" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmPassword" class="form-label">Confirmer le mot de passe</label>
+                        <input type="password" id="confirmPassword" class="form-input" placeholder="Confirmez votre nouveau mot de passe" required>
+                    </div>
+
+                    <button type="submit" class="auth-btn">Réinitialiser le mot de passe</button>
+                </form>
+            </div>
+
+            <!-- Success Step -->
+            <div id="form-success" class="form-step" style="display: none;">
+                <div class="success-message" style="display: block;">
+                    ✅ Votre mot de passe a été réinitialisé avec succès !
+                </div>
+                <p style="color: var(--gray-600); margin-bottom: var(--space-6);">
+                    Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.
+                </p>
+                <a href="connexion.html" class="auth-btn" style="text-decoration: none; display: inline-block;">
+                    Se connecter
+                </a>
+            </div>
+
+            <div style="margin-top: var(--space-6);">
+                <p class="auth-switch">
+                    Vous vous souvenez de votre mot de passe ? 
+                    <a href="connexion.html">Se connecter</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+
+        function nextStep() {
+            if (currentStep < 4) {
+                // Hide current step
+                document.getElementById(`form-step${currentStep}`).style.display = 'none';
+                document.getElementById(`step${currentStep}`).classList.remove('active');
+                document.getElementById(`step${currentStep}`).classList.add('completed');
+                
+                currentStep++;
+                
+                // Show next step
+                if (currentStep <= 3) {
+                    document.getElementById(`form-step${currentStep}`).style.display = 'block';
+                    document.getElementById(`step${currentStep}`).classList.add('active');
+                } else {
+                    document.getElementById('form-success').style.display = 'block';
+                }
+            }
+        }
+
+        function resendCode() {
+            alert('Code renvoyé ! Vérifiez votre email.');
+        }
+
+        // Step 1: Email submission
+        document.querySelector('#form-step1 form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            
+            if (email) {
+                // Simulate sending code
+                setTimeout(() => {
+                    nextStep();
+                    document.getElementById('email-sent').style.display = 'block';
+                }, 1000);
+            }
+        });
+
+        // Step 2: Code verification
+        document.querySelector('#form-step2 form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const code = document.getElementById('code').value;
+            
+            if (code && code.length === 6) {
+                // Simulate code verification
+                setTimeout(() => {
+                    nextStep();
+                    document.getElementById('code-verified').style.display = 'block';
+                }, 1000);
+            } else {
+                alert('Veuillez entrer un code à 6 chiffres valide.');
+            }
+        });
+
+        // Step 3: New password
+        document.querySelector('#form-step3 form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (newPassword !== confirmPassword) {
+                alert('Les mots de passe ne correspondent pas.');
+                return;
+            }
+            
+            if (newPassword.length < 8) {
+                alert('Le mot de passe doit contenir au moins 8 caractères.');
+                return;
+            }
+            
+            // Simulate password reset
+            setTimeout(() => {
+                nextStep();
+            }, 1000);
+        });
+
+        // Auto-format code input
+        document.getElementById('code').addEventListener('input', function(e) {
+            this.value = this.value.replace(/\D/g, '').substring(0, 6);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Produits - Luxanda</title>
+    <link rel="icon" type="image/png" href="../Média/img/logoluxanda.png">
+    <link rel="stylesheet" href="../css/styles.css">
+    <style>
+        .products-hero {
+            background: linear-gradient(135deg, var(--primary-orange-light) 0%, var(--primary-blue-light) 100%);
+            padding: var(--space-16) 0;
+            text-align: center;
+        }
+
+        .products-hero h1 {
+            font-size: var(--font-size-5xl);
+            font-weight: bold;
+            color: var(--gray-800);
+            margin-bottom: var(--space-4);
+        }
+
+        .products-hero p {
+            font-size: var(--font-size-xl);
+            color: var(--gray-600);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .filters-section {
+            background: var(--white);
+            padding: var(--space-8) 0;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .filters-container {
+            display: flex;
+            gap: var(--space-4);
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .filter-select {
+            padding: var(--space-2) var(--space-4);
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius);
+            background: var(--white);
+            color: var(--gray-700);
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--primary-orange);
+        }
+
+        .products-content {
+            padding: var(--space-16) 0;
+            background: var(--gray-50);
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: var(--space-6);
+            margin-top: var(--space-8);
+        }
+
+        .product-card {
+            background: var(--white);
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            border: 1px solid var(--gray-200);
+        }
+
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .product-image {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .product-card:hover .product-image img {
+            transform: scale(1.05);
+        }
+
+        .product-badge {
+            position: absolute;
+            top: var(--space-3);
+            right: var(--space-3);
+            background: var(--primary-orange);
+            color: var(--white);
+            padding: var(--space-1) var(--space-3);
+            border-radius: var(--radius);
+            font-size: var(--font-size-sm);
+            font-weight: 600;
+        }
+
+        .product-info {
+            padding: var(--space-6);
+        }
+
+        .product-name {
+            font-size: var(--font-size-lg);
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: var(--space-2);
+            line-height: 1.4;
+        }
+
+        .product-rating {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            margin-bottom: var(--space-3);
+            font-size: var(--font-size-sm);
+            color: var(--gray-600);
+        }
+
+        .product-price {
+            font-size: var(--font-size-xl);
+            font-weight: 700;
+            color: var(--primary-orange);
+            margin-bottom: var(--space-4);
+        }
+
+        .add-to-cart-btn {
+            width: 100%;
+            padding: var(--space-3);
+            background: var(--primary-orange);
+            color: var(--white);
+            border: none;
+            border-radius: var(--radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .add-to-cart-btn:hover {
+            background: var(--primary-orange-hover);
+            transform: translateY(-1px);
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: var(--space-2);
+            margin-top: var(--space-12);
+        }
+
+        .pagination-btn {
+            padding: var(--space-2) var(--space-4);
+            border: 2px solid var(--gray-200);
+            background: var(--white);
+            color: var(--gray-600);
+            border-radius: var(--radius);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .pagination-btn:hover {
+            border-color: var(--primary-orange);
+            color: var(--primary-orange);
+        }
+
+        .pagination-btn.active {
+            background: var(--primary-orange);
+            border-color: var(--primary-orange);
+            color: var(--white);
+        }
+
+        .breadcrumb {
+            padding: var(--space-4) 0;
+            background: var(--white);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .breadcrumb-container {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            color: var(--gray-600);
+            font-size: var(--font-size-sm);
+        }
+
+        .breadcrumb a {
+            color: var(--primary-orange);
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="top-bar-container">
+                <div class="top-bar-left">
+                    <span>📞 +229 01 93 38 95 63</span>
+                    <span>📧 contact@luxanda.bj</span>
+                </div>
+                <div class="top-bar-right">
+                    <a href="Formulaire.html" class="top-bar-link">Devenir Vendeur</a>
+                    <a href="connexion.html" class="top-bar-link">Se connecter</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Header -->
+        <div class="main-header">
+            <a href="../index.html" class="logo">
+                <img src="../Média/img/logoluxanda.png" alt="Luxanda" style="height: 40px; width: auto;">
+            </a>
+
+            <div class="search-container">
+                <input type="text" class="search-input" placeholder="Rechercher des produits, marques ou catégories...">
+                <button class="search-btn">Rechercher</button>
+            </div>
+
+            <div class="header-icons">
+                <button class="icon-btn" title="Favoris">❤️</button>
+                <button class="icon-btn" title="Panier">
+                    🛒
+                    <span class="cart-badge">0</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="nav-bar">
+            <div class="nav-container">
+                <a href="../index.html" class="nav-link">Accueil</a>
+                <a href="Boutique.html" class="nav-link">Boutiques</a>
+                <a href="Boutique.html" class="nav-link">Promotions</a>
+                <a href="Boutique.html" class="nav-link">Nouveautés</a>
+                <a href="Boutique.html" class="nav-link">Meilleures Ventes</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Breadcrumb -->
+                    <div class="breadcrumb">
+        <div class="section-container">
+            <div class="breadcrumb-container">
+                <a href="../index.html">Accueil</a>
+                <span>→</span>
+                        <span>Produits</span>
+                    </div>
+                </div>
+            </div>
+
+    <!-- Hero Section -->
+    <section class="products-hero">
+        <div class="section-container">
+            <h1>Tous nos Produits</h1>
+            <p>Découvrez notre sélection de produits de qualité pour tous vos besoins</p>
+        </div>
+    </section>
+
+    <!-- Filters Section -->
+    <section class="filters-section">
+        <div class="section-container">
+            <div class="filters-container">
+                <div class="filter-group">
+                    <label for="category">Catégorie :</label>
+                    <select id="category" class="filter-select">
+                            <option value="">Toutes les catégories</option>
+                            <option value="electronique">Électronique</option>
+                            <option value="mode">Mode & Beauté</option>
+                            <option value="maison">Maison & Jardin</option>
+                            <option value="sport">Sport & Loisirs</option>
+                            <option value="alimentation">Alimentation</option>
+                            <option value="sante">Santé</option>
+                        </select>
+                    </div>
+
+                <div class="filter-group">
+                    <label for="sort">Trier par :</label>
+                    <select id="sort" class="filter-select">
+                        <option value="popular">Plus populaires</option>
+                        <option value="price-low">Prix croissant</option>
+                        <option value="price-high">Prix décroissant</option>
+                        <option value="newest">Plus récents</option>
+                        <option value="rating">Meilleures notes</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="price">Prix :</label>
+                    <select id="price" class="filter-select">
+                            <option value="">Tous les prix</option>
+                            <option value="0-10000">0 - 10 000 FCFA</option>
+                            <option value="10000-50000">10 000 - 50 000 FCFA</option>
+                            <option value="50000-100000">50 000 - 100 000 FCFA</option>
+                            <option value="100000+">100 000+ FCFA</option>
+                        </select>
+                    </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Products Content -->
+    <section class="products-content">
+        <div class="section-container">
+            <div class="products-grid">
+                <div class="product-card">
+                    <div class="product-image">
+                        <img src="../Média/img/téléphone.jpg" alt="Smartphone Samsung A54">
+                        <div class="product-badge">-15%</div>
+                    </div>
+                    <div class="product-info">
+                        <div class="product-name">Smartphone Samsung A54</div>
+                        <div class="product-rating">
+                            <span class="stars">⭐⭐⭐⭐⭐</span>
+                            <span>4.5 (234)</span>
+                        </div>
+                        <div class="product-price">185 000 FCFA</div>
+                        <button class="add-to-cart-btn">Ajouter au panier</button>
+                    </div>
+                </div>
+
+                <div class="product-card">
+                    <div class="product-image">
+                        <img src="../Média/img/robe.jpg" alt="Robe Africaine Premium">
+                        <div class="product-badge">Nouveau</div>
+                    </div>
+                    <div class="product-info">
+                        <div class="product-name">Robe Africaine Premium</div>
+                        <div class="product-rating">
+                            <span class="stars">⭐⭐⭐⭐⭐</span>
+                            <span>5.0 (156)</span>
+                        </div>
+                        <div class="product-price">25 000 FCFA</div>
+                        <button class="add-to-cart-btn">Ajouter au panier</button>
+                    </div>
+                </div>
+
+                <div class="product-card">
+                    <div class="product-image">
+                        <img src="../Média/img/airpord.jpg" alt="Écouteurs Bluetooth">
+                        <div class="product-badge">-20%</div>
+                    </div>
+                    <div class="product-info">
+                        <div class="product-name">Écouteurs Bluetooth</div>
+                        <div class="product-rating">
+                            <span class="stars">⭐⭐⭐⭐</span>
+                            <span>4.2 (89)</span>
+                        </div>
+                        <div class="product-price">15 500 FCFA</div>
+                        <button class="add-to-cart-btn">Ajouter au panier</button>
+                    </div>
+                </div>
+
+                <div class="product-card">
+                    <div class="product-image">
+                        <img src="../Média/img/sac.jpg" alt="Sac à Main Luxe">
+                        <div class="product-badge">Top Vente</div>
+                    </div>
+                    <div class="product-info">
+                        <div class="product-name">Sac à Main Luxe</div>
+                        <div class="product-rating">
+                            <span class="stars">⭐⭐⭐⭐⭐</span>
+                            <span>4.8 (67)</span>
+                        </div>
+                        <div class="product-price">32 000 FCFA</div>
+                        <button class="add-to-cart-btn">Ajouter au panier</button>
+                    </div>
+                </div>
+
+                <div class="product-card">
+                    <div class="product-image">
+                        <img src="../Média/img/montre.jpg" alt="Montre Connectée">
+                        <div class="product-badge">-10%</div>
+                    </div>
+                    <div class="product-info">
+                        <div class="product-name">Montre Connectée</div>
+                        <div class="product-rating">
+                            <span class="stars">⭐⭐⭐⭐⭐</span>
+                            <span>4.6 (123)</span>
+                        </div>
+                        <div class="product-price">45 000 FCFA</div>
+                        <button class="add-to-cart-btn">Ajouter au panier</button>
+                    </div>
+                </div>
+
+                <div class="product-card">
+                    <div class="product-image">
+                        <img src="../Média/img/chaussure.jpg" alt="Chaussures Sport">
+                        <div class="product-badge">Promo</div>
+                    </div>
+                    <div class="product-info">
+                        <div class="product-name">Chaussures Sport</div>
+                        <div class="product-rating">
+                            <span class="stars">⭐⭐⭐⭐</span>
+                            <span>4.4 (201)</span>
+                        </div>
+                        <div class="product-price">28 500 FCFA</div>
+                        <button class="add-to-cart-btn">Ajouter au panier</button>
+                    </div>
+                    </div>
+
+                <div class="product-card">
+                    <div class="product-image">
+                        <img src="../Média/img/maison.jpg" alt="Déco Maison">
+                        <div class="product-badge">Nouveau</div>
+                    </div>
+                    <div class="product-info">
+                        <div class="product-name">Déco Maison Moderne</div>
+                        <div class="product-rating">
+                            <span class="stars">⭐⭐⭐⭐</span>
+                            <span>4.3 (98)</span>
+                        </div>
+                        <div class="product-price">18 000 FCFA</div>
+                        <button class="add-to-cart-btn">Ajouter au panier</button>
+                    </div>
+                    </div>
+
+                <div class="product-card">
+                    <div class="product-image">
+                        <img src="../Média/img/beauté.jpg" alt="Produits Beauté">
+                        <div class="product-badge">-25%</div>
+                    </div>
+                    <div class="product-info">
+                        <div class="product-name">Kit Beauté Complet</div>
+                        <div class="product-rating">
+                            <span class="stars">⭐⭐⭐⭐⭐</span>
+                            <span>4.7 (145)</span>
+                        </div>
+                        <div class="product-price">22 500 FCFA</div>
+                        <button class="add-to-cart-btn">Ajouter au panier</button>
+                </div>
+            </div>
+
+                <div class="product-card">
+                    <div class="product-image">
+                        <img src="../Média/img/sport.jpg" alt="Équipement Sport">
+                        <div class="product-badge">Top Vente</div>
+                    </div>
+                    <div class="product-info">
+                        <div class="product-name">Équipement Sport</div>
+                        <div class="product-rating">
+                            <span class="stars">⭐⭐⭐⭐</span>
+                            <span>4.1 (87)</span>
+                        </div>
+                        <div class="product-price">35 000 FCFA</div>
+                        <button class="add-to-cart-btn">Ajouter au panier</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination">
+                <a href="#" class="pagination-btn">← Précédent</a>
+                <a href="#" class="pagination-btn active">1</a>
+                <a href="#" class="pagination-btn">2</a>
+                <a href="#" class="pagination-btn">3</a>
+                <a href="#" class="pagination-btn">Suivant →</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-section">
+                <h3>Luxanda.</h3>
+                <p>La marketplace qui connecte l'Afrique au monde du commerce en ligne.</p>
+            </div>
+            <div class="footer-section">
+                <h3>À Propos</h3>
+                <ul class="footer-links">
+                    <li><a href="a-propos.html" class="footer-link">Qui sommes-nous</a></li>
+                    <li><a href="nos-services.html" class="footer-link">Nos Services</a></li>
+                    <li><a href="Formulaire.html" class="footer-link">Devenir Vendeur</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Support</h3>
+                <ul class="footer-links">
+                    <li><a href="centre-aide.html" class="footer-link">Centre d'aide</a></li>
+                    <li><a href="faq.html" class="footer-link">FAQ</a></li>
+                    <li><a href="contact.html" class="footer-link">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Contact</h3>
+                <p>📞 +229 01 41 75 75 59</p>
+                <p>📧 contact@luxanda.bj</p>
+                <p>📍 Cotonou, Bénin</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2025 Luxanda.bj - Tous droits réservés</p>
+        </div>
+    </footer>
+
+    <script>
+        // Add to cart functionality
+        document.querySelectorAll('.add-to-cart-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                this.textContent = 'Ajouté ✓';
+                this.style.background = '#16a34a';
+                setTimeout(() => {
+                    this.textContent = 'Ajouter au panier';
+                    this.style.background = '';
+                }, 2000);
+            });
+        });
+
+        // Filter functionality
+        document.querySelectorAll('.filter-select').forEach(select => {
+            select.addEventListener('change', function() {
+                // Simulate filtering
+                console.log('Filter changed:', this.id, this.value);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Livraison - Luxanda</title>
+    <link rel="icon" type="image/png" href="../Média/img/logoluxanda.png">
+    <link rel="stylesheet" href="../css/styles.css">
+    <style>
+        .delivery-hero {
+            background: linear-gradient(135deg, var(--primary-orange-light) 0%, var(--primary-blue-light) 100%);
+            padding: var(--space-16) 0;
+            text-align: center;
+        }
+
+        .delivery-hero h1 {
+            font-size: var(--font-size-5xl);
+            font-weight: bold;
+            color: var(--gray-800);
+            margin-bottom: var(--space-4);
+        }
+
+        .delivery-hero p {
+            font-size: var(--font-size-xl);
+            color: var(--gray-600);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .delivery-content {
+            padding: var(--space-16) 0;
+            background: var(--white);
+        }
+
+        .delivery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--space-8);
+            margin-top: var(--space-12);
+        }
+
+        .delivery-card {
+            background: var(--white);
+            border-radius: var(--radius-xl);
+            padding: var(--space-8);
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            border: 1px solid var(--gray-200);
+        }
+
+        .delivery-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .delivery-icon {
+            font-size: var(--font-size-4xl);
+            margin-bottom: var(--space-4);
+            color: var(--primary-orange);
+        }
+
+        .delivery-card h3 {
+            font-size: var(--font-size-xl);
+            color: var(--gray-800);
+            margin-bottom: var(--space-4);
+        }
+
+        .delivery-card p {
+            color: var(--gray-600);
+            line-height: 1.6;
+            margin-bottom: var(--space-4);
+        }
+
+        .delivery-card ul {
+            color: var(--gray-600);
+            padding-left: var(--space-6);
+        }
+
+        .delivery-card li {
+            margin-bottom: var(--space-2);
+        }
+
+        .breadcrumb {
+            padding: var(--space-4) 0;
+            background: var(--white);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .breadcrumb-container {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            color: var(--gray-600);
+            font-size: var(--font-size-sm);
+        }
+
+        .breadcrumb a {
+            color: var(--primary-orange);
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        .tracking-section {
+            background: var(--gray-50);
+            padding: var(--space-16) 0;
+        }
+
+        .tracking-form {
+            background: var(--white);
+            padding: var(--space-8);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow);
+            max-width: 500px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .tracking-input {
+            width: 100%;
+            padding: var(--space-4);
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius);
+            font-size: var(--font-size-lg);
+            margin-bottom: var(--space-4);
+        }
+
+        .tracking-input:focus {
+            outline: none;
+            border-color: var(--primary-orange);
+        }
+
+        .tracking-btn {
+            background: var(--primary-orange);
+            color: var(--white);
+            padding: var(--space-4) var(--space-8);
+            border: none;
+            border-radius: var(--radius);
+            font-size: var(--font-size-lg);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .tracking-btn:hover {
+            background: var(--primary-orange-hover);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="top-bar-container">
+                <div class="top-bar-left">
+                    <span>📞 +229 01 93 38 95 63</span>
+                    <span>📧 contact@luxanda.bj</span>
+                </div>
+                <div class="top-bar-right">
+                    <a href="Formulaire.html" class="top-bar-link">Devenir Vendeur</a>
+                    <a href="connexion.html" class="top-bar-link">Se connecter</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Header -->
+        <div class="main-header">
+            <a href="../index.html" class="logo">
+                <img src="../Média/img/logoluxanda.png" alt="Luxanda" style="height: 40px; width: auto;">
+            </a>
+
+            <div class="search-container">
+                <input type="text" class="search-input" placeholder="Rechercher des produits, marques ou catégories...">
+                <button class="search-btn">Rechercher</button>
+            </div>
+
+            <div class="header-icons">
+                <button class="icon-btn" title="Favoris">❤️</button>
+                <button class="icon-btn" title="Panier">
+                    🛒
+                    <span class="cart-badge">0</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="nav-bar">
+            <div class="nav-container">
+                <a href="../index.html" class="nav-link">Accueil</a>
+                <a href="Boutique.html" class="nav-link">Boutiques</a>
+                <a href="Boutique.html" class="nav-link">Promotions</a>
+                <a href="Boutique.html" class="nav-link">Nouveautés</a>
+                <a href="Boutique.html" class="nav-link">Meilleures Ventes</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+        <div class="section-container">
+            <div class="breadcrumb-container">
+                <a href="../index.html">Accueil</a>
+                <span>→</span>
+                <span>Livraison</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="delivery-hero">
+        <div class="section-container">
+            <h1>Livraison Rapide et Sécurisée</h1>
+            <p>Découvrez nos options de livraison adaptées à vos besoins en Afrique de l'Ouest</p>
+        </div>
+    </section>
+
+    <!-- Delivery Content -->
+    <section class="delivery-content">
+        <div class="section-container">
+            <h2 class="section-title text-center">Nos Services de Livraison</h2>
+            <div class="delivery-grid">
+                <div class="delivery-card">
+                    <div class="delivery-icon">🚚</div>
+                    <h3>Livraison Standard</h3>
+                    <p>Livraison fiable dans les délais habituels</p>
+                    <ul>
+                        <li>Délai : 3-7 jours ouvrables</li>
+                        <li>Suivi en temps réel</li>
+                        <li>Points relais disponibles</li>
+                        <li>Coût : 2 500 FCFA</li>
+                    </ul>
+                </div>
+
+                <div class="delivery-card">
+                    <div class="delivery-icon">⚡</div>
+                    <h3>Livraison Express</h3>
+                    <p>Livraison rapide pour vos urgences</p>
+                    <ul>
+                        <li>Délai : 24-48h</li>
+                        <li>Suivi en temps réel</li>
+                        <li>Livraison à domicile</li>
+                        <li>Coût : 5 000 FCFA</li>
+                    </ul>
+                </div>
+
+                <div class="delivery-card">
+                    <div class="delivery-icon">🏠</div>
+                    <h3>Livraison à Domicile</h3>
+                    <p>Confort et sécurité à votre porte</p>
+                    <ul>
+                        <li>Délai : 2-5 jours ouvrables</li>
+                        <li>Horaires flexibles</li>
+                        <li>Appel avant livraison</li>
+                        <li>Coût : 3 500 FCFA</li>
+                    </ul>
+                </div>
+
+                <div class="delivery-card">
+                    <div class="delivery-icon">📍</div>
+                    <h3>Points Relais</h3>
+                    <p>Récupérez votre colis à votre convenance</p>
+                    <ul>
+                        <li>Réseau de 50+ points</li>
+                        <li>Horaires étendus</li>
+                        <li>Garde gratuite 7 jours</li>
+                        <li>Coût : 1 500 FCFA</li>
+                    </ul>
+                </div>
+
+                <div class="delivery-card">
+                    <div class="delivery-icon">🌍</div>
+                    <h3>Livraison Internationale</h3>
+                    <p>Vers tous les pays d'Afrique</p>
+                    <ul>
+                        <li>Délai : 7-14 jours</li>
+                        <li>Douanes incluses</li>
+                        <li>Assurance comprise</li>
+                        <li>Coût : 15 000 FCFA</li>
+                    </ul>
+                </div>
+
+                <div class="delivery-card">
+                    <div class="delivery-icon">💼</div>
+                    <h3>Livraison Entreprise</h3>
+                    <p>Solutions B2B pour les entreprises</p>
+                    <ul>
+                        <li>Livraisons programmées</li>
+                        <li>Facturation mensuelle</li>
+                        <li>Support dédié</li>
+                        <li>Tarifs préférentiels</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tracking Section -->
+    <section class="tracking-section">
+        <div class="section-container">
+            <h2 class="section-title text-center">Suivre Ma Commande</h2>
+            <div class="tracking-form">
+                <h3 style="margin-bottom: var(--space-4); color: var(--gray-800);">Numéro de Suivi</h3>
+                <p style="color: var(--gray-600); margin-bottom: var(--space-6);">
+                    Entrez votre numéro de commande ou de suivi pour connaître le statut de votre livraison
+                </p>
+                <input type="text" class="tracking-input" placeholder="Ex: LX2025001234" id="trackingNumber">
+                <button class="tracking-btn" onclick="trackOrder()">Suivre la Commande</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-section">
+                <h3>Luxanda.</h3>
+                <p>La marketplace qui connecte l'Afrique au monde du commerce en ligne.</p>
+            </div>
+            <div class="footer-section">
+                <h3>À Propos</h3>
+                <ul class="footer-links">
+                    <li><a href="a-propos.html" class="footer-link">Qui sommes-nous</a></li>
+                    <li><a href="nos-services.html" class="footer-link">Nos Services</a></li>
+                    <li><a href="Formulaire.html" class="footer-link">Devenir Vendeur</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Support</h3>
+                <ul class="footer-links">
+                    <li><a href="centre-aide.html" class="footer-link">Centre d'aide</a></li>
+                    <li><a href="faq.html" class="footer-link">FAQ</a></li>
+                    <li><a href="contact.html" class="footer-link">Contact</a></li>
+                    <li><a href="livraison.html" class="footer-link">Livraison</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Contact</h3>
+                <p>📞 +229 01 41 75 75 59</p>
+                <p>📧 contact@luxanda.bj</p>
+                <p>📍 Cotonou, Bénin</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2025 Luxanda.bj - Tous droits réservés</p>
+        </div>
+    </footer>
+
+    <script>
+        function trackOrder() {
+            const trackingNumber = document.getElementById('trackingNumber').value;
+            if (trackingNumber) {
+                alert(`Suivi de la commande ${trackingNumber} :\n\n📦 Commande expédiée\n🚚 En transit vers Cotonou\n📅 Livraison prévue : Demain 14h-18h\n\nVous recevrez un SMS lors de la livraison.`);
+            } else {
+                alert('Veuillez entrer un numéro de suivi valide.');
+            }
+        }
+    </script>
+</body>
+</html>
+

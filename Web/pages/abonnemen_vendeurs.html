@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Abonnement - Luxanda</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f9fafb;
+            color: #1f2937;
+        }
+
+        .header {
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .logo-orange { color: #FF6600; }
+        .logo-blue { color: #003366; }
+
+        .main-container {
+            display: flex;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: white;
+            min-height: calc(100vh - 73px);
+            padding: 1.5rem 0;
+            box-shadow: 1px 0 3px rgba(0,0,0,0.05);
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.875rem 1.5rem;
+            color: #6b7280;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .menu-item:hover {
+            background: #f9fafb;
+            color: #FF6600;
+        }
+
+        .menu-item.active {
+            background: #fff7ed;
+            color: #FF6600;
+            border-right: 3px solid #FF6600;
+            font-weight: 600;
+        }
+
+        .content {
+            flex: 1;
+            padding: 2rem;
+        }
+
+        .page-title {
+            font-size: 1.875rem;
+            font-weight: bold;
+            color: #111827;
+            margin-bottom: 2rem;
+        }
+
+        /* Current Plan Banner */
+        .current-plan-banner {
+            background: linear-gradient(135deg, #003366, #0055aa);
+            border-radius: 16px;
+            padding: 2rem;
+            color: white;
+            margin-bottom: 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 10px 30px rgba(0, 51, 102, 0.3);
+        }
+
+        .current-plan-info {
+            flex: 1;
+        }
+
+        .current-plan-label {
+            font-size: 0.875rem;
+            color: #93c5fd;
+            margin-bottom: 0.5rem;
+        }
+
+        .current-plan-name {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .current-plan-expiry {
+            font-size: 0.875rem;
+            color: #bfdbfe;
+        }
+
+        .plan-stats {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .plan-stat {
+            text-align: center;
+        }
+
+        .plan-stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #FF6600;
+        }
+
+        .plan-stat-label {
+            font-size: 0.75rem;
+            color: #bfdbfe;
+            margin-top: 0.25rem;
+        }
+
+        /* Plans Grid */
+        .plans-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .plan-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .plan-card:hover {
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            transform: translateY(-5px);
+        }
+
+        .plan-card.current {
+            border: 3px solid #003366;
+        }
+
+        .plan-badge {
+            background: #003366;
+            color: white;
+            text-align: center;
+            padding: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .plan-header {
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .plan-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .plan-name {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #111827;
+            margin-bottom: 1rem;
+        }
+
+        .plan-price {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #FF6600;
+        }
+
+        .plan-period {
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+
+        .plan-features {
+            padding: 0 2rem 2rem;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            color: #374151;
+        }
+
+        .feature-icon {
+            color: #16a34a;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .plan-action {
+            padding: 0 2rem 2rem;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+        }
+
+        .btn-primary {
+            background: #FF6600;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #e55a00;
+            box-shadow: 0 4px 12px rgba(255, 102, 0, 0.3);
+        }
+
+        .btn-outline {
+            background: white;
+            border: 2px solid #e5e7eb;
+            color: #6b7280;
+        }
+
+        .btn-outline:hover {
+            border-color: #003366;
+            color: #003366;
+        }
+
+        .btn-current {
+            background: #e5e7eb;
+            color: #6b7280;
+            cursor: default;
+        }
+
+        /* Comparison Table */
+        .comparison-section {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 3rem;
+        }
+
+        .comparison-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #111827;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .comparison-table {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f9fafb;
+        }
+
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        th:first-child {
+            border-top-left-radius: 8px;
+        }
+
+        th:last-child {
+            border-top-right-radius: 8px;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .check-icon {
+            color: #16a34a;
+            font-weight: bold;
+            font-size: 1.25rem;
+        }
+
+        .cross-icon {
+            color: #dc2626;
+            font-weight: bold;
+            font-size: 1.25rem;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background: linear-gradient(135deg, #FF6600, #ff8833);
+            border-radius: 16px;
+            padding: 3rem;
+            text-align: center;
+            color: white;
+            box-shadow: 0 10px 30px rgba(255, 102, 0, 0.3);
+        }
+
+        .cta-title {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .cta-description {
+            font-size: 1.125rem;
+            color: #fff7ed;
+            margin-bottom: 2rem;
+        }
+
+        .btn-white {
+            background: white;
+            color: #FF6600;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+        }
+
+        .btn-white:hover {
+            background: #fff7ed;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        /* FAQ Section */
+        .faq-section {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-top: 3rem;
+        }
+
+        .faq-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #111827;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .faq-item {
+            border-bottom: 1px solid #e5e7eb;
+            padding: 1.5rem 0;
+        }
+
+        .faq-item:last-child {
+            border-bottom: none;
+        }
+
+        .faq-question {
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .faq-answer {
+            color: #6b7280;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            display: none;
+        }
+
+        .faq-item.active .faq-answer {
+            display: block;
+        }
+
+        .faq-toggle {
+            color: #FF6600;
+            font-weight: bold;
+            font-size: 1.25rem;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+
+            .plans-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .current-plan-banner {
+                flex-direction: column;
+                text-align: center;
+                gap: 2rem;
+            }
+
+            .plan-stats {
+                width: 100%;
+                justify-content: space-around;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <span class="logo-orange">Luxanda</span><span class="logo-blue">.bj</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <a href="#" class="menu-item">
+                <span>📊</span>
+                <span>Tableau de bord</span>
+            </a>
+            <a href="#" class="menu-item">
+                <span>📦</span>
+                <span>Mes Produits</span>
+            </a>
+            <a href="#" class="menu-item">
+                <span>🛒</span>
+                <span>Commandes</span>
+            </a>
+            <a href="#" class="menu-item">
+                <span>📈</span>
+                <span>Statistiques</span>
+            </a>
+            <a href="#" class="menu-item active">
+                <span>👑</span>
+                <span>Abonnement</span>
+            </a>
+            <a href="#" class="menu-item">
+                <span>🤝</span>
+                <span>Affiliation</span>
+            </a>
+            <a href="#" class="menu-item">
+                <span>👥</span>
+                <span>Clients</span>
+            </a>
+            <a href="#" class="menu-item">
+                <span>⚙️</span>
+                <span>Paramètres</span>
+            </a>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content">
+            <h1 class="page-title">Mon Abonnement</h1>
+
+            <!-- Current Plan Banner -->
+            <div class="current-plan-banner">
+                <div class="current-plan-info">
+                    <div class="current-plan-label">Abonnement Actuel</div>
+                    <div class="current-plan-name">
+                        <span>👑</span>
+                        <span>Plan Pro</span>
+                    </div>
+                    <div class="current-plan-expiry">Expire le 09 Novembre 2025</div>
+                </div>
+                <div class="plan-stats">
+                    <div class="plan-stat">
+                        <div class="plan-stat-value">45/50</div>
+                        <div class="plan-stat-label">Produits utilisés</div>
+                    </div>
+                    <div class="plan-stat">
+                        <div class="plan-stat-value">5%</div>
+                        <div class="plan-stat-label">Commission</div>
+                    </div>
+                    <div class="plan-stat">
+                        <div class="plan-stat-value">24j</div>
+                        <div class="plan-stat-label">Restants</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Plans Grid -->
+            <div class="plans-grid">
+                <!-- Starter Plan -->
+                <div class="plan-card">
+                    <div class="plan-header">
+                        <div class="plan-icon">🌱</div>
+                        <div class="plan-name">Starter</div>
+                        <div>
+                            <span class="plan-price">5 000</span>
+                            <span class="plan-period">FCFA / mois</span>
+                        </div>
+                    </div>
+                    <div class="plan-features">
+                        <div class="feature-item">
+                            <span class="feature-icon">✓</span>
+                            <span>10 produits maximum</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">✓</span>
+                            <span>Commission 8%</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">✓</span>
+                            <span>Support par email</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">✓</span>
+                            <span>Statistiques de base</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">✓</span>
+                            <span>Paiement CinetPay</span>
+                        </div>
+                    </div>
+                    <div class="plan-action">
+                        <button class="btn btn-outline" onclick="selectPlan('Starter', 5000)">Choisir ce plan</button>
+                    </div>
+                </div>
+
+                <!-- Pro Plan (Current) -->
+                <div class="plan-card current">
+                    <div class="plan-badge">PLAN ACTUEL</div>
+                    <div class="plan-header">
+                        <div class="plan-icon">👑</div>
+                        <div class="plan-name">Pro</div>
+                        <div>
+                            <span class="plan-price">15 000</span>
+                            <span class="plan-period">FCFA / mois</span>
+                        </div>
+                    </div>
+                    <div class="plan-features">
+                        <div class="feature-item">
+                            <span class="feature-icon">✓</span>
+                            <span>50 produits maximum</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">✓</span>
+                            <span>Commission 5%</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">✓</span>
+                            <span>Support prioritaire</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">✓</span>
+                            <span>Statistiques avancées</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">✓</span>
+                            <span>Badge Pro</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">✓</span>
+                            <span>Paiement CinetPay</span>
+                        </div>
+                    </div>
+                    <div class="plan-action">
+                        <button class="btn btn-current">Plan actuel</button>
+                    </div>
+                </div>
+
+                <!-- Premium Plan -->
+                <div class="plan-card">
+                    <div class="plan-header">
+                        <div class="plan-icon">💎</div>
+                        <div class="plan-name">Premium</div>
+                        <div>
+                            <span class="plan-price">30 000</span>
+                            <span class="plan-period">FCFA / mois</span>
+                        </div>
+                    </div>
+                    <div class="plan-features">
+                        <div class="feature-item">
+                            <span class="feature-icon">✓</span>
+                            <span>Produits illimités</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">✓</span>
+                            <span>Commission 3%</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">✓</span>
+                            <span>Support 24/7</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">✓</span>
+                            <span>Analytics complet</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">✓</span>
+                            <span>Badge Premium</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">✓</span>
+                            <span>Mise en avant prioritaire</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">✓</span>
+                            <span>API personnalisée</span>
+                        </div>
+                    </div>
+                    <div class="plan-action">
+                        <button class="btn btn-primary" onclick="selectPlan('Premium', 30000)">Améliorer vers Premium</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comparison Table -->
+            <div class="comparison-section">
+                <h2 class="comparison-title">Comparaison Détaillée des Plans</h2>
+                <div class="comparison-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Fonctionnalités</th>
+                                <th>Starter</th>
+                                <th>Pro</th>
+                                <th>Premium</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Nombre de produits</td>
+                                <td>10</td>
+                                <td>50</td>
+                                <td>Illimité</td>
+                            </tr>
+                            <tr>
+                                <td>Commission par vente</td>
+                                <td>8%</td>
+                                <td>5%</td>
+                                <td>3%</td>
+                            </tr>
+                            <tr>
+                                <td>Support client</td>
+                                <td>Email</td>
+                                <td>Prioritaire</td>
+                                <td>24/7</td>
+                            </tr>
+                            <tr>
+                                <td>Statistiques</td>
+                                <td>Basiques</td>
+                                <td>Avancées</td>
+                                <td>Complètes</td>
+                            </tr>
+                            <tr>
+                                <td>Badge boutique</td>
+                                <td><span class="cross-icon">✗</span></td>
+                                <td><span class="check-icon">✓</span></td>
+                                <td><span class="check-icon">✓</span></td>
+                            </tr>
+                            <tr>
+                                <td>Mise en avant</td>
+                                <td><span class="cross-icon">✗</span></td>
+                                <td><span class="cross-icon">✗</span></td>
+                                <td><span class="check-icon">✓</span></td>
+                            </tr>
+                            <tr>
+                                <td>API personnalisée</td>
+                                <td><span class="cross-icon">✗</span></td>
+                                <td><span class="cross-icon">✗</span></td>
+                                <td><span class="check-icon">✓</span></td>
+                            </tr>
+                            <tr>
+                                <td>Promotion sur réseaux sociaux</td>
+                                <td><span class="cross-icon">✗</span></td>
+                                <td><span class="check-icon">✓</span></td>
+                                <td><span class="check-icon">✓</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- CTA Section -->
+            <div class="cta-section">
+                <h2 class="cta-title">Besoin d'un plan personnalisé ?</h2>
+                <p class="cta-description">
+                    Contactez notre équipe commerciale pour discuter d'une offre sur mesure<br>
+                    adaptée aux besoins spécifiques de votre entreprise
+                </p>
+                <button class="btn-white" onclick="alert('Contactez-nous : commercial@luxanda.bj')">Contacter le support

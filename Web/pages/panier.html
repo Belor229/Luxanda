@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panier - Luxanda</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="top-bar-container">
+                <div class="top-bar-left">
+                    <span>📞 +229 01 93 38 95 63</span>
+                    <span>📧 contact@luxanda.bj</span>
+                </div>
+                <div class="top-bar-right">
+                    <a href="auth/inscription.html" class="top-bar-link">Devenir Vendeur</a>
+                    <a href="auth/connexion.html" class="top-bar-link">Se connecter</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Header -->
+        <div class="main-header">
+            <a href="../index.html" class="logo">
+                <span class="logo-orange">Luxanda</span><span class="logo-blue">.bj</span>
+            </a>
+
+            <div class="search-container">
+                <input type="text" class="search-input" placeholder="Rechercher des produits, marques ou catégories...">
+                <button class="search-btn">Rechercher</button>
+            </div>
+
+            <div class="header-icons">
+                <button class="icon-btn" title="Favoris">❤️</button>
+                <button class="icon-btn" title="Panier">
+                    🛒
+                    <span class="cart-badge" id="cartCount">3</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="nav-bar">
+            <div class="nav-container">
+                <a href="../index.html" class="nav-link">Accueil</a>
+                <a href="produits.html" class="nav-link">Produits</a>
+                <a href="boutiques.html" class="nav-link">Boutiques</a>
+                <a href="promotions.html" class="nav-link">Promotions</a>
+                <a href="nouveautes.html" class="nav-link">Nouveautés</a>
+                <a href="meilleures-ventes.html" class="nav-link">Meilleures Ventes</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="section">
+        <div class="container">
+            <!-- Page Header -->
+            <div class="page-header">
+                <div>
+                    <div class="breadcrumb">
+                        <span>Accueil</span>
+                        <span>›</span>
+                        <span>Panier</span>
+                    </div>
+                    <h1 class="page-title">Mon Panier</h1>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+                <!-- Cart Items -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Articles dans votre panier (3)</h3>
+                        <button class="btn btn-outline" onclick="clearCart()">Vider le panier</button>
+                    </div>
+
+                    <!-- Cart Items List -->
+                    <div id="cartItems">
+                        <!-- Item 1 -->
+                        <div class="cart-item" style="display: flex; gap: 1.5rem; padding: 1.5rem; border-bottom: 1px solid #e5e7eb;">
+                            <div style="width: 120px; height: 120px; background: #f9fafb; border-radius: 8px; overflow: hidden;">
+                                <img src="../Média/img/téléphone.jpg" alt="Smartphone Samsung A54" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <div style="flex: 1;">
+                                <h4 style="font-weight: 600; margin-bottom: 0.5rem; color: #111827;">Smartphone Samsung A54</h4>
+                                <p style="color: #6b7280; margin-bottom: 0.5rem; font-size: 0.875rem;">Vendu par: Électro Plus</p>
+                                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                                    <div class="product-rating">
+                                        <span class="stars">⭐⭐⭐⭐⭐</span>
+                                        <span>4.5</span>
+                                        <span>(234)</span>
+                                    </div>
+                                </div>
+                                <div style="display: flex; justify-content: between; align-items: center;">
+                                    <div style="display: flex; align-items: center; gap: 1rem;">
+                                        <button onclick="updateQuantity(1, -1)" style="width: 32px; height: 32px; border: 1px solid #e5e7eb; background: white; border-radius: 6px; cursor: pointer;">-</button>
+                                        <span id="qty1" style="font-weight: 600; min-width: 30px; text-align: center;">1</span>
+                                        <button onclick="updateQuantity(1, 1)" style="width: 32px; height: 32px; border: 1px solid #e5e7eb; background: white; border-radius: 6px; cursor: pointer;">+</button>
+                                    </div>
+                                    <div style="font-size: 1.25rem; font-weight: 700; color: #FF6600;">
+                                        185 000 FCFA
+                                    </div>
+                                </div>
+                                <button onclick="removeItem(1)" style="margin-top: 1rem; color: #dc2626; background: none; border: none; cursor: pointer; font-size: 0.875rem;">
+                                    🗑️ Supprimer
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Item 2 -->
+                        <div class="cart-item" style="display: flex; gap: 1.5rem; padding: 1.5rem; border-bottom: 1px solid #e5e7eb;">
+                            <div style="width: 120px; height: 120px; background: #f9fafb; border-radius: 8px; overflow: hidden;">
+                                <img src="../Média/img/robe.jpg" alt="Robe Africaine Premium" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <div style="flex: 1;">
+                                <h4 style="font-weight: 600; margin-bottom: 0.5rem; color: #111827;">Robe Africaine Premium</h4>
+                                <p style="color: #6b7280; margin-bottom: 0.5rem; font-size: 0.875rem;">Vendu par: Mode Africaine</p>
+                                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                                    <div class="product-rating">
+                                        <span class="stars">⭐⭐⭐⭐⭐</span>
+                                        <span>5.0</span>
+                                        <span>(156)</span>
+                                    </div>
+                                </div>
+                                <div style="display: flex; justify-content: between; align-items: center;">
+                                    <div style="display: flex; align-items: center; gap: 1rem;">
+                                        <button onclick="updateQuantity(2, -1)" style="width: 32px; height: 32px; border: 1px solid #e5e7eb; background: white; border-radius: 6px; cursor: pointer;">-</button>
+                                        <span id="qty2" style="font-weight: 600; min-width: 30px; text-align: center;">2</span>
+                                        <button onclick="updateQuantity(2, 1)" style="width: 32px; height: 32px; border: 1px solid #e5e7eb; background: white; border-radius: 6px; cursor: pointer;">+</button>
+                                    </div>
+                                    <div style="font-size: 1.25rem; font-weight: 700; color: #FF6600;">
+                                        50 000 FCFA
+                                    </div>
+                                </div>
+                                <button onclick="removeItem(2)" style="margin-top: 1rem; color: #dc2626; background: none; border: none; cursor: pointer; font-size: 0.875rem;">
+                                    🗑️ Supprimer
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Item 3 -->
+                        <div class="cart-item" style="display: flex; gap: 1.5rem; padding: 1.5rem;">
+                            <div style="width: 120px; height: 120px; background: #f9fafb; border-radius: 8px; overflow: hidden;">
+                                <img src="../Média/img/airpord.jpg" alt="Écouteurs Bluetooth" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <div style="flex: 1;">
+                                <h4 style="font-weight: 600; margin-bottom: 0.5rem; color: #111827;">Écouteurs Bluetooth</h4>
+                                <p style="color: #6b7280; margin-bottom: 0.5rem; font-size: 0.875rem;">Vendu par: TechBénin</p>
+                                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                                    <div class="product-rating">
+                                        <span class="stars">⭐⭐⭐⭐</span>
+                                        <span>4.2</span>
+                                        <span>(89)</span>
+                                    </div>
+                                </div>
+                                <div style="display: flex; justify-content: between; align-items: center;">
+                                    <div style="display: flex; align-items: center; gap: 1rem;">
+                                        <button onclick="updateQuantity(3, -1)" style="width: 32px; height: 32px; border: 1px solid #e5e7eb; background: white; border-radius: 6px; cursor: pointer;">-</button>
+                                        <span id="qty3" style="font-weight: 600; min-width: 30px; text-align: center;">1</span>
+                                        <button onclick="updateQuantity(3, 1)" style="width: 32px; height: 32px; border: 1px solid #e5e7eb; background: white; border-radius: 6px; cursor: pointer;">+</button>
+                                    </div>
+                                    <div style="font-size: 1.25rem; font-weight: 700; color: #FF6600;">
+                                        15 500 FCFA
+                                    </div>
+                                </div>
+                                <button onclick="removeItem(3)" style="margin-top: 1rem; color: #dc2626; background: none; border: none; cursor: pointer; font-size: 0.875rem;">
+                                    🗑️ Supprimer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Continue Shopping -->
+                    <div style="padding: 1.5rem; border-top: 1px solid #e5e7eb; text-align: center;">
+                        <a href="produits.html" class="btn btn-outline">← Continuer mes achats</a>
+                    </div>
+                </div>
+
+                <!-- Order Summary -->
+                <div>
+                    <div class="card" style="position: sticky; top: 2rem;">
+                        <h3 style="margin-bottom: 1.5rem; font-size: 1.25rem; font-weight: 700;">Résumé de la commande</h3>
+                        
+                        <!-- Order Details -->
+                        <div style="margin-bottom: 1.5rem;">
+                            <div style="display: flex; justify-content: between; margin-bottom: 0.75rem;">
+                                <span>Sous-total (3 articles)</span>
+                                <span id="subtotal">250 500 FCFA</span>
+                            </div>
+                            <div style="display: flex; justify-content: between; margin-bottom: 0.75rem;">
+                                <span>Frais de livraison</span>
+                                <span id="deliveryFee">5 000 FCFA</span>
+                            </div>
+                            <div style="display: flex; justify-content: between; margin-bottom: 0.75rem;">
+                                <span>Frais de service</span>
+                                <span>2 500 FCFA</span>
+                            </div>
+                            <div style="display: flex; justify-content: between; margin-bottom: 1rem; padding-top: 1rem; border-top: 1px solid #e5e7eb; font-weight: 700; font-size: 1.125rem;">
+                                <span>Total</span>
+                                <span id="total" style="color: #FF6600;">258 000 FCFA</span>
+                            </div>
+                        </div>
+
+                        <!-- Delivery Info -->
+                        <div style="background: #eff6ff; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                            <h4 style="margin-bottom: 0.5rem; font-size: 0.875rem; font-weight: 600;">Livraison gratuite</h4>
+                            <p style="font-size: 0.75rem; color: #6b7280; margin-bottom: 0.5rem;">
+                                Ajoutez 49 500 FCFA pour bénéficier de la livraison gratuite
+                            </p>
+                            <div style="height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden;">
+                                <div style="width: 83%; height: 100%; background: #FF6600; border-radius: 3px;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Promo Code -->
+                        <div style="margin-bottom: 1.5rem;">
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="text" placeholder="Code promo" style="flex: 1; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 0.875rem;">
+                                <button class="btn btn-outline" style="padding: 0.75rem 1rem;">Appliquer</button>
+                            </div>
+                        </div>
+
+                        <!-- Checkout Button -->
+                        <button class="btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1.125rem; margin-bottom: 1rem;" onclick="proceedToCheckout()">
+                            Procéder au paiement
+                        </button>
+
+                        <!-- Security Info -->
+                        <div style="text-align: center; font-size: 0.75rem; color: #6b7280;">
+                            <p>🔒 Paiement sécurisé</p>
+                            <p>Vos données sont protégées</p>
+                        </div>
+                    </div>
+
+                    <!-- Recommended Products -->
+                    <div class="card" style="margin-top: 1.5rem;">
+                        <h3 style="margin-bottom: 1rem; font-size: 1.125rem; font-weight: 700;">Recommandés pour vous</h3>
+                        <div style="display: flex; flex-direction: column; gap: 1rem;">
+                            <div style="display: flex; gap: 1rem; align-items: center;">
+                                <div style="width: 60px; height: 60px; background: #f9fafb; border-radius: 6px; overflow: hidden;">
+                                    <img src="../Média/img/montre.jpg" style="width: 100%; height: 100%; object-fit: cover;">
+                                </div>
+                                <div style="flex: 1;">
+                                    <div style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.25rem;">Montre Connectée</div>
+                                    <div style="font-size: 0.75rem; color: #6b7280;">45 000 FCFA</div>
+                                </div>
+                                <button class="btn btn-outline" style="padding: 0.5rem 1rem; font-size: 0.75rem;">Ajouter</button>
+                            </div>
+                            
+                            <div style="display: flex; gap: 1rem; align-items: center;">
+                                <div style="width: 60px; height: 60px; background: #f9fafb; border-radius: 6px; overflow: hidden;">
+                                    <img src="../Média/img/sac.jpg" style="width: 100%; height: 100%; object-fit: cover;">
+                                </div>
+                                <div style="flex: 1;">
+                                    <div style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.25rem;">Sac à Main Luxe</div>
+                                    <div style="font-size: 0.75rem; color: #6b7280;">32 000 FCFA</div>
+                                </div>
+                                <button class="btn btn-outline" style="padding: 0.5rem 1rem; font-size: 0.75rem;">Ajouter</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-section">
+                <h3>Luxanda.</h3>
+                <p>La marketplace qui connecte l'Afrique au monde du commerce en ligne.</p>
+            </div>
+            <div class="footer-section">
+                <h3>À Propos</h3>
+                <ul class="footer-links">
+                    <li><a href="a-propos.html" class="footer-link">Qui sommes-nous</a></li>
+                    <li><a href="#" class="footer-link">Nos Services</a></li>
+                    <li><a href="auth/inscription.html" class="footer-link">Devenir Vendeur</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Support</h3>
+                <ul class="footer-links">
+                    <li><a href="faq.html" class="footer-link">Centre d'aide</a></li>
+                    <li><a href="#" class="footer-link">Livraison</a></li>
+                    <li><a href="#" class="footer-link">Retours</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Contact</h3>
+                <p>📞 +229 01 41 75 75 59</p>
+                <p>📧 contact@luxanda.bj</p>
+                <p>📍 Cotonou, Bénin</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2025 Luxanda.bj - Tous droits réservés</p>
+        </div>
+    </footer>
+
+    <script>
+        // Cart data
+        const cartItems = [
+            { id: 1, name: "Smartphone Samsung A54", price: 185000, quantity: 1, seller: "Électro Plus" },
+            { id: 2, name: "Robe Africaine Premium", price: 25000, quantity: 2, seller: "Mode Africaine" },
+            { id: 3, name: "Écouteurs Bluetooth", price: 15500, quantity: 1, seller: "TechBénin" }
+        ];
+
+        function updateQuantity(itemId, delta) {
+            const item = cartItems.find(item => item.id === itemId);
+            if (item) {
+                item.quantity = Math.max(1, item.quantity + delta);
+                document.getElementById(`qty${itemId}`).textContent = item.quantity;
+                updateTotals();
+            }
+        }
+
+        function removeItem(itemId) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer cet article ?')) {
+                const index = cartItems.findIndex(item => item.id === itemId);
+                if (index > -1) {
+                    cartItems.splice(index, 1);
+                    document.querySelector(`[onclick="updateQuantity(${itemId}, -1)"]`).closest('.cart-item').remove();
+                    updateTotals();
+                    updateCartCount();
+                }
+            }
+        }
+
+        function updateTotals() {
+            const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const deliveryFee = subtotal >= 50000 ? 0 : 5000;
+            const serviceFee = subtotal * 0.01; // 1% service fee
+            const total = subtotal + deliveryFee + serviceFee;
+
+            document.getElementById('subtotal').textContent = `${subtotal.toLocaleString()} FCFA`;
+            document.getElementById('deliveryFee').textContent = deliveryFee === 0 ? 'Gratuit' : `${deliveryFee.toLocaleString()} FCFA`;
+            document.getElementById('total').textContent = `${total.toLocaleString()} FCFA`;
+
+            // Update free delivery progress
+            const freeDeliveryProgress = Math.min((subtotal / 50000) * 100, 100);
+            const progressBar = document.querySelector('.card .card:last-child div[style*="width: 83%"]');
+            if (progressBar) {
+                progressBar.style.width = `${freeDeliveryProgress}%`;
+            }
+
+            // Update delivery message
+            const remaining = 50000 - subtotal;
+            if (remaining > 0) {
+                document.querySelector('.card .card:last-child p').textContent = 
+                    `Ajoutez ${remaining.toLocaleString()} FCFA pour bénéficier de la livraison gratuite`;
+            } else {
+                document.querySelector('.card .card:last-child p').textContent = 
+                    'Vous bénéficiez de la livraison gratuite !';
+            }
+        }
+
+        function updateCartCount() {
+            const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+            document.getElementById('cartCount').textContent = totalItems;
+        }
+
+        function clearCart() {
+            if (confirm('Êtes-vous sûr de vouloir vider votre panier ?')) {
+                cartItems.length = 0;
+                document.getElementById('cartItems').innerHTML = '<div style="text-align: center; padding: 3rem; color: #6b7280;"><p>Votre panier est vide</p></div>';
+                updateCartCount();
+                updateTotals();
+            }
+        }
+
+        function proceedToCheckout() {
+            if (cartItems.length === 0) {
+                alert('Votre panier est vide !');
+                return;
+            }
+            window.location.href = 'checkout.html';
+        }
+
+        // Initialize
+        updateTotals();
+    </script>
+</body>
+</html>

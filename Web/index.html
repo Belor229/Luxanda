@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Luxanda - Le marché en ligne qui inspire confiance</title>
+  <meta name="description" content="Luxanda, la marketplace africaine qui inspire confiance. Produits mis en avant, espace vendeurs, programme de récompenses, blog et newsletter." />
+  <link rel="icon" type="image/png" href="Média/img/logoluxanda.png" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    /* Page-specific styles aligning with the provided mockup */
+    .hero-split { background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); }
+    .hero-inner { max-width: var(--container-max-width); margin: 0 auto; padding: 4rem 2rem; display: grid; grid-template-columns: 1.2fr 1fr; gap: 2rem; align-items: center; }
+    .hero-title { font-size: clamp(2.25rem, 5vw, 3.5rem); font-weight: 900; color: #111827; margin-bottom: .5rem; letter-spacing: -0.5px; }
+    .hero-sub { font-size: 1.125rem; color: #4b5563; margin-bottom: 1.5rem; }
+    .hero-actions { display: flex; gap: .75rem; }
+    .btn-pill { padding: .9rem 1.25rem; border-radius: 12px; font-weight: 700; border: 2px solid transparent; }
+    .btn-pill.primary { background: var(--primary-orange); color: #fff; }
+    .btn-pill.primary:hover { background: var(--primary-orange-hover); }
+    .btn-pill.secondary { background: #fff; color: #374151; border-color: #e5e7eb; }
+    .btn-pill.secondary:hover { border-color: var(--primary-blue); color: var(--primary-blue); }
+    .hero-illustration { display: flex; justify-content: center; align-items: center; }
+    .hero-illustration svg { width: min(400px, 90%); height: auto; opacity: .9; }
+
+    .section-block { padding: 3rem 0; background: #fff; }
+    .section-block.alt { background: #f9fafb; }
+    .section-title-min { font-size: 1.5rem; font-weight: 800; color: #111827; margin-bottom: 1.25rem; }
+
+    .cards-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }
+    .card-simple { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow-sm); }
+    .card-simple .media { background: #f3f4f6; height: 160px; display:flex; align-items:center; justify-content:center; }
+    .card-simple .media img { width: 100%; height: 100%; object-fit: cover; }
+    .card-simple .body { padding: .9rem; }
+    .price-line { font-weight: 800; color: #111827; margin-bottom: .5rem; }
+    .muted { color: #6b7280; font-size: .85rem; }
+    .card-actions { display: flex; justify-content: flex-end; }
+    .btn-ghost { padding: .5rem .875rem; border: 2px solid #e5e7eb; border-radius: 10px; background: #fff; font-weight: 700; color: #374151; }
+    .btn-ghost:hover { border-color: var(--primary-orange); color: var(--primary-orange); }
+
+    .vendor-split { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: center; }
+    .vendor-illustration { display: flex; justify-content: center; }
+
+    .icons-3, .icons-4 { display: grid; gap: 1rem; }
+    .icons-3 { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+    .icons-4 { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+    .icon-item { text-align: center; padding: 1.25rem; border-radius: 12px; background: #fff; border: 1px solid #e5e7eb; }
+    .icon-emoji { font-size: 2rem; display:block; margin-bottom: .5rem; }
+    .icon-title { font-weight: 800; color: #111827; margin-bottom: .25rem; }
+    .icon-sub { color: #6b7280; font-size: .9rem; }
+
+    .blog-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+    .blog-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; }
+    .blog-card .media { height: 140px; background: #f3f4f6; }
+    .blog-card .media img { width: 100%; height: 100%; object-fit: cover; }
+    .blog-card .body { padding: 1rem; }
+
+    @media (max-width: 980px){ .hero-inner { grid-template-columns: 1fr; padding: 2.5rem 1rem; } .vendor-split { grid-template-columns: 1fr; } }
+  /* Colorful and animated enhancements */
+    .hero-split {
+      position: relative;
+      overflow: hidden;
+      background: radial-gradient(1200px 600px at -10% -10%, #ffe6d5, transparent 40%),
+                  radial-gradient(1100px 600px at 110% -10%, #dbeafe, transparent 40%),
+                  linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+    }
+    .hero-title {
+      background: linear-gradient(135deg, var(--primary-blue), var(--primary-orange));
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .btn-pill.primary { box-shadow: 0 10px 24px rgba(255,102,0,.25); }
+    .btn-pill.primary:hover { transform: translateY(-2px); box-shadow: 0 14px 30px rgba(255,102,0,.35); }
+    .btn-pill.secondary:hover { transform: translateY(-2px); }
+
+    /* Floating decoration */
+    .hero-decor { position:absolute; inset:0; pointer-events:none; }
+    .blob { position:absolute; width:220px; height:220px; border-radius:50%; filter: blur(26px); opacity:.25; animation: float 12s ease-in-out infinite; }
+    .blob.b1 { background: #ffedd5; top: -40px; left: -60px; animation-delay: 0s; }
+    .blob.b2 { background: #dbeafe; right: -80px; top: 40px; animation-delay: 3s; }
+    .blob.b3 { background: #fde68a; left: 40%; bottom: -80px; animation-delay: 6s; }
+    .ring { position:absolute; width:180px; height:180px; border-radius:50%; border: 2px solid rgba(0,0,0,.06); animation: drift 18s linear infinite; }
+    .ring.r1 { top: 10%; left: 60%; }
+    .ring.r2 { bottom: 5%; left: 10%; animation-duration: 22s; }
+
+    @keyframes float { 0%,100%{ transform: translateY(0) scale(1); } 50%{ transform: translateY(-16px) scale(1.03); } }
+    @keyframes drift { from{ transform: rotate(0deg); } to{ transform: rotate(360deg); } }
+
+    /* Card hover animation */
+    .card-simple { transition: transform .35s ease, box-shadow .35s ease; }
+    .card-simple:hover { transform: translateY(-6px); box-shadow: 0 18px 40px rgba(0,0,0,.12); }
+
+    /* Reveal on scroll */
+    .will-reveal { opacity: 0; transform: translateY(16px); transition: opacity .6s ease, transform .6s ease; }
+    .will-reveal.revealed { opacity: 1; transform: translateY(0); }
+
+    /* Accent backgrounds for alternating sections */
+    .section-block.alt { background:
+        radial-gradient(600px 300px at 10% 0%, #fff7ed, transparent 50%),
+        linear-gradient(180deg, #f9fafb, #ffffff);
+    }
+  /* Extra body gradient mesh and title glow */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background:
+        radial-gradient(800px 400px at 10% 0%, rgba(255, 102, 0, 0.08), transparent 60%),
+        radial-gradient(700px 400px at 90% 10%, rgba(0, 51, 102, 0.08), transparent 60%),
+        radial-gradient(600px 400px at 50% 100%, rgba(255, 184, 108, 0.08), transparent 60%);
+      pointer-events: none;
+    }
+
+    .hero-title { position: relative; text-shadow: 0 8px 30px rgba(255,102,0,.18), 0 2px 10px rgba(0,51,102,.18); }
+    .hero-title::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: -8px;
+      width: 60%;
+      height: 14px;
+      background: linear-gradient(90deg, #FF6600, #FF8533, #FFD18A);
+      border-radius: 9999px;
+      filter: blur(10px);
+      opacity: .9;
+      animation: pulseGlow 4s ease-in-out infinite;
+    }
+    @keyframes pulseGlow { 0%,100%{ transform: scaleX(1); opacity:.85;} 50%{ transform: scaleX(1.08); opacity:1; } }
+  /* Drawers and hero logo */
+    .hero-logo { width: min(360px, 90%); height:auto; filter: drop-shadow(0 12px 30px rgba(255,102,0,.2)) drop-shadow(0 4px 16px rgba(0,51,102,.15)); animation: float 10s ease-in-out infinite; }
+    .drawer-overlay { position: fixed; inset: 0; background: rgba(17,24,39,.5); backdrop-filter: blur(2px); display: none; z-index: 999; }
+    .drawer { position: fixed; top: 0; bottom: 0; left: 0; width: 340px; background: #fff; box-shadow: var(--shadow-xl); transform: translateX(-100%); transition: transform .3s ease; z-index: 1000; display: flex; flex-direction: column; }
+    .drawer.right { left: auto; right: 0; transform: translateX(100%); }
+    .drawer.open { transform: translateX(0); }
+    .drawer-header { padding: 1rem; border-bottom: 1px solid #e5e7eb; display:flex; align-items:center; justify-content: space-between; }
+    .drawer-body { padding: 1rem; overflow: auto; }
+    .drawer-item { display: grid; grid-template-columns: 56px 1fr auto; gap: .75rem; align-items: center; padding: .5rem 0; border-bottom: 1px solid #f3f4f6; }
+    .drawer-item img { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; background:#f3f4f6; }
+    .drawer-actions { display:flex; gap:.5rem; }
+    .badge { background: var(--primary-orange); color:#fff; border-radius: 9999px; padding: .1rem .5rem; font-size: .75rem; font-weight:700; }
+  /* Extra orange accents */
+    .section-title-min { position: relative; }
+    .section-title-min::after {
+      content: '';
+      display: block;
+      width: 88px;
+      height: 6px;
+      margin-top: .5rem;
+      background: linear-gradient(90deg, #FF6600, #FF8A33);
+      border-radius: 9999px;
+      box-shadow: 0 8px 24px rgba(255,102,0,.25);
+    }
+
+    .icon-emoji { color: var(--primary-orange); }
+
+    .btn-ghost:hover { background: rgba(255,102,0,.06); }
+
+    .btn-pill.secondary:hover { border-color: var(--primary-orange); color: var(--primary-orange); background: #fff7ed; }
+
+    .card-simple { position: relative; }
+    .card-simple::before { content:''; position:absolute; left:0; right:0; top:0; height:3px; background: linear-gradient(90deg, #FF6600, #FF8A33); opacity:.9; }
+
+    .blog-card { position: relative; }
+    .blog-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:4px; background: linear-gradient(180deg, #FF6600, #FF8A33); opacity:.9; }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <!-- Top Bar -->
+    <div class="top-bar">
+      <div class="top-bar-container">
+        <div class="top-bar-left">
+          <span>📞 +229 01 93 38 95 63</span>
+          <span>📧 contact@luxanda.bj</span>
+        </div>
+        <div class="top-bar-right">
+          <a href="pages/Formulaire.html" class="top-bar-link">Devenir Vendeur</a>
+          <a href="pages/connexion.html" class="top-bar-link">Se connecter</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Header -->
+    <div class="main-header">
+      <a href="index.html" class="logo">
+        <img src="Média/img/logoluxanda.png" alt="Luxanda" />
+      </a>
+      <div class="search-container">
+        <input type="text" class="search-input" placeholder="Rechercher des produits, marques ou catégories..." />
+        <button class="search-btn">Rechercher</button>
+      </div>
+      <div class="header-icons">
+        <button class="icon-btn" title="Favoris">❤️</button>
+        <button class="icon-btn" title="Panier">🛒<span class="cart-badge">0</span></button>
+        <button class="mobile-menu-toggle">☰</button>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="nav-bar">
+      <div class="nav-container">
+        <a href="index.html" class="nav-link">Accueil</a>
+        <a href="pages/Boutique.html" class="nav-link">Boutiques</a>
+        <a href="pages/promotions.html" class="nav-link">Promotions</a>
+        <a href="pages/nouveautes.html" class="nav-link">Nouveautés</a>
+        <a href="pages/meilleures-ventes.html" class="nav-link">Meilleures Ventes</a>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Hero split -->
+  <section class="hero-split">
+    <div class="hero-decor">
+      <span class="blob b1"></span>
+      <span class="blob b2"></span>
+      <span class="blob b3"></span>
+      <span class="ring r1"></span>
+      <span class="ring r2"></span>
+    </div>
+    <div class="hero-inner">
+      <div>
+        <h1 class="hero-title">Luxanda</h1>
+        <p class="hero-sub">Le marché en ligne qui inspire confiance</p>
+        <div class="hero-actions">
+          <a class="btn-pill primary" href="#featured">Explorer les produits</a>
+          <a class="btn-pill secondary" href="pages/Formulaire.html">Devenir vendeur</a>
+        </div>
+      </div>
+      <div class="hero-illustration">
+        <!-- Simple shopping bag SVG -->
+        <img src="Média/img/logoluxanda.png" alt="Luxanda" class="hero-logo">
+      </div>
+    </div>
+  </section>
+
+  <!-- Produits mis en avant -->
+  <section class="section-block" id="featured">
+    <div class="container">
+      <h2 class="section-title-min">Produits mis en avant</h2>
+      <div class="cards-row">
+        <article class="card-simple" data-id="prd1" data-name="Smartphone Samsung A54" data-price="185000" data-image="Média/img/téléphone.jpg">
+          <div class="media"><img src="Média/img/téléphone.jpg" alt="Smartphone" /></div>
+          <div class="body">
+            <div class="price-line">185 000 FCFA</div>
+            <div class="muted">Smartphone Samsung A54</div>
+            <div class="card-actions" style="margin-top:.75rem; gap:.5rem;">
+              <button class="btn-ghost add-cart">Ajouter</button>
+              <button class="btn-ghost add-fav">Favori</button>
+            </div>
+          </div>
+        </article>
+        <article class="card-simple" data-id="prd2" data-name="Robe Africaine Premium" data-price="25000" data-image="Média/img/robe.jpg">
+          <div class="media"><img src="Média/img/robe.jpg" alt="Robe Africaine" /></div>
+          <div class="body">
+            <div class="price-line">25 000 FCFA</div>
+            <div class="muted">Robe Africaine Premium</div>
+            <div class="card-actions" style="margin-top:.75rem; gap:.5rem;">
+              <button class="btn-ghost add-cart">Ajouter</button>
+              <button class="btn-ghost add-fav">Favori</button>
+            </div>
+          </div>
+        </article>
+        <article class="card-simple" data-id="prd3" data-name="Écouteurs Bluetooth" data-price="15500" data-image="Média/img/airpord.jpg">
+          <div class="media"><img src="Média/img/airpord.jpg" alt="Écouteurs Bluetooth" /></div>
+          <div class="body">
+            <div class="price-line">15 500 FCFA</div>
+            <div class="muted">Écouteurs Bluetooth</div>
+            <div class="card-actions" style="margin-top:.75rem; gap:.5rem;">
+              <button class="btn-ghost add-cart">Ajouter</button>
+              <button class="btn-ghost add-fav">Favori</button>
+            </div>
+          </div>
+        </article>
+        <article class="card-simple" data-id="prd4" data-name="Sac à Main Luxe" data-price="32000" data-image="Média/img/sac.jpg">
+          <div class="media"><img src="Média/img/sac.jpg" alt="Sac à Main" /></div>
+          <div class="body">
+            <div class="price-line">32 000 FCFA</div>
+            <div class="muted">Sac à Main Luxe</div>
+            <div class="card-actions" style="margin-top:.75rem; gap:.5rem;">
+              <button class="btn-ghost add-cart">Ajouter</button>
+              <button class="btn-ghost add-fav">Favori</button>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Espace vendeurs -->
+  <section class="section-block alt">
+    <div class="container">
+      <h2 class="section-title-min">Espace vendeurs</h2>
+      <div class="vendor-split">
+        <div>
+          <p class="muted" style="margin-bottom:1rem; font-size:1rem;">Créez votre boutique en ligne, touchez des milliers de clients et augmentez vos ventes.</p>
+          <a class="btn-pill secondary" href="pages/Formulaire.html">Devenir vendeur</a>
+        </div>
+        <div class="vendor-illustration">
+          <!-- Simple person with laptop illustration -->
+          <svg viewBox="0 0 220 140" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect x="20" y="70" width="180" height="50" rx="8" fill="#e5e7eb" />
+            <rect x="60" y="50" width="100" height="20" rx="4" fill="#f3f4f6" stroke="#e5e7eb" />
+            <circle cx="110" cy="30" r="18" fill="#e5e7eb" />
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Programme de récompenses visiteurs -->
+  <section class="section-block">
+    <div class="container">
+      <h2 class="section-title-min">Programme de récompenses visiteurs</h2>
+      <div class="icons-3">
+        <div class="icon-item"><span class="icon-emoji">🏅</span><div class="icon-title">Points</div><div class="icon-sub">Cumulez des points à chaque achat</div></div>
+        <div class="icon-item"><span class="icon-emoji">🎟️</span><div class="icon-title">Coupons</div><div class="icon-sub">Accédez à des coupons exclusifs</div></div>
+        <div class="icon-item"><span class="icon-emoji">🎁</span><div class="icon-title">Bonus</div><div class="icon-sub">Profitez de cadeaux et avantages</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pourquoi choisir Luxanda ? -->
+  <section class="section-block alt">
+    <div class="container">
+      <h2 class="section-title-min">Pourquoi choisir Luxanda ?</h2>
+      <div class="icons-4">
+        <div class="icon-item"><span class="icon-emoji">🛡️</span><div class="icon-title">Paiements sécurisés</div><div class="icon-sub">Vos transactions protégées</div></div>
+        <div class="icon-item"><span class="icon-emoji">📋</span><div class="icon-title">Abonnements clairs</div><div class="icon-sub">Sans frais cachés</div></div>
+        <div class="icon-item"><span class="icon-emoji">🏆</span><div class="icon-title">Récompenses et fidélité</div><div class="icon-sub">Points et bonus</div></div>
+        <div class="icon-item"><span class="icon-emoji">🤝</span><div class="icon-title">Confiance et proximité</div><div class="icon-sub">Support local</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Blog -->
+  <section class="section-block">
+    <div class="container">
+      <h2 class="section-title-min">Blog</h2>
+      <div class="blog-row">
+        <article class="blog-card">
+          <div class="media"><img src="Média/img/Image2.jpg" alt="Blog 1"></div>
+          <div class="body">
+            <h3 style="font-weight:800; color:#111827; margin-bottom:.25rem;">Tendances E-commerce Afrique 2025</h3>
+            <p class="muted">Ce que vous devez savoir pour vendre en ligne.</p>
+          </div>
+        </article>
+        <article class="blog-card">
+          <div class="media"><img src="Média/img/Image3.jpg" alt="Blog 2"></div>
+          <div class="body">
+            <h3 style="font-weight:800; color:#111827; margin-bottom:.25rem;">Guide du vendeur Luxanda</h3>
+            <p class="muted">Démarrer et optimiser votre boutique.</p>
+          </div>
+        </article>
+        <article class="blog-card">
+          <div class="media"><img src="Média/img/img.png" alt="Blog 3"></div>
+          <div class="body">
+            <h3 style="font-weight:800; color:#111827; margin-bottom:.25rem;">Sécurité des paiements</h3>
+            <p class="muted">Nos bonnes pratiques pour la confiance.</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Drawers: Favorites & Cart -->
+  <div class="drawer-overlay" id="drawerOverlay"></div>
+  <aside class="drawer" id="favDrawer">
+    <div class="drawer-header"><strong>Favoris</strong><button class="btn-ghost" id="closeFav">Fermer</button></div>
+    <div class="drawer-body"><div id="favEmpty" class="muted">Aucun favori</div><div id="favList"></div></div>
+  </aside>
+  <aside class="drawer right" id="cartDrawer">
+    <div class="drawer-header"><strong>Panier</strong><button class="btn-ghost" id="closeCart">Fermer</button></div>
+    <div class="drawer-body"><div id="cartEmpty" class="muted">Votre panier est vide</div><div id="cartList"></div><div id="cartTotal" style="margin-top:1rem;font-weight:800;"></div></div>
+  </aside>
+
+  <!-- Newsletter -->
+  <section class="newsletter-section">
+    <div class="section-container">
+      <div class="newsletter-content">
+        <h2 style="font-size: 2rem; margin-bottom: 1rem;">Newsletter</h2>
+        <p style="font-size: 1.1rem; margin-bottom: 2rem; opacity: .9;">Abonnez-vous pour recevoir les dernières offres et nouveautés</p>
+        <form class="newsletter-form">
+          <input type="email" class="newsletter-input" placeholder="Votre adresse email" required />
+          <button type="submit" class="newsletter-btn">S'abonner</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-section">
+        <h3>Luxanda.</h3>
+        <p>La marketplace qui connecte l'Afrique au monde du commerce en ligne.</p>
+      </div>
+      <div class="footer-section">
+        <h3>À Propos</h3>
+        <ul class="footer-links">
+          <li><a class="footer-link" href="pages/a-propos.html">Qui sommes-nous</a></li>
+          <li><a class="footer-link" href="pages/nos-services.html">Nos Services</a></li>
+          <li><a class="footer-link" href="pages/Formulaire.html">Devenir Vendeur</a></li>
+          <li><a class="footer-link" href="pages/blog.html">Blog</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h3>Support</h3>
+        <ul class="footer-links">
+          <li><a class="footer-link" href="pages/centre-aide.html">Centre d'aide</a></li>
+          <li><a class="footer-link" href="pages/faq.html">FAQ</a></li>
+          <li><a class="footer-link" href="pages/contact.html">Contact</a></li>
+          <li><a class="footer-link" href="pages/livraison.html">Livraison</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h3>Légal</h3>
+        <ul class="footer-links">
+          <li><a class="footer-link" href="pages/conditions-utilisation.html">Conditions d'utilisation</a></li>
+          <li><a class="footer-link" href="pages/politique-confidentialite.html">Politique de confidentialité</a></li>
+          <li><a class="footer-link" href="pages/cgv.html">CGV</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h3>Contact</h3>
+        <p>📞 +229 01 41 75 75 59</p>
+        <p>📧 contact@luxanda.bj</p>
+        <p>📍 Cotonou, Bénin</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2025 Luxanda.bj - Tous droits réservés</p>
+    </div>
+  </footer>
+
+  <script>
+    // Mobile menu toggle
+    const toggle = document.querySelector('.mobile-menu-toggle');
+    if (toggle) {
+      toggle.addEventListener('click', () => document.querySelector('.nav-container').classList.toggle('active'));
+    }
+
+    // Newsletter feedback
+    const form = document.querySelector('.newsletter-form');
+    if (form) {
+      form.addEventListener('submit', (e) => { e.preventDefault(); alert('Merci pour votre inscription !'); form.reset(); });
+    }
+
+    // Reveal on scroll: make sections/cards animate in
+    const revealTargets = [
+      '.section-block', '.card-simple', '.icon-item', '.blog-card', '.hero-inner > div'
+    ].join(',');
+
+    const elements = document.querySelectorAll(revealTargets);
+    elements.forEach(el => el.classList.add('will-reveal'));
+
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('revealed');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+
+    elements.forEach(el => io.observe(el));
+
+    // Subtle parallax on hero illustration
+    const heroIllustration = document.querySelector('.hero-illustration');
+    if (heroIllustration) {
+      window.addEventListener('mousemove', (e) => {
+        const rect = heroIllustration.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const dx = (e.clientX - cx) / rect.width;
+        const dy = (e.clientY - cy) / rect.height;
+        heroIllustration.style.transform = `translate(${dx * 8}px, ${dy * 8}px)`;
+      });
+      window.addEventListener('mouseleave', () => heroIllustration.style.transform = 'translate(0,0)');
+    }
+
+    // ===== Favorites & Cart (localStorage) =====
+    const LS_FAV = 'lux_fav_items';
+    const LS_CART = 'lux_cart_items';
+    const favBtn = document.querySelector('button[title="Favoris"]');
+    const cartBtn = document.querySelector('button[title="Panier"]');
+    const cartBadge = document.querySelector('.cart-badge');
+    const overlay = document.getElementById('drawerOverlay');
+    const favDrawer = document.getElementById('favDrawer');
+    const cartDrawer = document.getElementById('cartDrawer');
+
+    function read(key){ try{ return JSON.parse(localStorage.getItem(key) || '[]'); }catch(e){ return []; } }
+    function write(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
+
+    function updateBadges(){
+      const cart = read(LS_CART); cartBadge.textContent = cart.reduce((a,i)=>a+(i.qty||1),0);
+    }
+
+    function renderFav(){
+      const fav = read(LS_FAV); const list = document.getElementById('favList'); const empty = document.getElementById('favEmpty');
+      list.innerHTML = '';
+      if(!fav.length){ empty.style.display='block'; return; } empty.style.display='none';
+      fav.forEach(item=>{
+        const row = document.createElement('div'); row.className='drawer-item';
+        row.innerHTML = `<img src="${item.image}" alt="${item.name}"><div><div style="font-weight:700;">${item.name}</div><div class="muted">${(item.price).toLocaleString('fr-FR')} FCFA</div></div><div class="drawer-actions"><button class="btn-ghost" data-id="${item.id}" data-act="addCart">Ajouter</button><button class="btn-ghost" data-id="${item.id}" data-act="rmFav">Retirer</button></div>`;
+        list.appendChild(row);
+      });
+      list.querySelectorAll('button').forEach(b=>{
+        b.addEventListener('click', ()=>{
+          const id = b.getAttribute('data-id'); const act = b.getAttribute('data-act');
+          if(act==='rmFav'){ removeFav(id); }
+          if(act==='addCart'){ const item = read(LS_FAV).find(x=>x.id===id); if(item){ addCart(item); } }
+        });
+      });
+    }
+
+    function renderCart(){
+      const cart = read(LS_CART); const list = document.getElementById('cartList'); const empty = document.getElementById('cartEmpty'); const totalEl = document.getElementById('cartTotal');
+      list.innerHTML=''; totalEl.textContent='';
+      if(!cart.length){ empty.style.display='block'; return; } empty.style.display='none';
+      let total=0;
+      cart.forEach(item=>{ total += (item.price * (item.qty||1));
+        const row = document.createElement('div'); row.className='drawer-item';
+        row.innerHTML = `<img src="${item.image}" alt="${item.name}"><div><div style="font-weight:700;">${item.name}</div><div class="muted">${(item.price).toLocaleString('fr-FR')} FCFA</div></div><div class="drawer-actions"><button class="btn-ghost" data-id="${item.id}" data-act="dec">-</button><span class="badge">${item.qty||1}</span><button class="btn-ghost" data-id="${item.id}" data-act="inc">+</button><button class="btn-ghost" data-id="${item.id}" data-act="rm">Retirer</button></div>`;
+        list.appendChild(row);
+      });
+      totalEl.textContent = 'Total: ' + total.toLocaleString('fr-FR') + ' FCFA';
+      list.querySelectorAll('button').forEach(b=>{
+        b.addEventListener('click', ()=>{
+          const id = b.getAttribute('data-id'); const act=b.getAttribute('data-act');
+          if(act==='inc') changeQty(id, +1);
+          if(act==='dec') changeQty(id, -1);
+          if(act==='rm') removeCart(id);
+        });
+      });
+    }
+
+    function toggleFav(item){
+      const fav = read(LS_FAV); const idx = fav.findIndex(x=>x.id===item.id);
+      if(idx>=0){ fav.splice(idx,1); } else { fav.push(item); }
+      write(LS_FAV, fav); renderFav();
+    }
+    function removeFav(id){ const fav = read(LS_FAV).filter(x=>x.id!==id); write(LS_FAV, fav); renderFav(); }
+
+    function addCart(item){ const cart = read(LS_CART); const f = cart.find(x=>x.id===item.id); if(f){ f.qty=(f.qty||1)+1; } else { cart.push({...item, qty:1}); } write(LS_CART, cart); updateBadges(); renderCart(); }
+    function changeQty(id, delta){ const cart=read(LS_CART); const f=cart.find(x=>x.id===id); if(!f) return; f.qty=(f.qty||1)+delta; if(f.qty<=0){ cart.splice(cart.findIndex(x=>x.id===id),1);} write(LS_CART, cart); updateBadges(); renderCart(); }
+    function removeCart(id){ const cart = read(LS_CART).filter(x=>x.id!==id); write(LS_CART, cart); updateBadges(); renderCart(); }
+
+    // Bind product buttons
+    document.querySelectorAll('.card-simple').forEach(card=>{
+      const item = { id: card.dataset.id, name: card.dataset.name, price: Number(card.dataset.price||0), image: card.dataset.image };
+      const addC = card.querySelector('.add-cart'); if(addC){ addC.addEventListener('click', ()=> addCart(item)); }
+      const favC = card.querySelector('.add-fav'); if(favC){ favC.addEventListener('click', ()=> toggleFav(item)); }
+    });
+
+    // Open/close drawers
+    function openFav(){ overlay.style.display='block'; favDrawer.classList.add('open'); }
+    function openCart(){ overlay.style.display='block'; cartDrawer.classList.add('open'); }
+    function closeDrawers(){ overlay.style.display='none'; favDrawer.classList.remove('open'); cartDrawer.classList.remove('open'); }
+
+    if(favBtn){ favBtn.addEventListener('click', ()=>{ renderFav(); openFav(); }); }
+    if(cartBtn){ cartBtn.addEventListener('click', ()=>{ renderCart(); openCart(); }); }
+    document.getElementById('closeFav').addEventListener('click', closeDrawers);
+    document.getElementById('closeCart').addEventListener('click', closeDrawers);
+    overlay.addEventListener('click', closeDrawers);
+
+    // Init badges
+    updateBadges();
+  </script>
+</body>
+</html>

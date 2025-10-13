@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Inscription - Luxanda</title>
+    <meta name="description" content="Inscrivez-vous sur Luxanda, la marketplace africaine. Créez un compte acheteur ou vendeur et commencez dès maintenant." />
+    <link rel="icon" type="image/png" href="../Média/img/logoluxanda.png" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #0a1628 0%, #003366 50%, #0a1628 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(255, 102, 0, 0.12) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(0, 51, 102, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(255, 102, 0, 0.08) 0%, transparent 50%);
+            animation: pulse 20s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+        @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.85;transform:scale(1.05)} }
+
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(25px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 30px rgba(0,0,0,0.4);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .header-container {
+            max-width: 1400px; margin: 0 auto; padding: 1.25rem 2rem;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .back-link, .login-link {
+            display: inline-flex; align-items: center; gap: .5rem;
+            color: rgba(255,255,255,0.85); text-decoration: none; font-size: .95rem; font-weight: 500;
+            padding: .8rem 1.25rem; border-radius: 12px;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            transition: all .3s ease;
+        }
+        .back-link:hover, .login-link:hover {
+            background: rgba(255,102,0,.25); border-color: rgba(255,102,0,.5); color: #FF6600;
+        }
+        .logo {
+            font-size: 2rem; font-weight: 900;
+            background: linear-gradient(135deg, #FF6600 0%, #ffaa00 50%, #FF6600 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            filter: drop-shadow(0 2px 10px rgba(255, 102, 0, 0.6)); letter-spacing: -1px;
+        }
+
+        /* Layout */
+        .main-wrapper { max-width: 1100px; margin: 0 auto; padding: 2rem; position: relative; z-index: 1; }
+        .form-container {
+            background: rgba(255,255,255,0.97); backdrop-filter: blur(30px);
+            border-radius: 28px; padding: 2.25rem; box-shadow: 0 40px 80px rgba(0,0,0,.45);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .form-header { text-align: center; margin-bottom: 2rem; }
+        .form-icon { font-size: 3rem; margin-bottom: .5rem; filter: drop-shadow(0 4px 15px rgba(255, 102, 0, 0.3)); }
+        .form-title {
+            font-size: 2.25rem; font-weight: 900;
+            background: linear-gradient(135deg, #003366 0%, #FF6600 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            margin-bottom: .35rem;
+        }
+        .form-subtitle { color: #6b7280; font-size: 1.05rem; }
+
+        /* Steps */
+        .steps-progress { display: flex; justify-content: center; align-items: center; gap: 1rem; margin-bottom: 2rem; }
+        .step { display: flex; flex-direction: column; align-items: center; gap: .5rem; }
+        .step-number { width: 44px; height: 44px; border-radius: 50%; background: #e5e7eb; color: #9ca3af; display:flex;align-items:center;justify-content:center; font-weight:700; transition: all .3s; }
+        .step-number.active { background: linear-gradient(135deg,#FF6600,#ff8833); color:#fff; box-shadow: 0 8px 20px rgba(255,102,0,.4); transform: scale(1.05); }
+        .step-number.completed { background: linear-gradient(135deg,#16a34a,#22c55e); color:#fff; }
+        .step-label { font-size: .8rem; font-weight: 600; color: #9ca3af; }
+        .step-line { width: 90px; height: 4px; background: #e5e7eb; border-radius: 8px; overflow: hidden; }
+        .step-line.active { background: linear-gradient(90deg, #FF6600, #ff8833); }
+
+        /* User Type */
+        .section-title { font-size: 1.2rem; font-weight: 800; color: #111827; margin-bottom: 1rem; display: flex; align-items: center; gap: .75rem; }
+        .section-title::before { content: ''; width: 5px; height: 26px; background: linear-gradient(180deg, #FF6600, #ff8833); border-radius: 4px; }
+        .user-type-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+        .user-type-card { padding: 2rem 1.5rem; border: 2px solid #e5e7eb; border-radius: 18px; text-align: center; cursor: pointer; background: #fff; transition: all .3s; }
+        .user-type-card:hover { border-color:#FF6600; transform: translateY(-6px); box-shadow: 0 16px 40px rgba(255,102,0,.18); }
+        .user-type-card.selected { border-color:#FF6600; background: linear-gradient(135deg,#fff7ed,#ffffff); box-shadow: 0 16px 44px rgba(255,102,0,.25); }
+        .user-type-icon { font-size: 3rem; margin-bottom: .75rem; }
+        .user-type-name { font-size: 1.25rem; font-weight: 800; color:#111827; margin-bottom: .35rem; }
+        .user-type-card.selected .user-type-name { background: linear-gradient(135deg,#FF6600,#ff8833); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .user-type-desc { font-size: .95rem; color:#6b7280; }
+
+        /* Form fields */
+        .form-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1rem; }
+        .form-group { display:flex; flex-direction:column; gap:.45rem; }
+        .form-group.full { grid-column: 1 / -1; }
+        .form-label { font-size: .9rem; font-weight: 700; color:#374151; }
+        .required { color:#FF6600; }
+        .form-input, .form-select, .form-textarea {
+            width: 100%; padding: 1rem; border: 2px solid #e5e7eb; border-radius: 12px; font-size: .95rem; transition: all .25s;
+            background: #fff; font-family: inherit;
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: #FF6600; box-shadow: 0 0 0 4px rgba(255,102,0,.12); }
+        .form-textarea { min-height: 120px; resize: vertical; }
+
+        /* Buttons */
+        .btn-primary {
+            width: 100%; padding: 1.1rem; background: linear-gradient(135deg, #FF6600, #ff8833); color:#fff; border:none; border-radius: 12px;
+            font-weight: 800; font-size: 1rem; cursor: pointer; transition: all .3s; box-shadow: 0 10px 28px rgba(255,102,0,.35);
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 16px 36px rgba(255,102,0,.42); }
+        .btn-secondary { width: 100%; padding: 1rem; background:#fff; color:#6b7280; border:2px solid #e5e7eb; border-radius:12px; font-weight:700; cursor:pointer; transition: all .2s; }
+        .btn-secondary:hover { border-color:#FF6600; color:#FF6600; }
+        .form-actions { display:flex; gap: 1rem; margin-top: 1rem; }
+
+        .hidden { display: none; }
+        @media (max-width: 768px){
+            .header-container{padding:1rem}
+            .main-wrapper{padding:1rem}
+            .form-container{padding:1.25rem}
+            .user-type-grid{grid-template-columns:1fr}
+            .form-grid{grid-template-columns:1fr}
+            .form-title{font-size:1.75rem}
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <a class="back-link" href="../index.html">← Retour</a>
+            <div class="logo">LUXANDA</div>
+            <a class="login-link" href="connexion.html">Déjà membre ? Connexion</a>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main class="main-wrapper">
+        <section class="form-container" aria-label="Inscription Luxanda">
+            <!-- Header -->
+            <div class="form-header">
+                <div class="form-icon">✨</div>
+                <h1 class="form-title">Rejoignez Luxanda</h1>
+                <p class="form-subtitle">Créez un compte Acheteur ou Vendeur en 3 étapes</p>
+            </div>
+
+            <!-- Steps -->
+            <div class="steps-progress">
+                <div class="step" id="stepIndicator1">
+                    <div class="step-number active" id="step1Circle">1</div>
+                    <div class="step-label">Type de compte</div>
+                </div>
+                <div class="step-line" id="line1"></div>
+                <div class="step" id="stepIndicator2">
+                    <div class="step-number" id="step2Circle">2</div>
+                    <div class="step-label">Informations</div>
+                </div>
+                <div class="step-line" id="line2"></div>
+                <div class="step" id="stepIndicator3">
+                    <div class="step-number" id="step3Circle">3</div>
+                    <div class="step-label">Sécurité</div>
+                </div>
+            </div>
+
+            <!-- Step 1 -->
+            <div id="step1" class="step-content">
+                <div class="section-title">Choisissez votre profil</div>
+                <div class="user-type-grid">
+                    <div class="user-type-card" id="buyerCard" role="button" tabindex="0" onclick="selectUserType('buyer')">
+                        <div class="user-type-icon">🛍️</div>
+                        <div class="user-type-name">Acheteur</div>
+                        <div class="user-type-desc">Découvrez et achetez des produits premium</div>
+                    </div>
+                    <div class="user-type-card" id="sellerCard" role="button" tabindex="0" onclick="selectUserType('seller')">
+                        <div class="user-type-icon">💼</div>
+                        <div class="user-type-name">Vendeur</div>
+                        <div class="user-type-desc">Créez votre boutique et vendez à grande échelle</div>
+                    </div>
+                </div>
+                <div class="form-actions" style="margin-top: 1.25rem;">
+                    <button class="btn-primary" onclick="nextStep(2)">Continuer →</button>
+                </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div id="step2" class="step-content hidden">
+                <div class="section-title">Vos informations</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label" for="firstName">Prénom <span class="required">*</span></label>
+                        <input class="form-input" id="firstName" name="firstName" type="text" placeholder="Jean" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="lastName">Nom <span class="required">*</span></label>
+                        <input class="form-input" id="lastName" name="lastName" type="text" placeholder="Dupont" required />
+                    </div>
+                    <div class="form-group full">
+                        <label class="form-label" for="email">Adresse Email <span class="required">*</span></label>
+                        <input class="form-input" id="email" name="email" type="email" placeholder="jean.dupont@email.com" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="phone">Téléphone <span class="required">*</span></label>
+                        <input class="form-input" id="phone" name="phone" type="tel" placeholder="+229 XX XX XX XX" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="birthdate">Date de naissance</label>
+                        <input class="form-input" id="birthdate" name="birthdate" type="date" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="city">Ville <span class="required">*</span></label>
+                        <select class="form-select" id="city" name="city" required>
+                            <option value="">Sélectionnez votre ville</option>
+                            <option value="cotonou">Cotonou</option>
+                            <option value="porto-novo">Porto-Novo</option>
+                            <option value="parakou">Parakou</option>
+                            <option value="abomey-calavi">Abomey-Calavi</option>
+                            <option value="djougou">Djougou</option>
+                            <option value="bohicon">Bohicon</option>
+                            <option value="autre">Autre</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="district">Quartier</label>
+                        <input class="form-input" id="district" name="district" type="text" placeholder="Akpakpa, Ganhi..." />
+                    </div>
+
+                    <!-- Seller specific -->
+                    <div class="form-group full hidden" id="storeNameGroup">
+                        <label class="form-label" for="storeName">Nom de votre boutique <span class="required">*</span></label>
+                        <input class="form-input" id="storeName" name="storeName" type="text" placeholder="Ma Boutique Premium" />
+                    </div>
+                    <div class="form-group full hidden" id="storeDescGroup">
+                        <label class="form-label" for="storeDesc">Description de votre boutique</label>
+                        <textarea class="form-textarea" id="storeDesc" name="storeDesc" placeholder="Décrivez votre boutique, vos produits, vos atouts..."></textarea>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button class="btn-secondary" onclick="previousStep(1)" type="button">← Retour</button>
+                    <button class="btn-primary" onclick="nextStep(3)" type="button">Continuer →</button>
+                </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div id="step3" class="step-content hidden">
+                <div class="section-title">Sécurité et finalisation</div>
+                <div class="form-grid">
+                    <div class="form-group full">
+                        <label class="form-label" for="password">Mot de passe <span class="required">*</span></label>
+                        <input class="form-input" id="password" name="password" type="password" placeholder="••••••••" required />
+                        <small style="color:#9ca3af">Minimum 8 caractères avec majuscules, chiffres et symboles</small>
+                    </div>
+                    <div class="form-group full">
+                        <label class="form-label" for="confirmPassword">Confirmer le mot de passe <span class="required">*</span></label>
+                        <input class="form-input" id="confirmPassword" name="confirmPassword" type="password" placeholder="••••••••" required />
+                    </div>
+                    <div class="form-group full">
+                        <label class="form-label" for="referralCode">Code de parrainage (optionnel)</label>
+                        <input class="form-input" id="referralCode" name="referralCode" type="text" placeholder="CODE2025" />
+                    </div>
+                </div>
+
+                <div style="display:flex; flex-direction:column; gap:.75rem; margin: .5rem 0 1rem;">
+                    <label style="display:flex; align-items:flex-start; gap:.6rem;">
+                        <input type="checkbox" id="terms" required style="margin-top:.25rem; width:18px; height:18px;" />
+                        <span style="font-size:.9rem;color:#374151;">J'accepte les <a href="conditions-utilisation.html" style="color:#FF6600; font-weight:700; text-decoration:none;">Conditions Générales d'Utilisation</a> et la <a href="politique-confidentialite.html" style="color:#FF6600; font-weight:700; text-decoration:none;">Politique de Confidentialité</a></span>
+                    </label>
+                    <label style="display:flex; align-items:flex-start; gap:.6rem;">
+                        <input type="checkbox" id="newsletter" style="margin-top:.25rem; width:18px; height:18px;" />
+                        <span style="font-size:.9rem;color:#374151;">Je souhaite recevoir les offres et promotions Luxanda par email</span>
+                    </label>
+                </div>
+
+                <div class="form-actions">
+                    <button class="btn-secondary" onclick="previousStep(2)" type="button">← Retour</button>
+                    <button class="btn-primary" onclick="submitForm()" type="button">✓ Créer mon compte</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        let currentStep = 1;
+        let selectedUserType = '';
+
+        function selectUserType(type) {
+            selectedUserType = type;
+            document.getElementById('buyerCard').classList.toggle('selected', type === 'buyer');
+            document.getElementById('sellerCard').classList.toggle('selected', type === 'seller');
+
+            // Toggle seller fields instantly for clarity (also reinforced at step change)
+            const seller = type === 'seller';
+            document.getElementById('storeNameGroup').classList.toggle('hidden', !seller);
+            document.getElementById('storeDescGroup').classList.toggle('hidden', !seller);
+        }
+
+        function setStepUI(step) {
+            // numbers
+            for (let i = 1; i <= 3; i++) {
+                const circle = document.getElementById(`step${i}Circle`);
+                const indicator = document.getElementById(`stepIndicator${i}`);
+                if (i < step) { circle.classList.add('completed'); circle.classList.remove('active'); circle.textContent = '✓'; }
+                else if (i === step) { circle.classList.add('active'); circle.classList.remove('completed'); circle.textContent = String(i); }
+                else { circle.classList.remove('active', 'completed'); circle.textContent = String(i); }
+                indicator && indicator.classList.toggle('active', i === step);
+            }
+            // lines
+            document.getElementById('line1').classList.toggle('active', step > 1);
+            document.getElementById('line2').classList.toggle('active', step > 2);
+        }
+
+        function nextStep(step) {
+            if (step === 2 && !selectedUserType) {
+                alert('Veuillez sélectionner un type de compte (Acheteur ou Vendeur).');
+                return;
+            }
+            if (step === 3) {
+                // Validate step 2 fields
+                const firstName = document.getElementById('firstName').value.trim();
+                const lastName  = document.getElementById('lastName').value.trim();
+                const email     = document.getElementById('email').value.trim();
+                const phone     = document.getElementById('phone').value.trim();
+                const city      = document.getElementById('city').value;
+
+                if (!firstName || !lastName || !email || !phone || !city) {
+                    alert('Veuillez remplir tous les champs obligatoires de vos informations.');
+                    return;
+                }
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    alert('Veuillez entrer une adresse email valide.');
+                    return;
+                }
+                if (selectedUserType === 'seller') {
+                    const storeName = document.getElementById('storeName').value.trim();
+                    if (!storeName) { alert('Veuillez renseigner le nom de votre boutique.'); return; }
+                }
+            }
+            // Switch step content
+            document.getElementById(`step${currentStep}`).classList.add('hidden');
+            document.getElementById(`step${step}`).classList.remove('hidden');
+            currentStep = step;
+            setStepUI(step);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function previousStep(step) {
+            document.getElementById(`step${currentStep}`).classList.add('hidden');
+            document.getElementById(`step${step}`).classList.remove('hidden');
+            currentStep = step;
+            setStepUI(step);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function submitForm() {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const terms = document.getElementById('terms').checked;
+
+            // Password validation
+            if (password.length < 8) { alert('Le mot de passe doit contenir au moins 8 caractères.'); return; }
+            const hasUpper = /[A-Z]/.test(password);
+            const hasLower = /[a-z]/.test(password);
+            const hasDigit = /[0-9]/.test(password);
+            if (!(hasUpper && hasLower && hasDigit)) { alert('Le mot de passe doit contenir des majuscules, minuscules et chiffres.'); return; }
+            if (password !== confirmPassword) { alert('Les mots de passe ne correspondent pas.'); return; }
+            if (!terms) { alert('Veuillez accepter les conditions d\'utilisation.'); return; }
+
+            const formData = {
+                userType: selectedUserType,
+                firstName: document.getElementById('firstName').value.trim(),
+                lastName: document.getElementById('lastName').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                phone: document.getElementById('phone').value.trim(),
+                birthdate: document.getElementById('birthdate').value,
+                city: document.getElementById('city').value,
+                district: document.getElementById('district').value.trim(),
+                referralCode: document.getElementById('referralCode').value.trim(),
+                newsletter: document.getElementById('newsletter').checked,
+            };
+            if (selectedUserType === 'seller') {
+                formData.storeName = document.getElementById('storeName').value.trim();
+                formData.storeDesc = document.getElementById('storeDesc').value.trim();
+            }
+
+            console.log('Form data:', formData);
+            const fullName = formData.firstName + ' ' + formData.lastName;
+            const userTypeText = selectedUserType === 'seller' ? 'vendeur' : 'acheteur';
+            alert(`✅ INSCRIPTION RÉUSSIE !\n\nBienvenue ${fullName} ! Votre compte ${userTypeText} est prêt.`);
+
+            // Redirect to appropriate space
+            if (selectedUserType === 'seller') {
+                window.location.href = 'espace_vendeurs.html';
+            } else {
+                window.location.href = 'utilisateurs.html';
+            }
+        }
+
+        // Helpers & realtime UI tweaks
+        document.addEventListener('DOMContentLoaded', () => {
+            // Basic email UI validation on blur
+            const emailInput = document.getElementById('email');
+            emailInput.addEventListener('blur', function(){
+                const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.value.trim());
+                this.style.borderColor = ok || !this.value ? '#e5e7eb' : '#dc2626';
+            });
+            // Phone allowed chars
+            const phoneInput = document.getElementById('phone');
+            phoneInput.addEventListener('input', function(){ this.value = this.value.replace(/[^\d+\s-]/g, ''); });
+        });
+    </script>
+</body>
+</html>
