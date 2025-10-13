@@ -1,2 +1,0 @@
-# Luxanda
-Marketplace africain moderne
