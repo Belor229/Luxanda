@@ -12,10 +12,19 @@
     <div id="adminAuthOverlay" style="position:fixed;inset:0;background:rgba(17,24,39,.85);display:none;align-items:center;justify-content:center;z-index:9999;">
       <div style="background:#fff;border-radius:16px;padding:2rem;max-width:420px;width:94%;box-shadow:var(--shadow-xl);text-align:center;">
         <h2 style="margin-bottom:.25rem;color:#111827;">Connexion administrateur</h2>
-        <p style="color:#6b7280;margin-bottom:1rem;font-size:.95rem;">Saisissez votre mot de passe pour accéder au tableau de bord.</p>
-        <input id="adminPassword" type="password" placeholder="Mot de passe" style="width:100%;padding:.9rem 1rem;border:2px solid #e5e7eb;border-radius:12px;font-size:1rem;margin-bottom:1rem;" />
-        <button id="adminLoginBtn" class="btn btn-primary" style="width:100%;">Se connecter</button>
-        <p style="margin-top:.75rem;color:#9ca3af;font-size:.8rem;">Démonstration: ce mécanisme est côté client (localStorage). Pour la production, utilisez une API sécurisée.</p>
+        <p style="color:#6b7280;margin-bottom:1rem;font-size:.95rem;">Saisissez votre mot de passe pour accéder au tableau de bord. (Propriétaire: Belor Odirick DJAGBA)</p>
+            <input id="adminPassword" type="password" placeholder="Mot de passe" style="width:100%;padding:.9rem 1rem;border:2px solid #e5e7eb;border-radius:12px;font-size:1rem;margin-bottom:1rem;" />
+            <button id="adminStep1Btn" class="btn btn-primary" style="width:100%;">Continuer</button>
+          </div>
+          <!-- Étape 2: Code envoyé par email -->
+          <div id="step2" style="display:none;">
+            <p id="emailInfo" style="color:#374151;margin-bottom:.75rem;font-size:.95rem;">Un code de vérification a été envoyé à votre adresse email.</p>
+            <input id="adminCode" type="text" placeholder="Entrez le code à 6 chiffres" maxlength="6" style="width:100%;padding:.9rem 1rem;border:2px solid #e5e7eb;border-radius:12px;font-size:1rem;margin-bottom:1rem;text-align:center;letter-spacing:4px;" />
+            <button id="adminStep2Btn" class="btn btn-primary" style="width:100%;">Vérifier et accéder</button>
+            <button id="resendCodeBtn" class="btn btn-outline" style="width:100%;margin-top:.5rem;">Renvoyer le code</button>
+            <p style="margin-top:.75rem;color:#9ca3af;font-size:.8rem;">Astuce: si l'envoi automatique n'est pas configuré, un email pré-rempli s'ouvrira dans votre messagerie.</p>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -327,13 +336,13 @@
         const raw = localStorage.getItem(DB_KEY);
         if(!raw){
             const seed = {
-                users:[{id:genId('USR'),name:'Jean Dupont',email:'jean.dupont@email.com',role:'buyer',status:'active'},{id:genId('USR'),name:'Admin',email:'admin@luxanda.bj',role:'admin',status:'active'}],
-                sellers:[{id:genId('SEL'),name:'TechBénin Store',plan:'Pro',status:'approved',productsCount:12},{id:genId('SEL'),name:'Mode Africaine',plan:'Starter',status:'pending',productsCount:3}],
-                categories:[{id:genId('CAT'),name:'Électronique',slug:'electronique'},{id:genId('CAT'),name:'Mode',slug:'mode'},{id:genId('CAT'),name:'Accessoires',slug:'accessoires'}],
-                products:[{id:genId('PRD'),name:'Smartphone Samsung A54',price:185000,category:'electronique',stock:12,status:'active',discount:15},{id:genId('PRD'),name:'Robe Africaine Premium',price:25000,category:'mode',stock:25,status:'active',discount:25},{id:genId('PRD'),name:'Écouteurs Bluetooth',price:15500,category:'electronique',stock:0,status:'inactive',discount:20}],
-                orders:[{id:genId('ORD'),customer:'Jean Dupont',total:250500,status:'pending',date:new Date().toISOString()},{id:genId('ORD'),customer:'Marie Dossou',total:45000,status:'shipped',date:new Date().toISOString()}],
-                promotions:[{id:genId('PRM'),title:'Ventes Flash',discount:20,active:true,start:new Date().toISOString().slice(0,10),end:'',products:[]}],
-                activities:[{title:'Initialisation',desc:'Base de données locale créée',time:new Date().toLocaleString()}]
+                users:[],
+                sellers:[],
+                categories:[],
+                products:[],
+                orders:[],
+                promotions:[],
+                activities:[]
             };
             localStorage.setItem(DB_KEY, JSON.stringify(seed));
             return seed;
@@ -611,30 +620,75 @@
 
     // ===== Init =====
     function init(){
-        // Simple client-side auth gate
+        // Double authentification (mot de passe + code email)
+        const ADMIN_PASSWORD = 'Momadmin2025@';
+        const OWNER_EMAIL = 'belor.djagba@luxanda.bj';
         const overlay = document.getElementById('adminAuthOverlay');
         const main = document.querySelector('.main-container');
         const isAuth = localStorage.getItem('lux_admin_auth') === '1';
-        if(!isAuth){
-            overlay.style.display = 'flex';
-            if(main) main.style.display = 'none';
-            const btn = document.getElementById('adminLoginBtn');
-            const input = document.getElementById('adminPassword');
-            const doLogin = ()=>{
-                // MOT DE PASSE DEMO (à changer): LuxAdmin2025!
-                if(input.value === 'LuxAdmin2025!'){
-                    localStorage.setItem('lux_admin_auth','1');
-                    overlay.style.display='none'; if(main) main.style.display='';
-                    startApp();
-                }else{
-                    alert('Mot de passe incorrect'); input.focus();
-                }
-            };
-            btn.addEventListener('click', doLogin);
-            input.addEventListener('keypress', (e)=>{ if(e.key==='Enter') doLogin(); });
-        } else {
-            startApp();
+        if(isAuth){ startApp(); return; }
+        overlay.style.display = 'flex';
+        if(main) main.style.display = 'none';
+
+        const step1 = document.getElementById('step1');
+        const step2 = document.getElementById('step2');
+        const passInput = document.getElementById('adminPassword');
+        const codeInput = document.getElementById('adminCode');
+        const btnStep1 = document.getElementById('adminStep1Btn');
+        const btnStep2 = document.getElementById('adminStep2Btn');
+        const btnResend = document.getElementById('resendCodeBtn');
+        const emailInfo = document.getElementById('emailInfo');
+
+        let currentCode = '';
+        function generateCode(){ currentCode = String(Math.floor(100000 + Math.random()*900000)); return currentCode; }
+        function codeEmailBody(){
+            return `Votre code de vérification Luxanda est: ${currentCode}\n\n`+
+                   `Requête: ${new Date().toLocaleString()}\n`+
+                   `Navigateur: ${navigator.userAgent}`;
         }
+        async function send2FACode(){
+            // Option 1: webhook configurable (POST JSON {to, subject, text})
+            const webhook = window.LUX_EMAIL_WEBHOOK; // à configurer lors du déploiement si disponible
+            const subject = 'Code de sécurité Luxanda Admin';
+            const text = codeEmailBody();
+            if(webhook){
+                try{
+                    const res = await fetch(webhook, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({to: OWNER_EMAIL, subject, text})});
+                    if(!res.ok) throw new Error('HTTP '+res.status);
+                    return true;
+                }catch(e){ console.warn('Webhook email échoué, fallback mailto.', e); }
+            }
+            // Option 2: fallback mailto
+            try{
+                const mailto = `mailto:${OWNER_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`;
+                navigator.clipboard && navigator.clipboard.writeText(currentCode).catch(()=>{});
+                window.location.href = mailto;
+                return true;
+            }catch(e){ return false; }
+        }
+
+        function goStep2(){ step1.style.display='none'; step2.style.display='block'; emailInfo.textContent = `Un code de vérification a été envoyé à ${OWNER_EMAIL}.`; }
+        function finishAuth(){ localStorage.setItem('lux_admin_auth','1'); overlay.style.display='none'; if(main) main.style.display=''; startApp(); }
+
+        async function handleStep1(){
+            if(passInput.value !== ADMIN_PASSWORD){ alert('Mot de passe incorrect'); passInput.focus(); return; }
+            generateCode();
+            const ok = await send2FACode();
+            goStep2();
+            if(!ok){ alert('Impossible d\'envoyer automatiquement l\'email. Un message pré-rempli s\'ouvrira dans votre messagerie.'); }
+            codeInput.focus();
+        }
+        function handleStep2(){
+            const val = (codeInput.value||'').trim();
+            if(val.length!==6){ alert('Code invalide'); return; }
+            if(val !== currentCode){ alert('Code incorrect'); return; }
+            finishAuth();
+        }
+        btnStep1.addEventListener('click', handleStep1);
+        passInput.addEventListener('keypress', (e)=>{ if(e.key==='Enter') handleStep1(); });
+        btnStep2.addEventListener('click', handleStep2);
+        codeInput.addEventListener('keypress', (e)=>{ if(e.key==='Enter') handleStep2(); });
+        btnResend.addEventListener('click', async ()=>{ generateCode(); await send2FACode(); alert('Nouveau code envoyé.'); codeInput.value=''; codeInput.focus(); });
     }
     function startApp(){
         getDB();
