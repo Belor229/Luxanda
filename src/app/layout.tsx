@@ -34,6 +34,11 @@ export const metadata: Metadata = {
   alternates: {
     canonical: '/',
   },
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+    apple: '/favicon.ico',
+  },
   openGraph: {
     title: 'Luxanda - Le marché en ligne qui inspire confiance',
     description: 'Luxanda, la marketplace africaine qui inspire confiance. Produits mis en avant, espace vendeurs, programme de récompenses.',

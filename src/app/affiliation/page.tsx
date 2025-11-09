@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { 
-  Share2, 
-  Users, 
-  DollarSign, 
-  Copy, 
+import {
+  Share2,
+  Users,
+  DollarSign,
+  Copy,
   CheckCircle,
   TrendingUp,
   Clock,
@@ -14,8 +14,7 @@ import {
   MessageCircle,
   Mail,
   Facebook,
-  Twitter,
-  WhatsApp
+  Twitter
 } from 'lucide-react'
 
 interface AffiliationStats {
@@ -248,7 +247,7 @@ export default function AffiliationPage() {
                   onClick={() => shareOnSocial('whatsapp')}
                   className="flex items-center space-x-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
                 >
-                  <WhatsApp className="h-4 w-4" />
+                  <MessageCircle className="h-4 w-4" />
                   <span>WhatsApp</span>
                 </button>
                 <button

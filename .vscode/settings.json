@@ -1,4 +1,5 @@
 {
-    "codium.codeCompletion.enable": false,
-    "liveServer.settings.port": 5501
+  "css.customData": [
+    ".vscode/tailwind-custom-data.json"
+  ]
 }

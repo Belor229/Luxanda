@@ -8,13 +8,13 @@ export default function VendorSection() {
     <section className="section-padding bg-gradient-to-br from-gray-50 to-white">
       <div className="container-custom">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
-          <div className="space-y-8">
+          <div className="space-y-6 sm:space-y-8">
             <div>
-              <h2 className="text-4xl font-bold text-gray-900 mb-6">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4 sm:mb-6">
                 Espace vendeurs
               </h2>
-              <p className="text-lg text-gray-600 leading-relaxed mb-8">
-                Créez votre boutique en ligne et touchez des milliers de clients. 
+              <p className="text-base sm:text-lg text-gray-600 leading-relaxed mb-6 sm:mb-8">
+                Créez votre boutique en ligne et touchez des milliers de clients.
                 Les abonnements sont gérés via Kkiapay pour une sécurité maximale.
               </p>
             </div>

@@ -1,0 +1,379 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  profile     UserProfile?
+  orders      Order[]
+  reviews     Review[]
+  addresses   Address[]
+  cart        Cart?
+  vendor      Vendor?
+  affiliate   Affiliate?
+  rewards     Rewards?
+  referralsAsReferrer Referral[] @relation("UserReferralsReferrer")
+  referralsAsReferred Referral[] @relation("UserReferralsReferred")
+  subscriptions Subscription[]
+
+  @@map("users")
+}
+
+model UserProfile {
+  id          String    @id @default(cuid())
+  userId      String    @unique
+  firstName   String?
+  lastName    String?
+  phone       String?
+  avatar      String?
+  dateOfBirth DateTime?
+  gender      Gender?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_profiles")
+}
+
+model Vendor {
+  id          String       @id @default(cuid())
+  userId      String       @unique
+  storeName   String
+  description String?
+  logo        String?
+  banner      String?
+  status      VendorStatus @default(PENDING)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Relations
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products Product[]
+
+  @@map("vendors")
+}
+
+model Affiliate {
+  id         String          @id @default(cuid())
+  userId     String          @unique
+  code       String          @unique
+  commission Float           @default(0.1)
+  status     AffiliateStatus @default(PENDING)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("affiliates")
+}
+
+model Product {
+  id           String        @id @default(cuid())
+  vendorId     String
+  name         String
+  description  String?
+  price        Float
+  comparePrice Float?
+  cost         Float?
+  sku          String?       @unique
+  barcode      String?
+  quantity     Int           @default(0)
+  weight       Float?
+  status       ProductStatus @default(DRAFT)
+  featured     Boolean       @default(false)
+  tags         String[]
+  images       String[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  // Relations
+  vendor     Vendor           @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  category   Category         @relation(fields: [categoryId], references: [id])
+  categoryId String
+  variants   ProductVariant[]
+  reviews    Review[]
+  orderItems OrderItem[]
+  cartItems  CartItem[]
+
+  @@map("products")
+}
+
+model ProductVariant {
+  id        String  @id @default(cuid())
+  productId String
+  name      String
+  value     String
+  price     Float?
+  sku       String?
+  quantity  Int     @default(0)
+
+  // Relations
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_variants")
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  image       String?
+  parentId    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  products Product[]
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryHierarchy")
+
+  @@map("categories")
+}
+
+model Order {
+  id            String        @id @default(cuid())
+  userId        String
+  status        OrderStatus   @default(PENDING)
+  total         Float
+  subtotal      Float
+  tax           Float         @default(0)
+  shipping      Float         @default(0)
+  discount      Float         @default(0)
+  paymentMethod String?
+  paymentStatus PaymentStatus @default(PENDING)
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relations
+  user      User        @relation(fields: [userId], references: [id])
+  items     OrderItem[]
+  address   Address     @relation(fields: [addressId], references: [id])
+  addressId String
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String @id @default(cuid())
+  orderId   String
+  productId String
+  quantity  Int
+  price     Float
+  total     Float
+
+  // Relations
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+}
+
+model Cart {
+  id     String @id @default(cuid())
+  userId String @unique
+
+  // Relations
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items CartItem[]
+
+  @@map("carts")
+}
+
+model CartItem {
+  id        String @id @default(cuid())
+  cartId    String
+  productId String
+  quantity  Int    @default(1)
+
+  // Relations
+  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("cart_items")
+}
+
+model Address {
+  id        String      @id @default(cuid())
+  userId    String
+  type      AddressType @default(SHIPPING)
+  firstName String
+  lastName  String
+  company   String?
+  address1  String
+  address2  String?
+  city      String
+  province  String
+  country   String
+  zip       String
+  phone     String?
+  isDefault Boolean     @default(false)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  // Relations
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders Order[]
+
+  @@map("addresses")
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  rating    Int
+  title     String?
+  comment   String?
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("reviews")
+}
+
+model Rewards {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  points      Int      @default(0)
+  totalEarned Int      @default(0)
+  totalSpent  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("rewards")
+}
+
+model Referral {
+  id          String   @id @default(cuid())
+  referrerId  String
+  referredId  String
+  commission  Float    @default(0)
+  status      ReferralStatus @default(PENDING)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  referrer User @relation("UserReferralsReferrer", fields: [referrerId], references: [id], onDelete: Cascade)
+  referred User @relation("UserReferralsReferred", fields: [referredId], references: [id], onDelete: Cascade)
+
+  @@unique([referrerId, referredId])
+  @@map("referrals")
+}
+
+model Subscription {
+  id           String           @id @default(cuid())
+  userId       String
+  plan         SubscriptionPlan
+  amount       Float
+  status       SubscriptionStatus @default(PENDING)
+  paymentRef   String?
+  startDate    DateTime?
+  endDate      DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("subscriptions")
+}
+
+// Enums
+enum Role {
+  USER
+  VENDOR
+  ADMIN
+}
+
+enum ReferralStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+enum SubscriptionPlan {
+  STARTER
+  PRO
+  PREMIUM
+}
+
+enum SubscriptionStatus {
+  PENDING
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum VendorStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum AffiliateStatus {
+  PENDING
+  ACTIVE
+  INACTIVE
+}
+
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum AddressType {
+  SHIPPING
+  BILLING
+}

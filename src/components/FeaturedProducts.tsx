@@ -10,11 +10,11 @@ export default function FeaturedProducts() {
   return (
     <section className="section-padding bg-white">
       <div className="container-custom">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
+        <div className="text-center mb-8 sm:mb-12">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4">
             Produits mis en avant
           </h2>
-          <div className="w-24 h-1 bg-gradient-to-r from-primary-orange to-primary-blue mx-auto rounded-full"></div>
+          <div className="w-16 sm:w-24 h-1 bg-gradient-to-r from-primary-orange to-primary-blue mx-auto rounded-full"></div>
         </div>
 
         {featuredProducts.length > 0 ? (

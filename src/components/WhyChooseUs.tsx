@@ -55,14 +55,14 @@ export default function WhyChooseUs() {
   return (
     <section className="section-padding bg-white">
       <div className="container-custom">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
+        <div className="text-center mb-12 sm:mb-16">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4">
             Pourquoi choisir Luxanda ?
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
             Découvrez les avantages qui font de Luxanda la marketplace de référence en Afrique
           </p>
-          <div className="w-24 h-1 bg-gradient-to-r from-primary-orange to-primary-blue mx-auto rounded-full mt-6"></div>
+          <div className="w-16 sm:w-24 h-1 bg-gradient-to-r from-primary-orange to-primary-blue mx-auto rounded-full mt-4 sm:mt-6"></div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">

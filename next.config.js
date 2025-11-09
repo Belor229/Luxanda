@@ -1,13 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    appDir: true,
-  },
   images: {
-    domains: ['localhost', 'res.cloudinary.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+      },
+    ],
   },
   env: {
-    CUSTOM_KEY: process.env.CUSTOM_KEY,
+    CUSTOM_KEY: process.env.CUSTOM_KEY || 'default_value',
   },
 }
 

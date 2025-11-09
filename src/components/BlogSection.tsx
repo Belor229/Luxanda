@@ -8,14 +8,14 @@ export default function BlogSection() {
   return (
     <section className="section-padding bg-gray-50">
       <div className="container-custom">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
+        <div className="text-center mb-12 sm:mb-16">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4">
             Blog & Actualités
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
             Restez informé des dernières tendances et conseils pour réussir en ligne
           </p>
-          <div className="w-24 h-1 bg-gradient-to-r from-primary-orange to-primary-blue mx-auto rounded-full mt-6"></div>
+          <div className="w-16 sm:w-24 h-1 bg-gradient-to-r from-primary-orange to-primary-blue mx-auto rounded-full mt-4 sm:mt-6"></div>
         </div>
 
         {blogPosts.length > 0 ? (

@@ -33,6 +33,9 @@ module.exports = {
         'fade-in': 'fadeIn 0.5s ease-in-out',
         'slide-up': 'slideUp 0.3s ease-out',
         'bounce-subtle': 'bounceSubtle 2s infinite',
+        'float': 'float 3s ease-in-out infinite',
+        'pulse-glow': 'pulseGlow 2s ease-in-out infinite',
+        'scale-in': 'scaleIn 0.5s ease-out',
       },
       keyframes: {
         fadeIn: {
@@ -46,6 +49,18 @@ module.exports = {
         bounceSubtle: {
           '0%, 100%': { transform: 'translateY(0)' },
           '50%': { transform: 'translateY(-5px)' },
+        },
+        float: {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-10px)' },
+        },
+        pulseGlow: {
+          '0%, 100%': { boxShadow: '0 0 5px rgba(255, 107, 53, 0.5)' },
+          '50%': { boxShadow: '0 0 20px rgba(255, 107, 53, 0.8)' },
+        },
+        scaleIn: {
+          '0%': { transform: 'scale(0.8)', opacity: '0' },
+          '100%': { transform: 'scale(1)', opacity: '1' },
         },
       },
     },

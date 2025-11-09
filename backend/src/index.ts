@@ -1,5 +1,5 @@
-import express from 'express'
-import cors from 'cors'
+import express, { Request, Response } from 'express'
+import * as cors from 'cors'
 import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
 import dotenv from 'dotenv'
@@ -33,7 +33,7 @@ const limiter = rateLimit({
 app.use(limiter)
 
 // CORS configuration
-app.use(cors({
+app.use((cors as any)({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true,
 }))
@@ -56,7 +56,7 @@ app.use('/api/vendor', vendorRoutes)
 app.use('/api/affiliation', affiliationRoutes)
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
+app.get('/api/health', (req: Request, res: Response) => {
   res.status(200).json({
     status: 'OK',
     message: 'Luxanda API is running',
@@ -89,7 +89,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 })
 
 // 404 handler
-app.use('*', (req, res) => {
+app.use('*', (req: Request, res: Response) => {
   res.status(404).json({
     error: 'Route non trouvée',
     message: 'La route demandée n\'existe pas',
