@@ -1,6 +1,6 @@
 import express from 'express'
 import { body, validationResult } from 'express-validator'
-import { getDB } from '../config/database'
+import { prisma } from '../config/prisma'
 import { authenticateToken } from '../middlewares/auth'
 import { AuthRequest } from '../types'
 
@@ -10,44 +10,49 @@ const router = express.Router()
 router.get('/my-affiliation', authenticateToken, async (req: AuthRequest, res: any) => {
   try {
     const userId = req.user?.userId
-    const db = getDB()
 
-    // Get user's affiliation stats
-    const [affiliationStats] = await db.execute(`
-      SELECT 
-        COUNT(referred_id) as total_referrals,
-        SUM(CASE WHEN status = 'paid' THEN commission_amount ELSE 0 END) as total_earnings,
-        SUM(CASE WHEN status = 'pending' THEN commission_amount ELSE 0 END) as pending_earnings
-      FROM affiliations 
-      WHERE referrer_id = ?
-    `, [userId])
+    // Get user's affiliation stats using Prisma
+    const affiliationStats = await prisma.referral.aggregate({
+      where: { referrerId: userId },
+      _count: { referredId: true },
+      _sum: {
+        commission: true
+      }
+    })
 
-    // Get recent referrals
-    const [recentReferrals] = await db.execute(`
-      SELECT 
-        a.id,
-        a.commission_amount,
-        a.status,
-        a.created_at,
-        u.first_name,
-        u.last_name,
-        u.email
-      FROM affiliations a
-      JOIN users u ON a.referred_id = u.id
-      WHERE a.referrer_id = ?
-      ORDER BY a.created_at DESC
-      LIMIT 10
-    `, [userId])
+    // Get recent referrals using Prisma
+    const recentReferrals = await prisma.referral.findMany({
+      where: { referrerId: userId },
+      include: {
+        referred: {
+          select: {
+            firstName: true,
+            lastName: true,
+            email: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 10
+    })
 
-    const stats = Array.isArray(affiliationStats) ? affiliationStats[0] : affiliationStats
-    const referrals = Array.isArray(recentReferrals) ? recentReferrals : []
+    const stats = affiliationStats
+    const referrals = recentReferrals.map((ref: any) => ({
+      id: ref.id,
+      commission_amount: ref.commission,
+      status: ref.status,
+      created_at: ref.createdAt,
+      first_name: ref.referred.firstName,
+      last_name: ref.referred.lastName,
+      email: ref.referred.email
+    }))
 
     res.json({
       affiliationLink: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/register?ref=${userId}`,
       stats: {
-        totalReferrals: stats?.total_referrals || 0,
-        totalEarnings: stats?.total_earnings || 0,
-        pendingEarnings: stats?.pending_earnings || 0
+        totalReferrals: stats._count?.referredId || 0,
+        totalEarnings: stats._sum?.commission || 0,
+        pendingEarnings: 0 // TODO: Calculate pending earnings separately
       },
       recentReferrals: referrals
     })
@@ -66,42 +71,47 @@ router.get('/referrals', authenticateToken, async (req: AuthRequest, res: any) =
     const limit = parseInt(req.query.limit as string) || 20
     const offset = (page - 1) * limit
 
-    const db = getDB()
+    // Get referrals with pagination using Prisma
+    const [referrals, totalCount] = await Promise.all([
+      prisma.referral.findMany({
+        where: { referrerId: userId },
+        include: {
+          referred: {
+            select: {
+              firstName: true,
+              lastName: true,
+              email: true,
+              phone: true
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: offset,
+        take: limit
+      }),
+      prisma.referral.count({
+        where: { referrerId: userId }
+      })
+    ])
 
-    // Get referrals with pagination
-    const [referrals] = await db.execute(`
-      SELECT 
-        a.id,
-        a.commission_amount,
-        a.status,
-        a.created_at,
-        u.first_name,
-        u.last_name,
-        u.email,
-        u.phone
-      FROM affiliations a
-      JOIN users u ON a.referred_id = u.id
-      WHERE a.referrer_id = ?
-      ORDER BY a.created_at DESC
-      LIMIT ? OFFSET ?
-    `, [userId, limit, offset])
-
-    // Get total count
-    const [totalCount] = await db.execute(`
-      SELECT COUNT(*) as total
-      FROM affiliations 
-      WHERE referrer_id = ?
-    `, [userId])
-
-    const total = Array.isArray(totalCount) ? (totalCount[0] as any)?.total : 0
+    const formattedReferrals = referrals.map((ref: any) => ({
+      id: ref.id,
+      commission_amount: ref.commission,
+      status: ref.status,
+      created_at: ref.createdAt,
+      first_name: ref.referred.firstName,
+      last_name: ref.referred.lastName,
+      email: ref.referred.email,
+      phone: ref.referred.phone
+    }))
 
     res.json({
-      referrals: referrals,
+      referrals: formattedReferrals,
       pagination: {
         page,
         limit,
-        total,
-        pages: Math.ceil(total / limit)
+        total: totalCount,
+        pages: Math.ceil(totalCount / limit)
       }
     })
 
@@ -113,8 +123,8 @@ router.get('/referrals', authenticateToken, async (req: AuthRequest, res: any) =
 
 // Create referral when someone registers with referral link
 router.post('/create-referral', [
-  body('referrer_id').isInt().notEmpty(),
-  body('referred_id').isInt().notEmpty(),
+  body('referrer_id').isString().notEmpty(),
+  body('referred_id').isString().notEmpty(),
   body('commission_rate').optional().isFloat({ min: 0, max: 100 })
 ], async (req: any, res: any) => {
   try {
@@ -127,29 +137,36 @@ router.post('/create-referral', [
     }
 
     const { referrer_id, referred_id, commission_rate = 30.00 } = req.body
-    const db = getDB()
 
-    // Check if referral already exists
-    const [existingReferral] = await db.execute(
-      'SELECT id FROM affiliations WHERE referrer_id = ? AND referred_id = ?',
-      [referrer_id, referred_id]
-    )
+    // Check if referral already exists using Prisma
+    const existingReferral = await prisma.referral.findUnique({
+      where: {
+        referrerId_referredId: {
+          referrerId: referrer_id,
+          referredId: referred_id
+        }
+      }
+    })
 
-    if (Array.isArray(existingReferral) && existingReferral.length > 0) {
+    if (existingReferral) {
       return res.status(400).json({
         error: 'Ce parrainage existe déjà'
       })
     }
 
-    // Create new referral
-    const [result] = await db.execute(`
-      INSERT INTO affiliations (referrer_id, referred_id, commission_rate, status)
-      VALUES (?, ?, ?, 'pending')
-    `, [referrer_id, referred_id, commission_rate])
+    // Create new referral using Prisma
+    const newReferral = await prisma.referral.create({
+      data: {
+        referrerId: referrer_id,
+        referredId: referred_id,
+        commission: commission_rate,
+        status: 'PENDING'
+      }
+    })
 
     res.json({
       message: 'Parrainage créé avec succès',
-      referralId: (result as any).insertId
+      referralId: newReferral.id
     })
 
   } catch (error) {
@@ -162,8 +179,8 @@ router.post('/create-referral', [
 
 // Update commission status (admin only)
 router.put('/update-commission', [
-  body('referral_id').isInt().notEmpty(),
-  body('status').isIn(['pending', 'paid', 'cancelled']),
+  body('referral_id').isString().notEmpty(),
+  body('status').isIn(['PENDING', 'PAID', 'CANCELLED']),
   body('commission_amount').optional().isFloat({ min: 0 })
 ], authenticateToken, async (req: AuthRequest, res: any) => {
   try {
@@ -176,19 +193,20 @@ router.put('/update-commission', [
     }
 
     // Check if user is admin
-    if (req.user?.role !== 'admin') {
+    if (req.user?.role !== 'ADMIN') {
       return res.status(403).json({ error: 'Accès non autorisé' })
     }
 
     const { referral_id, status, commission_amount } = req.body
-    const db = getDB()
 
-    // Update commission
-    await db.execute(`
-      UPDATE affiliations 
-      SET status = ?, commission_amount = COALESCE(?, commission_amount)
-      WHERE id = ?
-    `, [status, commission_amount, referral_id])
+    // Update commission using Prisma
+    await prisma.referral.update({
+      where: { id: referral_id },
+      data: {
+        status: status as 'PENDING' | 'PAID' | 'CANCELLED',
+        ...(commission_amount !== undefined && { commission: commission_amount })
+      }
+    })
 
     res.json({
       message: 'Commission mise à jour avec succès'
@@ -206,7 +224,7 @@ router.put('/update-commission', [
 router.get('/all', authenticateToken, async (req: AuthRequest, res: any) => {
   try {
     // Check if user is admin
-    if (req.user?.role !== 'admin') {
+    if (req.user?.role !== 'ADMIN') {
       return res.status(403).json({ error: 'Accès non autorisé' })
     }
 
@@ -214,40 +232,53 @@ router.get('/all', authenticateToken, async (req: AuthRequest, res: any) => {
     const limit = parseInt(req.query.limit as string) || 20
     const offset = (page - 1) * limit
 
-    const db = getDB()
+    // Get all affiliations with user details using Prisma
+    const [affiliations, totalCount] = await Promise.all([
+      prisma.referral.findMany({
+        include: {
+          referrer: {
+            select: {
+              firstName: true,
+              lastName: true,
+              email: true
+            }
+          },
+          referred: {
+            select: {
+              firstName: true,
+              lastName: true,
+              email: true
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: offset,
+        take: limit
+      }),
+      prisma.referral.count()
+    ])
 
-    // Get all affiliations with user details
-    const [affiliations] = await db.execute(`
-      SELECT 
-        a.id,
-        a.commission_amount,
-        a.commission_rate,
-        a.status,
-        a.created_at,
-        referrer.first_name as referrer_first_name,
-        referrer.last_name as referrer_last_name,
-        referrer.email as referrer_email,
-        referred.first_name as referred_first_name,
-        referred.last_name as referred_last_name,
-        referred.email as referred_email
-      FROM affiliations a
-      JOIN users referrer ON a.referrer_id = referrer.id
-      JOIN users referred ON a.referred_id = referred.id
-      ORDER BY a.created_at DESC
-      LIMIT ? OFFSET ?
-    `, [limit, offset])
-
-    // Get total count
-    const [totalCount] = await db.execute('SELECT COUNT(*) as total FROM affiliations')
-    const total = Array.isArray(totalCount) ? (totalCount[0] as any)?.total : 0
+    const formattedAffiliations = affiliations.map((affiliation: any) => ({
+      id: affiliation.id,
+      commission_amount: affiliation.commission,
+      commission_rate: affiliation.commission,
+      status: affiliation.status,
+      created_at: affiliation.createdAt,
+      referrer_first_name: affiliation.referrer.firstName,
+      referrer_last_name: affiliation.referrer.lastName,
+      referrer_email: affiliation.referrer.email,
+      referred_first_name: affiliation.referred.firstName,
+      referred_last_name: affiliation.referred.lastName,
+      referred_email: affiliation.referred.email
+    }))
 
     res.json({
-      affiliations: affiliations,
+      affiliations: formattedAffiliations,
       pagination: {
         page,
         limit,
-        total,
-        pages: Math.ceil(total / limit)
+        total: totalCount,
+        pages: Math.ceil(totalCount / limit)
       }
     })
 

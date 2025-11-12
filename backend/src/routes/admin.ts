@@ -1,5 +1,5 @@
 import express from 'express'
-import { getDB } from '../config/database'
+import { prisma } from '../config/prisma'
 import { authenticateToken, requireAdmin } from '../middlewares/auth'
 
 const router = express.Router()
@@ -7,79 +7,148 @@ const router = express.Router()
 // Admin dashboard stats
 router.get('/dashboard', authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const db = getDB()
-
     // Users stats
-    const [totalUsers] = await db.execute('SELECT COUNT(*) as total FROM users')
-    const [activeUsers] = await db.execute('SELECT COUNT(*) as total FROM users WHERE is_active = true')
-    const [vendors] = await db.execute('SELECT COUNT(*) as total FROM users WHERE role = "vendor"')
+    const totalUsers = await prisma.user.count()
+    const activeUsers = await prisma.user.count({
+      where: { profile: { isNot: null } } // Assuming active users have profiles
+    })
+    const vendors = await prisma.user.count({
+      where: { role: 'VENDOR' }
+    })
 
     // Products stats
-    const [totalProducts] = await db.execute('SELECT COUNT(*) as total FROM products')
-    const [activeProducts] = await db.execute('SELECT COUNT(*) as total FROM products WHERE is_active = true')
-    const [featuredProducts] = await db.execute('SELECT COUNT(*) as total FROM products WHERE is_featured = true')
+    const totalProducts = await prisma.product.count()
+    const activeProducts = await prisma.product.count({
+      where: { status: 'ACTIVE' }
+    })
+    const featuredProducts = await prisma.product.count({
+      where: { featured: true }
+    })
 
     // Subscriptions stats
-    const [totalSubscriptions] = await db.execute('SELECT COUNT(*) as total FROM subscriptions')
-    const [activeSubscriptions] = await db.execute('SELECT COUNT(*) as total FROM subscriptions WHERE status = "active"')
-    const [pendingSubscriptions] = await db.execute('SELECT COUNT(*) as total FROM subscriptions WHERE status = "pending"')
+    const totalSubscriptions = await prisma.subscription.count()
+    const activeSubscriptions = await prisma.subscription.count({
+      where: { status: 'ACTIVE' }
+    })
+    const pendingSubscriptions = await prisma.subscription.count({
+      where: { status: 'PENDING' }
+    })
 
     // Revenue stats
-    const [totalRevenue] = await db.execute(`
-      SELECT SUM(amount) as total 
-      FROM subscriptions 
-      WHERE status = "active" AND start_date >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
-    `)
+    const totalRevenue = await prisma.subscription.aggregate({
+      _sum: {
+        amount: true
+      },
+      where: {
+        status: 'ACTIVE',
+        startDate: {
+          gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // Last 30 days
+        }
+      }
+    })
 
     // Recent activities
-    const [recentUsers] = await db.execute(`
-      SELECT first_name, last_name, email, role, created_at 
-      FROM users 
-      ORDER BY created_at DESC 
-      LIMIT 5
-    `)
+    const recentUsers = await prisma.user.findMany({
+      select: {
+        profile: {
+          select: {
+            firstName: true,
+            lastName: true
+          }
+        },
+        email: true,
+        role: true,
+        createdAt: true
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 5
+    })
 
-    const [recentProducts] = await db.execute(`
-      SELECT p.name, p.price, u.first_name, u.last_name, p.created_at 
-      FROM products p 
-      JOIN users u ON p.vendor_id = u.id 
-      ORDER BY p.created_at DESC 
-      LIMIT 5
-    `)
+    const recentProducts = await prisma.product.findMany({
+      select: {
+        name: true,
+        price: true,
+        vendor: {
+          select: {
+            profile: {
+              select: {
+                firstName: true,
+                lastName: true
+              }
+            }
+          }
+        },
+        createdAt: true
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 5
+    })
 
-    const [recentSubscriptions] = await db.execute(`
-      SELECT s.plan_type, s.amount, s.status, u.first_name, u.last_name, s.created_at 
-      FROM subscriptions s 
-      JOIN users u ON s.user_id = u.id 
-      ORDER BY s.created_at DESC 
-      LIMIT 5
-    `)
+    const recentSubscriptions = await prisma.subscription.findMany({
+      select: {
+        plan: true,
+        amount: true,
+        status: true,
+        user: {
+          select: {
+            profile: {
+              select: {
+                firstName: true,
+                lastName: true
+              }
+            }
+          }
+        },
+        createdAt: true
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 5
+    })
 
     res.json({
       stats: {
         users: {
-          total: (totalUsers as any)[0]?.total || 0,
-          active: (activeUsers as any)[0]?.total || 0,
-          vendors: (vendors as any)[0]?.total || 0
+          total: totalUsers,
+          active: activeUsers,
+          vendors: vendors
         },
         products: {
-          total: (totalProducts as any)[0]?.total || 0,
-          active: (activeProducts as any)[0]?.total || 0,
-          featured: (featuredProducts as any)[0]?.total || 0
+          total: totalProducts,
+          active: activeProducts,
+          featured: featuredProducts
         },
         subscriptions: {
-          total: (totalSubscriptions as any)[0]?.total || 0,
-          active: (activeSubscriptions as any)[0]?.total || 0,
-          pending: (pendingSubscriptions as any)[0]?.total || 0
+          total: totalSubscriptions,
+          active: activeSubscriptions,
+          pending: pendingSubscriptions
         },
         revenue: {
-          thisMonth: (totalRevenue as any)[0]?.total || 0
+          thisMonth: totalRevenue._sum.amount || 0
         }
       },
       recentActivities: {
-        users: Array.isArray(recentUsers) ? recentUsers : [],
-        products: Array.isArray(recentProducts) ? recentProducts : [],
-        subscriptions: Array.isArray(recentSubscriptions) ? recentSubscriptions : []
+        users: recentUsers.map((user: any) => ({
+          firstName: user.profile?.firstName,
+          lastName: user.profile?.lastName,
+          email: user.email,
+          role: user.role,
+          createdAt: user.createdAt
+        })),
+        products: recentProducts.map((product: any) => ({
+          name: product.name,
+          price: product.price,
+          firstName: product.vendor?.profile?.firstName,
+          lastName: product.vendor?.profile?.lastName,
+          createdAt: product.createdAt
+        })),
+        subscriptions: recentSubscriptions.map((sub: any) => ({
+          plan: sub.plan,
+          amount: sub.amount,
+          status: sub.status,
+          firstName: sub.user?.profile?.firstName,
+          lastName: sub.user?.profile?.lastName,
+          createdAt: sub.createdAt
+        }))
       }
     })
 
@@ -92,42 +161,30 @@ router.get('/dashboard', authenticateToken, requireAdmin, async (req, res) => {
 })
 
 // Get all contact messages
-router.get('/contact-messages', authenticateToken, requireAdmin, async (req, res) => {
+router.get('/contact-messages', authenticateToken, requireAdmin, async (req: any, res: any) => {
   try {
     const { status, page = 1, limit = 20 } = req.query
-    const db = getDB()
 
-    let query = 'SELECT * FROM contact_messages WHERE 1=1'
-    const params: any[] = []
-
+    // Note: This assumes a ContactMessage model exists in Prisma schema
+    // If not, you'll need to add it or use raw SQL with prisma.$queryRaw
+    const whereClause: any = {}
     if (status) {
-      query += ' AND status = ?'
-      params.push(status)
+      whereClause.status = status
     }
 
-    query += ' ORDER BY created_at DESC'
+    const messages = await prisma.contactMessage.findMany({
+      where: whereClause,
+      orderBy: { createdAt: 'desc' },
+      skip: (Number(page) - 1) * Number(limit),
+      take: Number(limit)
+    })
 
-    // Add pagination
-    const offset = (Number(page) - 1) * Number(limit)
-    query += ' LIMIT ? OFFSET ?'
-    params.push(Number(limit), offset)
-
-    const [messages] = await db.execute(query, params)
-
-    // Get total count
-    let countQuery = 'SELECT COUNT(*) as total FROM contact_messages WHERE 1=1'
-    const countParams: any[] = []
-
-    if (status) {
-      countQuery += ' AND status = ?'
-      countParams.push(status)
-    }
-
-    const [countResult] = await db.execute(countQuery, countParams)
-    const total = (countResult as any)[0]?.total || 0
+    const total = await prisma.contactMessage.count({
+      where: whereClause
+    })
 
     res.json({
-      messages: Array.isArray(messages) ? messages : [],
+      messages,
       pagination: {
         page: Number(page),
         limit: Number(limit),
@@ -147,11 +204,10 @@ router.get('/contact-messages', authenticateToken, requireAdmin, async (req, res
 // Update message status
 router.patch('/contact-messages/:id/status', [
   requireAdmin
-], authenticateToken, async (req, res) => {
+], authenticateToken, async (req: any, res: any) => {
   try {
     const { id } = req.params
     const { status } = req.body
-    const db = getDB()
 
     if (!['new', 'read', 'replied'].includes(status)) {
       return res.status(400).json({
@@ -159,10 +215,10 @@ router.patch('/contact-messages/:id/status', [
       })
     }
 
-    await db.execute(
-      'UPDATE contact_messages SET status = ? WHERE id = ?',
-      [status, id]
-    )
+    await prisma.contactMessage.update({
+      where: { id },
+      data: { status }
+    })
 
     res.json({
       message: 'Statut du message mis à jour avec succès'
