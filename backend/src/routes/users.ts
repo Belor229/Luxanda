@@ -1,39 +1,43 @@
-import express from 'express'
+import express, { Request, Response } from 'express'
 import { body, validationResult } from 'express-validator'
-import { getDB } from '../config/database'
+import { prisma } from '../config/prisma'
 import { authenticateToken, requireAdmin } from '../middlewares/auth'
 
 const router = express.Router()
 
 // Get user profile
-router.get('/profile', authenticateToken, async (req, res) => {
+router.get('/profile', authenticateToken, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.userId
-    const db = getDB()
 
-    const [users] = await db.execute(
-      'SELECT id, email, first_name, last_name, phone, role, created_at FROM users WHERE id = ?',
-      [userId]
-    )
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        first_name: true,
+        last_name: true,
+        phone: true,
+        role: true,
+        created_at: true
+      }
+    })
 
-    if (!Array.isArray(users) || users.length === 0) {
+    if (!user) {
       return res.status(404).json({
         error: 'Utilisateur non trouvé'
       })
     }
 
-    const user = users[0] as any
-
     // Get user rewards if exists
-    const [rewards] = await db.execute(
-      'SELECT * FROM rewards WHERE user_id = ?',
-      [userId]
-    )
+    const rewards = await prisma.reward.findUnique({
+      where: { user_id: userId }
+    })
 
     res.json({
       user: {
         ...user,
-        rewards: Array.isArray(rewards) && rewards.length > 0 ? rewards[0] : null
+        rewards
       }
     })
 
@@ -50,7 +54,7 @@ router.put('/profile', [
   body('firstName').optional().trim().isLength({ min: 2 }),
   body('lastName').optional().trim().isLength({ min: 2 }),
   body('phone').optional().isMobilePhone('fr-FR')
-], authenticateToken, async (req, res) => {
+], authenticateToken, async (req: Request, res: Response) => {
   try {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
@@ -62,35 +66,25 @@ router.put('/profile', [
 
     const userId = (req as any).user.userId
     const { firstName, lastName, phone } = req.body
-    const db = getDB()
 
-    const updateFields = []
-    const values = []
+    const updateData: any = {}
 
-    if (firstName) {
-      updateFields.push('first_name = ?')
-      values.push(firstName)
-    }
-    if (lastName) {
-      updateFields.push('last_name = ?')
-      values.push(lastName)
-    }
-    if (phone) {
-      updateFields.push('phone = ?')
-      values.push(phone)
-    }
+    if (firstName) updateData.first_name = firstName
+    if (lastName) updateData.last_name = lastName
+    if (phone) updateData.phone = phone
 
-    if (updateFields.length === 0) {
+    if (Object.keys(updateData).length === 0) {
       return res.status(400).json({
         error: 'Aucune donnée à mettre à jour'
       })
     }
 
-    values.push(userId)
-    await db.execute(
-      `UPDATE users SET ${updateFields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-      values
-    )
+    updateData.updated_at = new Date()
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: updateData
+    })
 
     res.json({
       message: 'Profil mis à jour avec succès'
@@ -105,52 +99,49 @@ router.put('/profile', [
 })
 
 // Get all users (Admin only)
-router.get('/', authenticateToken, requireAdmin, async (req, res) => {
+router.get('/', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
   try {
     const { role, page = 1, limit = 20, search } = req.query
-    const db = getDB()
 
-    let query = 'SELECT id, email, first_name, last_name, phone, role, is_active, created_at FROM users WHERE 1=1'
-    const params: any[] = []
+    const where: any = {}
 
     if (role) {
-      query += ' AND role = ?'
-      params.push(role)
+      where.role = role
     }
 
     if (search) {
-      query += ' AND (first_name LIKE ? OR last_name LIKE ? OR email LIKE ?)'
-      params.push(`%${search}%`, `%${search}%`, `%${search}%`)
+      where.OR = [
+        { first_name: { contains: search } },
+        { last_name: { contains: search } },
+        { email: { contains: search } }
+      ]
     }
 
-    query += ' ORDER BY created_at DESC'
+    const skip = (Number(page) - 1) * Number(limit)
+    const take = Number(limit)
 
-    // Add pagination
-    const offset = (Number(page) - 1) * Number(limit)
-    query += ' LIMIT ? OFFSET ?'
-    params.push(Number(limit), offset)
-
-    const [users] = await db.execute(query, params)
-
-    // Get total count
-    let countQuery = 'SELECT COUNT(*) as total FROM users WHERE 1=1'
-    const countParams: any[] = []
-
-    if (role) {
-      countQuery += ' AND role = ?'
-      countParams.push(role)
-    }
-
-    if (search) {
-      countQuery += ' AND (first_name LIKE ? OR last_name LIKE ? OR email LIKE ?)'
-      countParams.push(`%${search}%`, `%${search}%`, `%${search}%`)
-    }
-
-    const [countResult] = await db.execute(countQuery, countParams)
-    const total = (countResult as any)[0]?.total || 0
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        select: {
+          id: true,
+          email: true,
+          first_name: true,
+          last_name: true,
+          phone: true,
+          role: true,
+          is_active: true,
+          created_at: true
+        },
+        orderBy: { created_at: 'desc' },
+        skip,
+        take
+      }),
+      prisma.user.count({ where })
+    ])
 
     res.json({
-      users: Array.isArray(users) ? users : [],
+      users,
       pagination: {
         page: Number(page),
         limit: Number(limit),
@@ -170,7 +161,7 @@ router.get('/', authenticateToken, requireAdmin, async (req, res) => {
 // Update user status (Admin only)
 router.patch('/:id/status', [
   body('isActive').isBoolean()
-], authenticateToken, requireAdmin, async (req, res) => {
+], authenticateToken, requireAdmin, async (req: Request, res: Response) => {
   try {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
@@ -182,12 +173,14 @@ router.patch('/:id/status', [
 
     const { id } = req.params
     const { isActive } = req.body
-    const db = getDB()
 
-    await db.execute(
-      'UPDATE users SET is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-      [isActive, id]
-    )
+    await prisma.user.update({
+      where: { id: Number(id) },
+      data: {
+        is_active: isActive,
+        updated_at: new Date()
+      }
+    })
 
     res.json({
       message: 'Statut de l\'utilisateur mis à jour avec succès'
@@ -202,38 +195,44 @@ router.patch('/:id/status', [
 })
 
 // Get user statistics (Admin only)
-router.get('/stats', authenticateToken, requireAdmin, async (req, res) => {
+router.get('/stats', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
   try {
-    const db = getDB()
-
     // Total users
-    const [totalUsers] = await db.execute('SELECT COUNT(*) as total FROM users')
-    const total = (totalUsers as any)[0]?.total || 0
+    const total = await prisma.user.count()
 
     // Active users
-    const [activeUsers] = await db.execute('SELECT COUNT(*) as total FROM users WHERE is_active = true')
-    const active = (activeUsers as any)[0]?.total || 0
+    const active = await prisma.user.count({
+      where: { is_active: true }
+    })
 
     // Users by role
-    const [usersByRole] = await db.execute(`
-      SELECT role, COUNT(*) as count 
-      FROM users 
-      GROUP BY role
-    `)
+    const usersByRole = await prisma.user.groupBy({
+      by: ['role'],
+      _count: {
+        role: true
+      }
+    })
 
     // New users this month
-    const [newUsers] = await db.execute(`
-      SELECT COUNT(*) as total 
-      FROM users 
-      WHERE created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
-    `)
-    const newThisMonth = (newUsers as any)[0]?.total || 0
+    const oneMonthAgo = new Date()
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1)
+
+    const newThisMonth = await prisma.user.count({
+      where: {
+        created_at: {
+          gte: oneMonthAgo
+        }
+      }
+    })
 
     res.json({
       totalUsers: total,
       activeUsers: active,
       inactiveUsers: total - active,
-      usersByRole: Array.isArray(usersByRole) ? usersByRole : [],
+      usersByRole: usersByRole.map(item => ({
+        role: item.role,
+        count: item._count.role
+      })),
       newUsersThisMonth: newThisMonth
     })
 

@@ -1,6 +1,6 @@
-import express from 'express'
+import express, { Request, Response } from 'express'
 import { body, validationResult } from 'express-validator'
-import { getDB } from '../config/database'
+import { prisma } from '../config/prisma'
 import { authenticateToken } from '../middlewares/auth'
 import { AuthRequest } from '../types'
 
@@ -29,7 +29,7 @@ const SUBSCRIPTION_PLANS = {
 }
 
 // Get subscription plans
-router.get('/plans', (req: any, res: any) => {
+router.get('/plans', (req: Request, res: Response): void => {
   res.json({
     plans: SUBSCRIPTION_PLANS
   })
@@ -39,7 +39,7 @@ router.get('/plans', (req: any, res: any) => {
 router.post('/create', [
   body('planType').isIn(['starter', 'pro', 'premium']),
   body('paymentMethod').isIn(['kkiapay'])
-], authenticateToken, async (req: AuthRequest, res: any) => {
+], authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
@@ -51,7 +51,6 @@ router.post('/create', [
 
     const { planType, paymentMethod } = (req as any).body
     const userId = (req as any).user.userId
-    const db = getDB()
 
     const plan = SUBSCRIPTION_PLANS[planType as keyof typeof SUBSCRIPTION_PLANS]
     if (!plan) {
@@ -61,32 +60,41 @@ router.post('/create', [
     }
 
     // Check if user already has an active subscription
-    const [existingSubs] = await db.execute(
-      'SELECT * FROM subscriptions WHERE user_id = ? AND status IN ("active", "pending")',
-      [userId]
-    )
+    const existingSubs = await prisma.subscription.findFirst({
+      where: {
+        user_id: userId,
+        status: {
+          in: ['active', 'pending']
+        }
+      }
+    })
 
-    if (Array.isArray(existingSubs) && existingSubs.length > 0) {
+    if (existingSubs) {
       return res.status(400).json({
         error: 'Vous avez déjà un abonnement actif ou en attente'
       })
     }
 
     // Create subscription
-    const [result] = await db.execute(
-      'INSERT INTO subscriptions (user_id, plan_type, amount, payment_method, status) VALUES (?, ?, ?, ?, "pending")',
-      [userId, planType, plan.price, paymentMethod]
-    )
+    const subscription = await prisma.subscription.create({
+      data: {
+        user_id: userId,
+        plan_type: planType,
+        amount: plan.price,
+        payment_method: paymentMethod,
+        status: 'pending'
+      }
+    })
 
-    const subscriptionId = (result as any).insertId
+    const subscriptionId = subscription.id
 
     // Generate payment reference
     const paymentReference = `LUX${subscriptionId}${Date.now()}`
 
-    await db.execute(
-      'UPDATE subscriptions SET payment_reference = ? WHERE id = ?',
-      [paymentReference, subscriptionId]
-    )
+    await prisma.subscription.update({
+      where: { id: subscriptionId },
+      data: { payment_reference: paymentReference }
+    })
 
     res.json({
       message: 'Abonnement créé avec succès',
@@ -114,18 +122,17 @@ router.post('/create', [
 })
 
 // Get user subscriptions
-router.get('/my-subscriptions', authenticateToken, async (req: AuthRequest, res: any) => {
+router.get('/my-subscriptions', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const userId = (req as any).user.userId
-    const db = getDB()
 
-    const [subscriptions] = await db.execute(
-      'SELECT * FROM subscriptions WHERE user_id = ? ORDER BY created_at DESC',
-      [userId]
-    )
+    const subscriptions = await prisma.subscription.findMany({
+      where: { user_id: userId },
+      orderBy: { created_at: 'desc' }
+    })
 
     res.json({
-      subscriptions: Array.isArray(subscriptions) ? subscriptions : []
+      subscriptions
     })
 
   } catch (error) {
@@ -137,7 +144,7 @@ router.get('/my-subscriptions', authenticateToken, async (req: AuthRequest, res:
 })
 
 // Admin: Get all subscriptions
-router.get('/all', authenticateToken, async (req: AuthRequest, res: any) => {
+router.get('/all', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const userRole = (req as any).user.role
     if (userRole !== 'admin') {
@@ -146,16 +153,21 @@ router.get('/all', authenticateToken, async (req: AuthRequest, res: any) => {
       })
     }
 
-    const db = getDB()
-    const [subscriptions] = await db.execute(`
-      SELECT s.*, u.first_name, u.last_name, u.email 
-      FROM subscriptions s 
-      JOIN users u ON s.user_id = u.id 
-      ORDER BY s.created_at DESC
-    `)
+    const subscriptions = await prisma.subscription.findMany({
+      include: {
+        user: {
+          select: {
+            first_name: true,
+            last_name: true,
+            email: true
+          }
+        }
+      },
+      orderBy: { created_at: 'desc' }
+    })
 
     res.json({
-      subscriptions: Array.isArray(subscriptions) ? subscriptions : []
+      subscriptions
     })
 
   } catch (error) {
@@ -169,7 +181,7 @@ router.get('/all', authenticateToken, async (req: AuthRequest, res: any) => {
 // Admin: Update subscription status
 router.patch('/:id/status', [
   body('status').isIn(['pending', 'active', 'expired', 'cancelled'])
-], authenticateToken, async (req: AuthRequest, res: any) => {
+], authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const userRole = (req as any).user.role
     if (userRole !== 'admin') {
@@ -188,29 +200,35 @@ router.patch('/:id/status', [
 
     const { id } = (req as any).params
     const { status } = (req as any).body
-    const db = getDB()
 
     // Update subscription status
-    await db.execute(
-      'UPDATE subscriptions SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-      [status, id]
-    )
+    await prisma.subscription.update({
+      where: { id: Number(id) },
+      data: {
+        status,
+        updated_at: new Date()
+      }
+    })
 
     // If activating subscription, set start and end dates
     if (status === 'active') {
-      const planType = await db.execute(
-        'SELECT plan_type FROM subscriptions WHERE id = ?',
-        [id]
-      )
-      
-      if (Array.isArray(planType) && planType.length > 0) {
-        const plan = planType[0] as any
-        const duration = SUBSCRIPTION_PLANS[plan.plan_type as keyof typeof SUBSCRIPTION_PLANS]?.duration || 30
-        
-        await db.execute(
-          'UPDATE subscriptions SET start_date = CURRENT_TIMESTAMP, end_date = DATE_ADD(CURRENT_TIMESTAMP, INTERVAL ? DAY) WHERE id = ?',
-          [duration, id]
-        )
+      const subscription = await prisma.subscription.findUnique({
+        where: { id: Number(id) }
+      })
+
+      if (subscription) {
+        const duration = SUBSCRIPTION_PLANS[subscription.plan_type as keyof typeof SUBSCRIPTION_PLANS]?.duration || 30
+        const startDate = new Date()
+        const endDate = new Date()
+        endDate.setDate(startDate.getDate() + duration)
+
+        await prisma.subscription.update({
+          where: { id: Number(id) },
+          data: {
+            start_date: startDate,
+            end_date: endDate
+          }
+        })
       }
     }
 
@@ -232,7 +250,7 @@ router.post('/confirm-payment', [
   body('amount').isNumeric(),
   body('reference').optional(),
   body('paymentMethod').isIn(['kkiapay'])
-], authenticateToken, async (req: AuthRequest, res: any) => {
+], authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
@@ -244,27 +262,37 @@ router.post('/confirm-payment', [
 
     const { transactionId, amount, reference, paymentMethod } = (req as any).body
     const userId = (req as any).user.userId
-    const db = getDB()
 
     // Trouver l'abonnement en attente
-    const [subscriptions] = await db.execute(
-      'SELECT * FROM subscriptions WHERE user_id = ? AND status = "pending" ORDER BY created_at DESC LIMIT 1',
-      [userId]
-    )
+    const subscription = await prisma.subscription.findFirst({
+      where: {
+        user_id: userId,
+        status: 'pending'
+      },
+      orderBy: { created_at: 'desc' }
+    })
 
-    if (!Array.isArray(subscriptions) || subscriptions.length === 0) {
+    if (!subscription) {
       return res.status(404).json({
         error: 'Aucun abonnement en attente trouvé'
       })
     }
 
-    const subscription = subscriptions[0] as any
-
     // Mettre à jour l'abonnement
-    await db.execute(
-      'UPDATE subscriptions SET status = "active", payment_reference = ?, start_date = CURRENT_TIMESTAMP, end_date = DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 30 DAY) WHERE id = ?',
-      [transactionId, subscription.id]
-    )
+    const duration = SUBSCRIPTION_PLANS[subscription.plan_type as keyof typeof SUBSCRIPTION_PLANS]?.duration || 30
+    const startDate = new Date()
+    const endDate = new Date()
+    endDate.setDate(startDate.getDate() + duration)
+
+    await prisma.subscription.update({
+      where: { id: subscription.id },
+      data: {
+        status: 'active',
+        payment_reference: transactionId,
+        start_date: startDate,
+        end_date: endDate
+      }
+    })
 
     res.json({
       message: 'Paiement confirmé avec succès',

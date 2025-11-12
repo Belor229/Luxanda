@@ -1,6 +1,6 @@
-import express from 'express'
+import express, { Request, Response } from 'express'
 import { body, validationResult } from 'express-validator'
-import { getDB } from '../config/database'
+import { prisma } from '../config/prisma'
 import nodemailer from 'nodemailer'
 
 const router = express.Router()
@@ -11,7 +11,7 @@ router.post('/send', [
   body('email').isEmail().normalizeEmail(),
   body('subject').optional().trim().isLength({ max: 255 }),
   body('message').trim().isLength({ min: 10 })
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
@@ -22,17 +22,20 @@ router.post('/send', [
     }
 
     const { name, email, subject, message } = req.body
-    const db = getDB()
 
     // Save to database
-    await db.execute(
-      'INSERT INTO contact_messages (name, email, subject, message) VALUES (?, ?, ?, ?)',
-      [name, email, subject || 'Contact via site web', message]
-    )
+    await prisma.contactMessage.create({
+      data: {
+        name,
+        email,
+        subject: subject || 'Contact via site web',
+        message
+      }
+    })
 
     // Send email notification
     try {
-      const transporter = nodemailer.createTransporter({
+      const transporter = nodemailer.createTransport({
         host: process.env.SMTP_HOST || 'smtp.gmail.com',
         port: parseInt(process.env.SMTP_PORT || '587'),
         secure: false,
@@ -77,15 +80,14 @@ router.post('/send', [
 })
 
 // Get contact messages (Admin only)
-router.get('/messages', async (req, res) => {
+router.get('/messages', async (req: Request, res: Response) => {
   try {
-    const db = getDB()
-    const [messages] = await db.execute(
-      'SELECT * FROM contact_messages ORDER BY created_at DESC'
-    )
+    const messages = await prisma.contactMessage.findMany({
+      orderBy: { created_at: 'desc' }
+    })
 
     res.json({
-      messages: Array.isArray(messages) ? messages : []
+      messages
     })
 
   } catch (error) {

@@ -1,11 +1,11 @@
-import express from 'express'
+import express, { Request, Response } from 'express'
 import { prisma } from '../config/prisma'
 import { authenticateToken, requireAdmin } from '../middlewares/auth'
 
 const router = express.Router()
 
 // Admin dashboard stats
-router.get('/dashboard', authenticateToken, requireAdmin, async (req, res) => {
+router.get('/dashboard', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
   try {
     // Users stats
     const totalUsers = await prisma.user.count()
@@ -161,7 +161,7 @@ router.get('/dashboard', authenticateToken, requireAdmin, async (req, res) => {
 })
 
 // Get all contact messages
-router.get('/contact-messages', authenticateToken, requireAdmin, async (req: any, res: any) => {
+router.get('/contact-messages', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
   try {
     const { status, page = 1, limit = 20 } = req.query
 
@@ -204,7 +204,7 @@ router.get('/contact-messages', authenticateToken, requireAdmin, async (req: any
 // Update message status
 router.patch('/contact-messages/:id/status', [
   requireAdmin
-], authenticateToken, async (req: any, res: any) => {
+], authenticateToken, async (req: Request, res: Response) => {
   try {
     const { id } = req.params
     const { status } = req.body
@@ -233,7 +233,7 @@ router.patch('/contact-messages/:id/status', [
 })
 
 // Get system logs (placeholder)
-router.get('/logs', authenticateToken, requireAdmin, async (req, res) => {
+router.get('/logs', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
   try {
     // This would typically read from log files or a logging service
     res.json({
