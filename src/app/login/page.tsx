@@ -41,17 +41,16 @@ export default function LoginPage() {
 
       if (response.ok) {
         // Store token in localStorage
-        localStorage.setItem('token', data.token)
+        if (data.token) {
+          localStorage.setItem('token', data.token)
+        }
         localStorage.setItem('user', JSON.stringify(data.user))
         
-        // Redirect based on user role
-        if (data.user.role === 'admin') {
-          router.push('/admin')
-        } else if (data.user.role === 'vendor') {
-          router.push('/vendor/dashboard')
-        } else {
-          router.push('/')
-        }
+        // Redirect based on user role or redirectPath
+        const redirectPath = data.redirectPath || 
+          (data.user.role === 'ADMIN' || data.user.role === 'admin' ? '/admin' :
+           data.user.role === 'VENDOR' || data.user.role === 'vendor' ? '/vendor/dashboard' : '/')
+        router.push(redirectPath)
       } else {
         setError(data.error || 'Erreur de connexion')
       }

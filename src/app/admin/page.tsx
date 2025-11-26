@@ -62,7 +62,8 @@ export default function AdminPage() {
     }
 
     const userData = JSON.parse(user)
-    if (userData.role !== 'admin') {
+    const userRole = userData.role?.toUpperCase()
+    if (userRole !== 'ADMIN' && userRole !== 'admin') {
       router.push('/')
       return
     }

@@ -70,10 +70,14 @@ router.get('/dashboard', authenticateToken, requireAdmin, async (req: Request, r
         price: true,
         vendor: {
           select: {
-            profile: {
+            user: {
               select: {
-                firstName: true,
-                lastName: true
+                profile: {
+                  select: {
+                    firstName: true,
+                    lastName: true
+                  }
+                }
               }
             }
           }
@@ -137,8 +141,8 @@ router.get('/dashboard', authenticateToken, requireAdmin, async (req: Request, r
         products: recentProducts.map((product: any) => ({
           name: product.name,
           price: product.price,
-          firstName: product.vendor?.profile?.firstName,
-          lastName: product.vendor?.profile?.lastName,
+          firstName: product.vendor?.user?.profile?.firstName,
+          lastName: product.vendor?.user?.profile?.lastName,
           createdAt: product.createdAt
         })),
         subscriptions: recentSubscriptions.map((sub: any) => ({

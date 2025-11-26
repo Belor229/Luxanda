@@ -82,7 +82,9 @@ export default function RegisterPage() {
       if (response.ok) {
         setSuccess(true)
         // Store token in localStorage
-        localStorage.setItem('token', data.token)
+        if (data.token) {
+          localStorage.setItem('token', data.token)
+        }
         localStorage.setItem('user', JSON.stringify(data.user))
         
         // Create referral if referrer exists
@@ -94,7 +96,7 @@ export default function RegisterPage() {
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({
-                referrer_id: parseInt(referrerId),
+                referrer_id: referrerId,
                 referred_id: data.user.id,
                 commission_rate: 30.00
               })
@@ -106,13 +108,10 @@ export default function RegisterPage() {
         
         // Redirect after 2 seconds
         setTimeout(() => {
-          if (data.user.role === 'admin') {
-            router.push('/admin')
-          } else if (data.user.role === 'vendor') {
-            router.push('/vendor/dashboard')
-          } else {
-            router.push('/')
-          }
+          const redirectPath = data.redirectPath || 
+            (data.user.role === 'ADMIN' || data.user.role === 'admin' ? '/admin' :
+             data.user.role === 'VENDOR' || data.user.role === 'vendor' ? '/vendor/dashboard' : '/')
+          router.push(redirectPath)
         }, 2000)
       } else {
         setError(data.error || 'Erreur lors de la création du compte')
