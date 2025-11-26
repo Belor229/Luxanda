@@ -229,10 +229,10 @@ router.get('/stats', authenticateToken, requireAdmin, async (req: Request, res: 
       totalUsers: total,
       activeUsers: active,
       inactiveUsers: total - active,
-      usersByRole: usersByRole.map(item => ({
-        role: item.role,
-        count: item._count.role
-      })),
+    usersByRole: usersByRole.map((item: { role: string; _count: { role: number } }) => ({
+      role: item.role,
+      count: item._count.role
+    })),
       newUsersThisMonth: newThisMonth
     })
 
