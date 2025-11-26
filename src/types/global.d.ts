@@ -123,7 +123,7 @@ declare module 'react' {
     ...children: ReactNode[]
   ): ReactElement<P>
   export function isValidElement(object: any): object is ReactElement
-  export function Children: {
+  export const Children: {
     map<T, C>(children: C | C[], fn: (child: C, index: number) => T): T[]
     forEach<C>(children: C | C[], fn: (child: C, index: number) => void): void
     count(children: any): number

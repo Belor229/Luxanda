@@ -83,7 +83,7 @@ router.post('/send', [
 router.get('/messages', async (req: Request, res: Response) => {
   try {
     const messages = await prisma.contactMessage.findMany({
-      orderBy: { created_at: 'desc' }
+      orderBy: { createdAt: 'desc' }
     })
 
     res.json({
