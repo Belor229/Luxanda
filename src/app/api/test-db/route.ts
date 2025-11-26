@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma'
 
 export async function GET(request: NextRequest) {
   try {
@@ -63,7 +61,8 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    await prisma.$disconnect()
+    // Note: Don't disconnect in serverless environment (Vercel)
+    // Prisma manages connections automatically in serverless
 
     return NextResponse.json({
       success: true,
@@ -95,7 +94,7 @@ export async function GET(request: NextRequest) {
           name: productWithRelations.name,
           vendor: {
             id: productWithRelations.vendor.id,
-            name: productWithRelations.vendor.name
+            storeName: productWithRelations.vendor.storeName
           },
           category: {
             id: productWithRelations.category.id,
@@ -109,7 +108,8 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Database test error:', error)
-    await prisma.$disconnect()
+    // Note: Don't disconnect in serverless environment (Vercel)
+    // Prisma manages connections automatically in serverless
 
     return NextResponse.json({
       success: false,
