@@ -10,10 +10,22 @@ const nextConfig = {
         protocol: 'http',
         hostname: 'localhost',
       },
+      {
+        protocol: 'https',
+        hostname: '**.supabase.co',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.supabase.in',
+      },
     ],
   },
   env: {
     CUSTOM_KEY: process.env.CUSTOM_KEY || 'default_value',
+  },
+  // Optimisations pour Vercel
+  experimental: {
+    optimizePackageImports: ['lucide-react'],
   },
 }
 

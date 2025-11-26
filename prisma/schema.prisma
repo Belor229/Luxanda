@@ -306,12 +306,13 @@ model Subscription {
 }
 
 model ContactMessage {
-  id        String   @id @default(cuid())
+  id        String            @id @default(cuid())
   name      String
   email     String
   subject   String?
   message   String
-  createdAt DateTime @default(now()) @map("created_at")
+  status    ContactMessageStatus @default(NEW)
+  createdAt DateTime          @default(now()) @map("created_at")
 
   @@map("contact_messages")
 }
@@ -387,5 +388,11 @@ enum PaymentStatus {
 enum AddressType {
   SHIPPING
   BILLING
+}
+
+enum ContactMessageStatus {
+  NEW
+  READ
+  REPLIED
 }
 

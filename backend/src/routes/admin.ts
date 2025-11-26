@@ -169,11 +169,21 @@ router.get('/contact-messages', authenticateToken, requireAdmin, async (req: Req
   try {
     const { status, page = 1, limit = 20 } = req.query
 
-    // Note: This assumes a ContactMessage model exists in Prisma schema
-    // If not, you'll need to add it or use raw SQL with prisma.$queryRaw
     const whereClause: any = {}
     if (status) {
-      whereClause.status = status
+      // Map string status to enum value
+      const statusMap: Record<string, 'NEW' | 'READ' | 'REPLIED'> = {
+        'new': 'NEW',
+        'read': 'READ',
+        'replied': 'REPLIED',
+        'NEW': 'NEW',
+        'READ': 'READ',
+        'REPLIED': 'REPLIED'
+      }
+      const statusEnum = statusMap[String(status).toUpperCase()]
+      if (statusEnum) {
+        whereClause.status = statusEnum
+      }
     }
 
     const messages = await prisma.contactMessage.findMany({
@@ -213,15 +223,26 @@ router.patch('/contact-messages/:id/status', [
     const { id } = req.params
     const { status } = req.body
 
-    if (!['new', 'read', 'replied'].includes(status)) {
+    // Map string status to enum value
+    const statusMap: Record<string, 'NEW' | 'READ' | 'REPLIED'> = {
+      'new': 'NEW',
+      'read': 'READ',
+      'replied': 'REPLIED',
+      'NEW': 'NEW',
+      'READ': 'READ',
+      'REPLIED': 'REPLIED'
+    }
+
+    const statusEnum = statusMap[String(status).toUpperCase()]
+    if (!statusEnum) {
       return res.status(400).json({
-        error: 'Statut invalide'
+        error: 'Statut invalide. Valeurs acceptées: new, read, replied'
       })
     }
 
     await prisma.contactMessage.update({
       where: { id },
-      data: { status }
+      data: { status: statusEnum }
     })
 
     res.json({
