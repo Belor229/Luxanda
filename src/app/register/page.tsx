@@ -21,7 +21,7 @@ export default function RegisterPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const [referrerId, setReferrerId] = useState<string | null>(null)
-  
+
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -86,7 +86,7 @@ export default function RegisterPage() {
           localStorage.setItem('token', data.token)
         }
         localStorage.setItem('user', JSON.stringify(data.user))
-        
+
         // Create referral if referrer exists
         if (referrerId && data.user.id) {
           try {
@@ -105,12 +105,12 @@ export default function RegisterPage() {
             console.error('Referral creation error:', error)
           }
         }
-        
+
         // Redirect after 2 seconds
         setTimeout(() => {
-          const redirectPath = data.redirectPath || 
+          const redirectPath = data.redirectPath ||
             (data.user.role === 'ADMIN' || data.user.role === 'admin' ? '/admin' :
-             data.user.role === 'VENDOR' || data.user.role === 'vendor' ? '/vendor/dashboard' : '/')
+              data.user.role === 'VENDOR' || data.user.role === 'vendor' ? '/vendor/dashboard' : '/')
           router.push(redirectPath)
         }, 2000)
       } else {
@@ -242,7 +242,7 @@ export default function RegisterPage() {
                     value={formData.phone}
                     onChange={handleChange}
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-orange focus:border-transparent"
-                    placeholder="+229 XX XX XX XX"
+                    placeholder="+229 01 41 75 75 59"
                   />
                 </div>
               </div>

@@ -8,10 +8,11 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   email     String   @unique
   name      String?
   password  String
@@ -36,7 +37,7 @@ model User {
 }
 
 model UserProfile {
-  id          String    @id @default(cuid())
+  id          String    @id @default(uuid())
   userId      String    @unique
   firstName   String?
   lastName    String?
@@ -54,7 +55,7 @@ model UserProfile {
 }
 
 model Vendor {
-  id          String       @id @default(cuid())
+  id          String       @id @default(uuid())
   userId      String       @unique
   storeName   String
   description String?
@@ -72,7 +73,7 @@ model Vendor {
 }
 
 model Affiliate {
-  id         String          @id @default(cuid())
+  id         String          @id @default(uuid())
   userId     String          @unique
   code       String          @unique
   commission Float           @default(0.1)
@@ -87,7 +88,7 @@ model Affiliate {
 }
 
 model Product {
-  id           String        @id @default(cuid())
+  id           String        @id @default(uuid())
   vendorId     String
   name         String
   description  String?
@@ -118,7 +119,7 @@ model Product {
 }
 
 model ProductVariant {
-  id        String  @id @default(cuid())
+  id        String  @id @default(uuid())
   productId String
   name      String
   value     String
@@ -133,7 +134,7 @@ model ProductVariant {
 }
 
 model Category {
-  id          String   @id @default(cuid())
+  id          String   @id @default(uuid())
   name        String   @unique
   description String?
   image       String?
@@ -150,7 +151,7 @@ model Category {
 }
 
 model Order {
-  id            String        @id @default(cuid())
+  id            String        @id @default(uuid())
   userId        String
   status        OrderStatus   @default(PENDING)
   total         Float
@@ -174,7 +175,7 @@ model Order {
 }
 
 model OrderItem {
-  id        String @id @default(cuid())
+  id        String @id @default(uuid())
   orderId   String
   productId String
   quantity  Int
@@ -189,7 +190,7 @@ model OrderItem {
 }
 
 model Cart {
-  id     String @id @default(cuid())
+  id     String @id @default(uuid())
   userId String @unique
 
   // Relations
@@ -200,7 +201,7 @@ model Cart {
 }
 
 model CartItem {
-  id        String @id @default(cuid())
+  id        String @id @default(uuid())
   cartId    String
   productId String
   quantity  Int    @default(1)
@@ -213,7 +214,7 @@ model CartItem {
 }
 
 model Address {
-  id        String      @id @default(cuid())
+  id        String      @id @default(uuid())
   userId    String
   type      AddressType @default(SHIPPING)
   firstName String
@@ -238,7 +239,7 @@ model Address {
 }
 
 model Review {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   userId    String
   productId String
   rating    Int
@@ -256,7 +257,7 @@ model Review {
 }
 
 model Rewards {
-  id          String   @id @default(cuid())
+  id          String   @id @default(uuid())
   userId      String   @unique
   points      Int      @default(0)
   totalEarned Int      @default(0)
@@ -271,7 +272,7 @@ model Rewards {
 }
 
 model Referral {
-  id          String   @id @default(cuid())
+  id          String   @id @default(uuid())
   referrerId  String
   referredId  String
   commission  Float    @default(0)
@@ -288,7 +289,7 @@ model Referral {
 }
 
 model Subscription {
-  id           String           @id @default(cuid())
+  id           String           @id @default(uuid())
   userId       String
   plan         SubscriptionPlan
   amount       Float
@@ -385,7 +386,7 @@ enum ContactMessageStatus {
 }
 
 model ContactMessage {
-  id        String            @id @default(cuid())
+  id        String            @id @default(uuid())
   name      String
   email     String
   subject   String?

@@ -12,14 +12,9 @@ router.get('/profile', authenticateToken, async (req: Request, res: Response) =>
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        first_name: true,
-        last_name: true,
-        phone: true,
-        role: true,
-        created_at: true
+      include: {
+        profile: true,
+        rewards: true
       }
     })
 
@@ -29,15 +24,16 @@ router.get('/profile', authenticateToken, async (req: Request, res: Response) =>
       })
     }
 
-    // Get user rewards if exists
-    const rewards = await prisma.reward.findUnique({
-      where: { user_id: userId }
-    })
-
     res.json({
       user: {
-        ...user,
-        rewards
+        id: user.id,
+        email: user.email,
+        firstName: user.profile?.firstName,
+        lastName: user.profile?.lastName,
+        phone: user.profile?.phone,
+        role: user.role,
+        createdAt: user.createdAt,
+        rewards: user.rewards
       }
     })
 
@@ -53,7 +49,7 @@ router.get('/profile', authenticateToken, async (req: Request, res: Response) =>
 router.put('/profile', [
   body('firstName').optional().trim().isLength({ min: 2 }),
   body('lastName').optional().trim().isLength({ min: 2 }),
-  body('phone').optional().isMobilePhone('fr-FR')
+  body('phone').optional().isString()
 ], authenticateToken, async (req: Request, res: Response) => {
   try {
     const errors = validationResult(req)
@@ -68,9 +64,8 @@ router.put('/profile', [
     const { firstName, lastName, phone } = req.body
 
     const updateData: any = {}
-
-    if (firstName) updateData.first_name = firstName
-    if (lastName) updateData.last_name = lastName
+    if (firstName) updateData.firstName = firstName
+    if (lastName) updateData.lastName = lastName
     if (phone) updateData.phone = phone
 
     if (Object.keys(updateData).length === 0) {
@@ -79,11 +74,13 @@ router.put('/profile', [
       })
     }
 
-    updateData.updated_at = new Date()
-
-    await prisma.user.update({
-      where: { id: userId },
-      data: updateData
+    await prisma.userProfile.upsert({
+      where: { userId },
+      update: updateData,
+      create: {
+        userId,
+        ...updateData
+      }
     })
 
     res.json({
@@ -106,14 +103,14 @@ router.get('/', authenticateToken, requireAdmin, async (req: Request, res: Respo
     const where: any = {}
 
     if (role) {
-      where.role = role
+      where.role = (role as string).toUpperCase()
     }
 
     if (search) {
       where.OR = [
-        { first_name: { contains: search } },
-        { last_name: { contains: search } },
-        { email: { contains: search } }
+        { email: { contains: search as string, mode: 'insensitive' } },
+        { profile: { firstName: { contains: search as string, mode: 'insensitive' } } },
+        { profile: { lastName: { contains: search as string, mode: 'insensitive' } } }
       ]
     }
 
@@ -126,14 +123,17 @@ router.get('/', authenticateToken, requireAdmin, async (req: Request, res: Respo
         select: {
           id: true,
           email: true,
-          first_name: true,
-          last_name: true,
-          phone: true,
           role: true,
-          is_active: true,
-          created_at: true
+          createdAt: true,
+          profile: {
+            select: {
+              firstName: true,
+              lastName: true,
+              phone: true
+            }
+          }
         },
-        orderBy: { created_at: 'desc' },
+        orderBy: { createdAt: 'desc' },
         skip,
         take
       }),
@@ -141,7 +141,15 @@ router.get('/', authenticateToken, requireAdmin, async (req: Request, res: Respo
     ])
 
     res.json({
-      users,
+      users: users.map((u: any) => ({
+        id: u.id,
+        email: u.email,
+        role: u.role,
+        createdAt: u.createdAt,
+        firstName: u.profile?.firstName,
+        lastName: u.profile?.lastName,
+        phone: u.profile?.phone
+      })),
       pagination: {
         page: Number(page),
         limit: Number(limit),
@@ -158,38 +166,23 @@ router.get('/', authenticateToken, requireAdmin, async (req: Request, res: Respo
   }
 })
 
-// Update user status (Admin only)
-router.patch('/:id/status', [
-  body('isActive').isBoolean()
-], authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+// Delete user (Admin only - logical delete not in schema, so we keep as example)
+router.delete('/:id', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
   try {
-    const errors = validationResult(req)
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        error: 'Données invalides',
-        details: errors.array()
-      })
-    }
-
     const { id } = req.params
-    const { isActive } = req.body
 
-    await prisma.user.update({
-      where: { id: Number(id) },
-      data: {
-        is_active: isActive,
-        updated_at: new Date()
-      }
+    await prisma.user.delete({
+      where: { id }
     })
 
     res.json({
-      message: 'Statut de l\'utilisateur mis à jour avec succès'
+      message: 'Utilisateur supprimé avec succès'
     })
 
   } catch (error) {
-    console.error('Update user status error:', error)
+    console.error('Delete user error:', error)
     res.status(500).json({
-      error: 'Erreur lors de la mise à jour du statut'
+      error: 'Erreur lors de la suppression de l\'utilisateur'
     })
   }
 })
@@ -199,11 +192,6 @@ router.get('/stats', authenticateToken, requireAdmin, async (req: Request, res: 
   try {
     // Total users
     const total = await prisma.user.count()
-
-    // Active users
-    const active = await prisma.user.count({
-      where: { is_active: true }
-    })
 
     // Users by role
     const usersByRole = await prisma.user.groupBy({
@@ -219,7 +207,7 @@ router.get('/stats', authenticateToken, requireAdmin, async (req: Request, res: 
 
     const newThisMonth = await prisma.user.count({
       where: {
-        created_at: {
+        createdAt: {
           gte: oneMonthAgo
         }
       }
@@ -227,12 +215,10 @@ router.get('/stats', authenticateToken, requireAdmin, async (req: Request, res: 
 
     res.json({
       totalUsers: total,
-      activeUsers: active,
-      inactiveUsers: total - active,
-    usersByRole: usersByRole.map((item: { role: string; _count: { role: number } }) => ({
-      role: item.role,
-      count: item._count.role
-    })),
+      usersByRole: usersByRole.map((item: any) => ({
+        role: item.role,
+        count: item._count.role
+      })),
       newUsersThisMonth: newThisMonth
     })
 

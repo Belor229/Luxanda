@@ -32,7 +32,7 @@ export const authenticateToken = (req: AuthRequest, res: Response, next: NextFun
 }
 
 export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction) => {
-  if (!req.user || req.user.role !== 'admin') {
+  if (!req.user || req.user.role !== 'ADMIN') {
     return res.status(403).json({
       error: 'Accès administrateur requis'
     })
@@ -41,7 +41,7 @@ export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction
 }
 
 export const requireVendor = (req: AuthRequest, res: Response, next: NextFunction) => {
-  if (!req.user || (req.user.role !== 'vendor' && req.user.role !== 'admin')) {
+  if (!req.user || (req.user.role !== 'VENDOR' && req.user.role !== 'ADMIN')) {
     return res.status(403).json({
       error: 'Accès vendeur requis'
     })

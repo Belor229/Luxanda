@@ -30,7 +30,7 @@ export default function Footer() {
             <h3 className="text-base sm:text-lg font-semibold mb-4 sm:mb-6 text-primary-orange">Support</h3>
             <ul className="space-y-2 sm:space-y-3">
               <li>
-                <Link href="/help" className="text-gray-300 hover:text-white transition-colors text-sm sm:text-base py-1 block">
+                <Link href="/contact" className="text-gray-300 hover:text-white transition-colors text-sm sm:text-base py-1 block">
                   Centre d'aide
                 </Link>
               </li>
@@ -45,8 +45,8 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/shipping" className="text-gray-300 hover:text-white transition-colors text-sm sm:text-base py-1 block">
-                  Livraison
+                <Link href="/products" className="text-gray-300 hover:text-white transition-colors text-sm sm:text-base py-1 block">
+                  Boutique
                 </Link>
               </li>
             </ul>
@@ -58,7 +58,7 @@ export default function Footer() {
             <div className="space-y-3 sm:space-y-4">
               <div className="flex items-center space-x-3">
                 <Phone className="h-4 sm:h-5 w-4 sm:w-5 text-primary-orange" />
-                <span className="text-gray-300 text-sm sm:text-base">+229 01 93 38 95 64</span>
+                <span className="text-gray-300 text-sm sm:text-base">+229 01 41 75 75 59</span>
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="h-4 sm:h-5 w-4 sm:w-5 text-primary-orange" />

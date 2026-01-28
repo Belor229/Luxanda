@@ -37,7 +37,7 @@ router.get('/plans', (req: Request, res: Response): void => {
 
 // Create subscription
 router.post('/create', [
-  body('planType').isIn(['starter', 'pro', 'premium']),
+  body('plan').isIn(['starter', 'pro', 'premium']),
   body('paymentMethod').isIn(['kkiapay'])
 ], authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
@@ -49,11 +49,11 @@ router.post('/create', [
       })
     }
 
-    const { planType, paymentMethod } = (req as any).body
+    const { plan: planName, paymentMethod } = (req as any).body
     const userId = (req as any).user.userId
 
-    const plan = SUBSCRIPTION_PLANS[planType as keyof typeof SUBSCRIPTION_PLANS]
-    if (!plan) {
+    const planInfo = SUBSCRIPTION_PLANS[planName as keyof typeof SUBSCRIPTION_PLANS]
+    if (!planInfo) {
       return res.status(400).json({
         error: 'Plan d\'abonnement invalide'
       })
@@ -62,9 +62,9 @@ router.post('/create', [
     // Check if user already has an active subscription
     const existingSubs = await prisma.subscription.findFirst({
       where: {
-        user_id: userId,
+        userId: userId,
         status: {
-          in: ['active', 'pending']
+          in: ['ACTIVE', 'PENDING']
         }
       }
     })
@@ -78,11 +78,10 @@ router.post('/create', [
     // Create subscription
     const subscription = await prisma.subscription.create({
       data: {
-        user_id: userId,
-        plan_type: planType,
-        amount: plan.price,
-        payment_method: paymentMethod,
-        status: 'pending'
+        userId: userId,
+        plan: (planName as string).toUpperCase() as any,
+        amount: planInfo.price,
+        status: 'PENDING'
       }
     })
 
@@ -93,21 +92,21 @@ router.post('/create', [
 
     await prisma.subscription.update({
       where: { id: subscriptionId },
-      data: { payment_reference: paymentReference }
+      data: { paymentRef: paymentReference }
     })
 
     res.json({
       message: 'Abonnement créé avec succès',
       subscription: {
         id: subscriptionId,
-        planType,
-        amount: plan.price,
+        plan: planName,
+        amount: planInfo.price,
         paymentReference,
-        status: 'pending'
+        status: 'PENDING'
       },
       paymentInstructions: {
         method: paymentMethod,
-        amount: plan.price,
+        amount: planInfo.price,
         reference: paymentReference,
         message: 'Redirection vers Kkiapay pour le paiement sécurisé.'
       }
@@ -127,8 +126,8 @@ router.get('/my-subscriptions', authenticateToken, async (req: AuthRequest, res:
     const userId = (req as any).user.userId
 
     const subscriptions = await prisma.subscription.findMany({
-      where: { user_id: userId },
-      orderBy: { created_at: 'desc' }
+      where: { userId: userId },
+      orderBy: { createdAt: 'desc' }
     })
 
     res.json({
@@ -147,7 +146,7 @@ router.get('/my-subscriptions', authenticateToken, async (req: AuthRequest, res:
 router.get('/all', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const userRole = (req as any).user.role
-    if (userRole !== 'admin') {
+    if (userRole !== 'ADMIN') {
       return res.status(403).json({
         error: 'Accès non autorisé'
       })
@@ -156,14 +155,10 @@ router.get('/all', authenticateToken, async (req: AuthRequest, res: Response) =>
     const subscriptions = await prisma.subscription.findMany({
       include: {
         user: {
-          select: {
-            first_name: true,
-            last_name: true,
-            email: true
-          }
+          include: { profile: true }
         }
       },
-      orderBy: { created_at: 'desc' }
+      orderBy: { createdAt: 'desc' }
     })
 
     res.json({
@@ -180,11 +175,11 @@ router.get('/all', authenticateToken, async (req: AuthRequest, res: Response) =>
 
 // Admin: Update subscription status
 router.patch('/:id/status', [
-  body('status').isIn(['pending', 'active', 'expired', 'cancelled'])
+  body('status').isIn(['PENDING', 'ACTIVE', 'EXPIRED', 'CANCELLED'])
 ], authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const userRole = (req as any).user.role
-    if (userRole !== 'admin') {
+    if (userRole !== 'ADMIN') {
       return res.status(403).json({
         error: 'Accès non autorisé'
       })
@@ -203,30 +198,30 @@ router.patch('/:id/status', [
 
     // Update subscription status
     await prisma.subscription.update({
-      where: { id: Number(id) },
+      where: { id: id },
       data: {
         status,
-        updated_at: new Date()
+        updatedAt: new Date()
       }
     })
 
     // If activating subscription, set start and end dates
-    if (status === 'active') {
+    if (status === 'ACTIVE') {
       const subscription = await prisma.subscription.findUnique({
-        where: { id: Number(id) }
+        where: { id: id }
       })
 
       if (subscription) {
-        const duration = SUBSCRIPTION_PLANS[subscription.plan_type as keyof typeof SUBSCRIPTION_PLANS]?.duration || 30
+        const duration = SUBSCRIPTION_PLANS[subscription.plan.toLowerCase() as keyof typeof SUBSCRIPTION_PLANS]?.duration || 30
         const startDate = new Date()
         const endDate = new Date()
         endDate.setDate(startDate.getDate() + duration)
 
         await prisma.subscription.update({
-          where: { id: Number(id) },
+          where: { id: id },
           data: {
-            start_date: startDate,
-            end_date: endDate
+            startDate: startDate,
+            endDate: endDate
           }
         })
       }
@@ -266,10 +261,10 @@ router.post('/confirm-payment', [
     // Trouver l'abonnement en attente
     const subscription = await prisma.subscription.findFirst({
       where: {
-        user_id: userId,
-        status: 'pending'
+        userId: userId,
+        status: 'PENDING'
       },
-      orderBy: { created_at: 'desc' }
+      orderBy: { createdAt: 'desc' }
     })
 
     if (!subscription) {
@@ -279,7 +274,7 @@ router.post('/confirm-payment', [
     }
 
     // Mettre à jour l'abonnement
-    const duration = SUBSCRIPTION_PLANS[subscription.plan_type as keyof typeof SUBSCRIPTION_PLANS]?.duration || 30
+    const duration = SUBSCRIPTION_PLANS[subscription.plan.toLowerCase() as keyof typeof SUBSCRIPTION_PLANS]?.duration || 30
     const startDate = new Date()
     const endDate = new Date()
     endDate.setDate(startDate.getDate() + duration)
@@ -287,10 +282,10 @@ router.post('/confirm-payment', [
     await prisma.subscription.update({
       where: { id: subscription.id },
       data: {
-        status: 'active',
-        payment_reference: transactionId,
-        start_date: startDate,
-        end_date: endDate
+        status: 'ACTIVE',
+        paymentRef: transactionId,
+        startDate: startDate,
+        endDate: endDate
       }
     })
 
@@ -298,8 +293,8 @@ router.post('/confirm-payment', [
       message: 'Paiement confirmé avec succès',
       subscription: {
         id: subscription.id,
-        planType: subscription.plan_type,
-        status: 'active'
+        plan: subscription.plan,
+        status: 'ACTIVE'
       }
     })
 

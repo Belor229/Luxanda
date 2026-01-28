@@ -3,10 +3,13 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Menu, X } from 'lucide-react'
+import { Menu, X, ShoppingCart } from 'lucide-react'
+import { useCartStore } from '@/store/useCartStore'
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const getItemCount = useCartStore((state: any) => state.getItemCount)
+  const cartCount = getItemCount()
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
@@ -17,7 +20,7 @@ export default function Header() {
             <div className="flex flex-col sm:flex-row items-center space-y-1 sm:space-y-0 sm:space-x-6">
               <span className="flex items-center space-x-2">
                 <span>📞</span>
-                <span>+229 01 93 38 95 63</span>
+                <span>+229 01 41 75 75 59</span>
               </span>
               <span className="flex items-center space-x-2">
                 <span>📧</span>
@@ -61,6 +64,16 @@ export default function Header() {
 
           {/* Header Icons */}
           <div className="flex items-center space-x-4">
+            {/* Cart Link */}
+            <Link href="/cart" className="relative p-3 text-gray-600 hover:text-primary-orange transition-colors rounded-lg hover:bg-gray-50 group min-h-[44px] min-w-[44px] flex items-center justify-center">
+              <ShoppingCart className="h-6 w-6" />
+              {cartCount > 0 && (
+                <span className="absolute top-1 right-1 bg-primary-orange text-white text-[10px] font-bold h-5 w-5 flex items-center justify-center rounded-full border-2 border-white shadow-sm transition-transform group-hover:scale-110">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
+
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}

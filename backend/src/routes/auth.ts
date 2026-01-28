@@ -12,8 +12,8 @@ router.post('/register', [
   body('password').isLength({ min: 6 }),
   body('firstName').trim().isLength({ min: 2 }),
   body('lastName').trim().isLength({ min: 2 }),
-  body('phone').optional().isMobilePhone('fr-FR'),
-  body('role').optional().isIn(['visitor', 'vendor'])
+  body('phone').optional().isString(),
+  body('role').optional().isIn(['USER', 'VENDOR'])
 ], async (req: Request, res: Response) => {
   try {
     const errors = validationResult(req)
@@ -24,7 +24,7 @@ router.post('/register', [
       })
     }
 
-    const { email, password, firstName, lastName, phone, role = 'visitor' } = req.body
+    const { email, password, firstName, lastName, phone, role = 'USER' } = req.body
 
     // Check if user exists
     const existingUser = await prisma.user.findUnique({
@@ -40,22 +40,25 @@ router.post('/register', [
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12)
 
-    // Create user
+    // Create user with profile
     const user = await prisma.user.create({
       data: {
         email,
         password: hashedPassword,
-        firstName,
-        lastName,
-        phone,
-        role
-      }
-    })
-
-    // Create rewards record for new user
-    await prisma.reward.create({
-      data: {
-        userId: user.id
+        role: (role as any).toUpperCase(),
+        profile: {
+          create: {
+            firstName,
+            lastName,
+            phone
+          }
+        },
+        rewards: {
+          create: {}
+        }
+      },
+      include: {
+        profile: true
       }
     })
 
@@ -72,8 +75,8 @@ router.post('/register', [
       user: {
         id: user.id,
         email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
+        firstName: user.profile?.firstName,
+        lastName: user.profile?.lastName,
         role: user.role
       }
     })
@@ -104,7 +107,8 @@ router.post('/login', [
 
     // Find user
     const user = await prisma.user.findUnique({
-      where: { email, isActive: true }
+      where: { email },
+      include: { profile: true }
     })
 
     if (!user) {
@@ -134,8 +138,8 @@ router.post('/login', [
       user: {
         id: user.id,
         email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
+        firstName: user.profile?.firstName,
+        lastName: user.profile?.lastName,
         role: user.role
       }
     })
@@ -162,7 +166,8 @@ router.get('/verify', async (req: Request, res: Response) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'LuxandaSecretKey2025') as any
 
     const user = await prisma.user.findUnique({
-      where: { id: decoded.userId, isActive: true }
+      where: { id: decoded.userId },
+      include: { profile: true }
     })
 
     if (!user) {
@@ -176,8 +181,8 @@ router.get('/verify', async (req: Request, res: Response) => {
       user: {
         id: user.id,
         email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
+        firstName: user.profile?.firstName,
+        lastName: user.profile?.lastName,
         role: user.role
       }
     })

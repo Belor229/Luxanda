@@ -12,6 +12,7 @@ import adminRoutes from './routes/admin'
 import contactRoutes from './routes/contact'
 import vendorRoutes from './routes/vendor'
 import affiliationRoutes from './routes/affiliation'
+import orderRoutes from './routes/orders'
 
 // Load environment variables
 dotenv.config()
@@ -54,6 +55,7 @@ app.use('/api/admin', adminRoutes)
 app.use('/api/contact', contactRoutes)
 app.use('/api/vendor', vendorRoutes)
 app.use('/api/affiliation', affiliationRoutes)
+app.use('/api/orders', orderRoutes)
 
 // Health check endpoint
 app.get('/api/health', (req: Request, res: Response) => {
@@ -67,21 +69,21 @@ app.get('/api/health', (req: Request, res: Response) => {
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Error:', err)
-  
+
   if (err.name === 'ValidationError') {
     return res.status(400).json({
       error: 'Données invalides',
       details: err.message,
     })
   }
-  
+
   if (err.name === 'UnauthorizedError') {
     return res.status(401).json({
       error: 'Non autorisé',
       message: 'Token invalide ou expiré',
     })
   }
-  
+
   res.status(500).json({
     error: 'Erreur interne du serveur',
     message: 'Une erreur s\'est produite. Veuillez réessayer.',

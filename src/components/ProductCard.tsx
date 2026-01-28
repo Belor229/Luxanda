@@ -36,7 +36,7 @@ export default function ProductCard({ product, viewMode }: ProductCardProps) {
     const message = encodeURIComponent(
       `Bonjour, je suis intéressé par ${product.name} sur Luxanda. Pouvez-vous m'en dire plus ?`
     )
-    const whatsappUrl = `https://wa.me/2290193389564?text=${message}`
+    const whatsappUrl = `https://wa.me/2290141757559?text=${message}`
     window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
   }
 
@@ -52,7 +52,7 @@ export default function ProductCard({ product, viewMode }: ProductCardProps) {
               className="object-cover rounded-lg"
             />
           </div>
-          
+
           <div className="flex-1 py-4">
             <div className="flex justify-between items-start mb-2">
               <h3 className="text-xl font-semibold text-gray-900 group-hover:text-primary-orange transition-colors">
@@ -62,11 +62,11 @@ export default function ProductCard({ product, viewMode }: ProductCardProps) {
                 {formatPrice(product.price)}
               </span>
             </div>
-            
+
             <p className="text-gray-600 mb-4 line-clamp-2">
               {product.description}
             </p>
-            
+
             <div className="flex items-center gap-4 mb-4">
               <span className="text-sm text-gray-500">
                 Par {product.vendor_name}
@@ -78,7 +78,7 @@ export default function ProductCard({ product, viewMode }: ProductCardProps) {
                 Stock: {product.stock_quantity}
               </span>
             </div>
-            
+
             <div className="flex gap-3">
               <button
                 onClick={handleWhatsAppClick}
@@ -117,11 +117,11 @@ export default function ProductCard({ product, viewMode }: ProductCardProps) {
         <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-primary-orange transition-colors">
           {product.name}
         </h3>
-        
+
         <p className="text-sm text-gray-600 mb-3 line-clamp-2">
           {product.description}
         </p>
-        
+
         <div className="flex items-center justify-between mb-4">
           <span className="text-2xl font-bold text-primary-orange">
             {formatPrice(product.price)}

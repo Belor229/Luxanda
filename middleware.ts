@@ -57,34 +57,23 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl)
   }
 
-  // If accessing admin route, check if user is admin
-  if (isAdminRoute && session) {
-    // Get user role from cookie or database
-    const userStr = request.cookies.get('user')?.value
-    if (userStr) {
-      try {
-        const user = JSON.parse(userStr)
-        if (user.role?.toUpperCase() !== 'ADMIN') {
-          return NextResponse.redirect(new URL('/', request.url))
-        }
-      } catch (e) {
-        // If can't parse, allow through and let client-side handle it
-      }
-    }
-  }
+  // Create a supabase client for checking roles
+  // We need to fetch the user role effectively
+  if ((isAdminRoute || isVendorRoute) && session) {
+    const { data: userProfile } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', session.user.id)
+      .single()
 
-  // If accessing vendor route, check if user is vendor
-  if (isVendorRoute && session) {
-    const userStr = request.cookies.get('user')?.value
-    if (userStr) {
-      try {
-        const user = JSON.parse(userStr)
-        if (user.role?.toUpperCase() !== 'VENDOR' && user.role?.toUpperCase() !== 'ADMIN') {
-          return NextResponse.redirect(new URL('/', request.url))
-        }
-      } catch (e) {
-        // If can't parse, allow through and let client-side handle it
-      }
+    const userRole = userProfile?.role?.toUpperCase()
+
+    if (isAdminRoute && userRole !== 'ADMIN') {
+      return NextResponse.redirect(new URL('/', request.url))
+    }
+
+    if (isVendorRoute && userRole !== 'VENDOR' && userRole !== 'ADMIN') {
+      return NextResponse.redirect(new URL('/', request.url))
     }
   }
 

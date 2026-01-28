@@ -11,21 +11,23 @@ router.get('/', async (req: Request, res: Response) => {
     const { category, featured, search, page = 1, limit = 20 } = req.query
 
     const where: any = {
-      is_active: true
+      status: 'ACTIVE'
     }
 
     if (category) {
-      where.category = category
+      where.category = {
+        name: category
+      }
     }
 
     if (featured === 'true') {
-      where.is_featured = true
+      where.featured = true
     }
 
     if (search) {
       where.OR = [
-        { name: { contains: search as string } },
-        { description: { contains: search as string } }
+        { name: { contains: search as string, mode: 'insensitive' } },
+        { description: { contains: search as string, mode: 'insensitive' } }
       ]
     }
 
@@ -37,14 +39,17 @@ router.get('/', async (req: Request, res: Response) => {
         where,
         include: {
           vendor: {
-            select: {
-              first_name: true,
-              last_name: true,
-              email: true
+            include: {
+              user: {
+                include: {
+                  profile: true
+                }
+              }
             }
-          }
+          },
+          category: true
         },
-        orderBy: { created_at: 'desc' },
+        orderBy: { createdAt: 'desc' },
         skip,
         take
       }),
@@ -52,7 +57,11 @@ router.get('/', async (req: Request, res: Response) => {
     ])
 
     res.json({
-      products,
+      products: products.map((p: any) => ({
+        ...p,
+        vendorName: p.vendor?.user?.profile ? `${p.vendor.user.profile.firstName} ${p.vendor.user.profile.lastName}` : p.vendor?.storeName,
+        categoryName: p.category?.name
+      })),
       pagination: {
         page: Number(page),
         limit: Number(limit),
@@ -76,18 +85,28 @@ router.get('/:id', async (req: Request, res: Response) => {
 
     const product = await prisma.product.findFirst({
       where: {
-        id: Number(id),
-        is_active: true
+        id: id,
+        status: 'ACTIVE'
       },
       include: {
         vendor: {
           select: {
-            first_name: true,
-            last_name: true,
-            email: true,
-            phone: true
+            storeName: true,
+            user: {
+              select: {
+                email: true,
+                profile: {
+                  select: {
+                    firstName: true,
+                    lastName: true,
+                    phone: true
+                  }
+                }
+              }
+            }
           }
-        }
+        },
+        category: true
       }
     })
 
@@ -114,8 +133,8 @@ router.post('/', [
   body('name').trim().isLength({ min: 2 }),
   body('description').trim().isLength({ min: 10 }),
   body('price').isNumeric().isFloat({ min: 0 }),
-  body('category').trim().isLength({ min: 2 }),
-  body('stockQuantity').isInt({ min: 0 })
+  body('categoryId').notEmpty().withMessage('La catégorie est requise'),
+  body('quantity').isInt({ min: 0 })
 ], authenticateToken, requireVendor, async (req: Request, res: Response) => {
   try {
     const errors = validationResult(req)
@@ -126,15 +145,26 @@ router.post('/', [
       })
     }
 
-    const { name, description, price, category, stockQuantity, images = [], isFeatured = false } = req.body
-    const vendorId = (req as any).user.userId
+    const { name, description, price, categoryId, quantity, images = [], featured = false } = req.body
+    const userId = (req as any).user.userId
+
+    // Find vendor by userId
+    const vendor = await prisma.vendor.findUnique({
+      where: { userId }
+    })
+
+    if (!vendor) {
+      return res.status(403).json({
+        error: 'Compte vendeur non trouvé'
+      })
+    }
 
     // Check if vendor has active subscription
     const subscription = await prisma.subscription.findFirst({
       where: {
-        user_id: vendorId,
-        status: 'active',
-        end_date: {
+        userId,
+        status: 'ACTIVE',
+        endDate: {
           gt: new Date()
         }
       }
@@ -148,29 +178,21 @@ router.post('/', [
 
     const product = await prisma.product.create({
       data: {
-        vendor_id: vendorId,
+        vendorId: vendor.id,
         name,
         description,
         price: Number(price),
-        category,
-        stock_quantity: stockQuantity,
-        images: JSON.stringify(images),
-        is_featured: isFeatured
+        categoryId,
+        quantity,
+        images,
+        featured,
+        status: 'ACTIVE'
       }
     })
 
     res.status(201).json({
       message: 'Produit créé avec succès',
-      product: {
-        id: product.id,
-        name: product.name,
-        description: product.description,
-        price: product.price,
-        category: product.category,
-        stockQuantity: product.stock_quantity,
-        images: JSON.parse(product.images || '[]'),
-        isFeatured: product.is_featured
-      }
+      product
     })
 
   } catch (error) {
@@ -186,8 +208,8 @@ router.put('/:id', [
   body('name').optional().trim().isLength({ min: 2 }),
   body('description').optional().trim().isLength({ min: 10 }),
   body('price').optional().isNumeric().isFloat({ min: 0 }),
-  body('category').optional().trim().isLength({ min: 2 }),
-  body('stockQuantity').optional().isInt({ min: 0 })
+  body('categoryId').optional().notEmpty(),
+  body('quantity').optional().isInt({ min: 0 })
 ], authenticateToken, requireVendor, async (req: Request, res: Response) => {
   try {
     const errors = validationResult(req)
@@ -199,13 +221,24 @@ router.put('/:id', [
     }
 
     const { id } = req.params
-    const vendorId = (req as any).user.userId
+    const userId = (req as any).user.userId
+
+    // Find vendor by userId
+    const vendor = await prisma.vendor.findUnique({
+      where: { userId }
+    })
+
+    if (!vendor) {
+      return res.status(403).json({
+        error: 'Compte vendeur non trouvé'
+      })
+    }
 
     // Check if product belongs to vendor
     const existingProduct = await prisma.product.findFirst({
       where: {
-        id: Number(id),
-        vendor_id: vendorId
+        id: id,
+        vendorId: vendor.id
       }
     })
 
@@ -220,10 +253,11 @@ router.put('/:id', [
     if (req.body.name !== undefined) updateData.name = req.body.name
     if (req.body.description !== undefined) updateData.description = req.body.description
     if (req.body.price !== undefined) updateData.price = Number(req.body.price)
-    if (req.body.category !== undefined) updateData.category = req.body.category
-    if (req.body.stockQuantity !== undefined) updateData.stock_quantity = req.body.stockQuantity
-    if (req.body.images !== undefined) updateData.images = JSON.stringify(req.body.images)
-    if (req.body.isFeatured !== undefined) updateData.is_featured = req.body.isFeatured
+    if (req.body.categoryId !== undefined) updateData.categoryId = req.body.categoryId
+    if (req.body.quantity !== undefined) updateData.quantity = Number(req.body.quantity)
+    if (req.body.images !== undefined) updateData.images = req.body.images
+    if (req.body.featured !== undefined) updateData.featured = req.body.featured
+    if (req.body.status !== undefined) updateData.status = req.body.status
 
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({
@@ -232,7 +266,7 @@ router.put('/:id', [
     }
 
     await prisma.product.update({
-      where: { id: Number(id) },
+      where: { id: id },
       data: updateData
     })
 
@@ -252,13 +286,23 @@ router.put('/:id', [
 router.delete('/:id', authenticateToken, requireVendor, async (req: Request, res: Response) => {
   try {
     const { id } = req.params
-    const vendorId = (req as any).user.userId
+    const userId = (req as any).user.userId
+
+    const vendor = await prisma.vendor.findUnique({
+      where: { userId }
+    })
+
+    if (!vendor) {
+      return res.status(403).json({
+        error: 'Compte vendeur non trouvé'
+      })
+    }
 
     // Check if product belongs to vendor
     const product = await prisma.product.findFirst({
       where: {
-        id: Number(id),
-        vendor_id: vendorId
+        id: id,
+        vendorId: vendor.id
       }
     })
 
@@ -268,9 +312,10 @@ router.delete('/:id', authenticateToken, requireVendor, async (req: Request, res
       })
     }
 
+    // Physical or Logical delete based on needs, schema supports logical status
     await prisma.product.update({
-      where: { id: Number(id) },
-      data: { is_active: false }
+      where: { id: id },
+      data: { status: 'ARCHIVED' }
     })
 
     res.json({
@@ -292,10 +337,10 @@ router.get('/vendor/:vendorId', async (req: Request, res: Response) => {
 
     const products = await prisma.product.findMany({
       where: {
-        vendor_id: Number(vendorId),
-        is_active: true
+        vendorId: vendorId,
+        status: 'ACTIVE'
       },
-      orderBy: { created_at: 'desc' }
+      orderBy: { createdAt: 'desc' }
     })
 
     res.json({

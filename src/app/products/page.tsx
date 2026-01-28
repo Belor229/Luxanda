@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import ProductCard from '@/components/ProductCard'
-import { Grid, List } from 'lucide-react'
+import { Grid, List, Search } from 'lucide-react'
 
 interface Product {
   id: number
@@ -94,7 +94,7 @@ export default function ProductsPage() {
                 {pagination.total} produit{pagination.total > 1 ? 's' : ''} trouvé{pagination.total > 1 ? 's' : ''}
               </span>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setViewMode('grid')}
@@ -113,24 +113,24 @@ export default function ProductsPage() {
 
           {/* Products Grid */}
           {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="card animate-pulse">
-                  <div className="h-48 bg-gray-200"></div>
-                  <div className="p-6 space-y-3">
-                    <div className="h-4 bg-gray-200 rounded"></div>
-                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                    <div className="h-6 bg-gray-200 rounded w-1/2"></div>
+                <div key={i} className="bg-white rounded-2xl overflow-hidden shadow-sm animate-pulse">
+                  <div className="h-64 bg-gray-200"></div>
+                  <div className="p-6 space-y-4">
+                    <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                    <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-4 bg-gray-200 rounded w-full"></div>
+                    <div className="h-10 bg-gray-200 rounded-xl w-full"></div>
                   </div>
                 </div>
               ))}
             </div>
           ) : products.length > 0 ? (
-            <div className={`grid gap-6 ${
-              viewMode === 'grid' 
-                ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
+            <div className={`grid gap-6 ${viewMode === 'grid'
+                ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
                 : 'grid-cols-1'
-            }`}>
+              }`}>
               {products.map((product) => (
                 <ProductCard
                   key={product.id}
@@ -166,34 +166,33 @@ export default function ProductsPage() {
                 >
                   Précédent
                 </button>
-                
+
                 {[...Array(pagination.pages)].map((_, i) => {
                   const page = i + 1
                   const isCurrentPage = page === pagination.page
                   const isNearCurrent = Math.abs(page - pagination.page) <= 2
                   const isFirstOrLast = page === 1 || page === pagination.pages
-                  
+
                   if (!isNearCurrent && !isFirstOrLast) {
                     return i === 1 || i === pagination.pages - 2 ? (
                       <span key={page} className="px-3 py-2 text-gray-500">...</span>
                     ) : null
                   }
-                  
+
                   return (
                     <button
                       key={page}
                       onClick={() => handlePageChange(page)}
-                      className={`px-4 py-2 rounded-lg font-medium ${
-                        isCurrentPage
+                      className={`px-4 py-2 rounded-lg font-medium ${isCurrentPage
                           ? 'bg-primary-orange text-white'
                           : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
-                      }`}
+                        }`}
                     >
                       {page}
                     </button>
                   )
                 })}
-                
+
                 <button
                   onClick={() => handlePageChange(pagination.page + 1)}
                   disabled={pagination.page === pagination.pages}

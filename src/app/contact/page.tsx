@@ -69,7 +69,7 @@ export default function ContactPage() {
           {/* Contact Info */}
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-8">Informations de contact</h2>
-            
+
             <div className="space-y-6">
               <div className="flex items-start space-x-4">
                 <div className="p-3 bg-primary-orange rounded-lg">
@@ -77,7 +77,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900">Téléphone</h3>
-                  <p className="text-gray-600">+229 01 93 38 95 64</p>
+                  <p className="text-gray-600">+229 01 41 75 75 59</p>
                   <p className="text-sm text-gray-500">Lun-Ven: 8h-18h</p>
                 </div>
               </div>
@@ -108,8 +108,8 @@ export default function ContactPage() {
             <div className="mt-8 p-6 bg-blue-50 rounded-lg">
               <h3 className="font-semibold text-gray-900 mb-2">Support vendeurs</h3>
               <p className="text-gray-600 text-sm">
-                Pour les questions concernant les abonnements vendeurs, 
-                les paiements ou la gestion de votre boutique, 
+                Pour les questions concernant les abonnements vendeurs,
+                les paiements ou la gestion de votre boutique,
                 contactez-nous directement.
               </p>
             </div>
@@ -118,7 +118,7 @@ export default function ContactPage() {
           {/* Contact Form */}
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-8">Envoyez-nous un message</h2>
-            
+
             {success && (
               <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
                 <p className="text-sm text-green-600">
@@ -202,7 +202,7 @@ export default function ContactPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full btn btn-primary flex items-center justify-center space-x-2"
+                className="w-full btn btn-primary flex items-center justify-center space-x-2 min-h-[50px] shadow-lg hover:shadow-primary-orange/20 transition-all"
               >
                 {loading ? (
                   <div className="loading-spinner"></div>
