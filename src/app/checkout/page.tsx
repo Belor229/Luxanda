@@ -38,17 +38,31 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     setMounted(true)
-    const userStr = localStorage.getItem('user')
-    if (userStr) {
-      const user = JSON.parse(userStr)
-      setFormData(prev => ({
-        ...prev,
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        email: user.email || '',
-        phone: user.phone || ''
-      }))
+    const fetchSession = async () => {
+      const { createClient } = await import('@/utils/supabase/client')
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+
+      if (session?.user) {
+        // Fetch profile from DB for cleaner data
+        const { data: profile } = await supabase
+          .from('users')
+          .select('profile:profiles(*)')
+          .eq('id', session.user.id)
+          .single() as any
+
+        if (profile?.profile) {
+          setFormData(prev => ({
+            ...prev,
+            firstName: profile.profile.firstName || '',
+            lastName: profile.profile.lastName || '',
+            email: session.user.email || '',
+            phone: profile.profile.phoneNumber || ''
+          }))
+        }
+      }
     }
+    fetchSession()
   }, [])
 
   if (!mounted) return null
@@ -74,21 +88,20 @@ export default function CheckoutPage() {
     setError('')
 
     try {
-      const token = localStorage.getItem('token')
-      if (!token) {
+      const { createClient } = await import('@/utils/supabase/client')
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+
+      if (!session) {
         setError('Veuillez vous connecter pour finaliser votre commande')
         router.push('/login?redirect=/checkout')
         return
       }
 
-      // First step: Create address or get one (Mock for now)
-      // Real flow would call /api/users/addresses
-
       const response = await fetch('/api/orders', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           items,
@@ -120,7 +133,7 @@ export default function CheckoutPage() {
         {/* Progress Tracker */}
         <div className="flex items-center justify-center mb-12">
           {[1, 2, 3].map((i) => (
-            <React.Fragment key={i}>
+            <div key={i} className="flex items-center">
               <div className={`flex items-center justify-center w-10 h-10 rounded-full font-bold border-2 transition-all ${step >= i ? 'bg-primary-orange border-primary-orange text-white' : 'border-gray-300 text-gray-400 bg-white'
                 }`}>
                 {step > i ? <CheckCircle className="h-6 w-6" /> : i}
@@ -128,7 +141,7 @@ export default function CheckoutPage() {
               {i < 3 && (
                 <div className={`w-16 h-1 mx-2 rounded-full ${step > i ? 'bg-primary-orange' : 'bg-gray-200'}`} />
               )}
-            </React.Fragment>
+            </div>
           ))}
         </div>
 

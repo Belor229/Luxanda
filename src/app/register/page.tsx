@@ -81,11 +81,7 @@ export default function RegisterPage() {
 
       if (response.ok) {
         setSuccess(true)
-        // Store token in localStorage
-        if (data.token) {
-          localStorage.setItem('token', data.token)
-        }
-        localStorage.setItem('user', JSON.stringify(data.user))
+        // The cookie is handled by the server-side route
 
         // Create referral if referrer exists
         if (referrerId && data.user.id) {
@@ -112,6 +108,7 @@ export default function RegisterPage() {
             (data.user.role === 'ADMIN' || data.user.role === 'admin' ? '/admin' :
               data.user.role === 'VENDOR' || data.user.role === 'vendor' ? '/vendor/dashboard' : '/')
           router.push(redirectPath)
+          router.refresh()
         }, 2000)
       } else {
         setError(data.error || 'Erreur lors de la création du compte')

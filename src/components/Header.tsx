@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import { Menu, X, ShoppingCart } from 'lucide-react'
 import { useCartStore } from '@/store/useCartStore'
 
@@ -10,6 +11,32 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const getItemCount = useCartStore((state: any) => state.getItemCount)
   const cartCount = getItemCount()
+
+  const [user, setUser] = useState<any>(null)
+  const router = useRouter()
+
+  useEffect(() => {
+    const initAuth = async () => {
+      const { createClient } = await import('@/utils/supabase/client')
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      setUser(session?.user || null)
+
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        setUser(session?.user || null)
+      })
+
+      return () => subscription.unsubscribe()
+    }
+    initAuth()
+  }, [])
+
+  const handleLogout = async () => {
+    const { createClient } = await import('@/utils/supabase/client')
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.refresh()
+  }
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
@@ -31,9 +58,23 @@ export default function Header() {
               <Link href="/register" className="hover:text-primary-orange transition-colors py-1 px-2 rounded">
                 Devenir Vendeur
               </Link>
-              <Link href="/login" className="hover:text-primary-orange transition-colors py-1 px-2 rounded">
-                Se connecter
-              </Link>
+              {user ? (
+                <>
+                  <Link href="/users/profile" className="hover:text-primary-orange transition-colors py-1 px-2 rounded">
+                    Mon Profil
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="hover:text-primary-orange transition-colors py-1 px-2 rounded"
+                  >
+                    Déconnexion
+                  </button>
+                </>
+              ) : (
+                <Link href="/login" className="hover:text-primary-orange transition-colors py-1 px-2 rounded">
+                  Se connecter
+                </Link>
+              )}
               <Link
                 href="https://wa.me/2290141757559?text=Bonjour%20Luxanda%2C%20j%E2%80%99ai%20une%20question"
                 target="_blank"
@@ -100,9 +141,11 @@ export default function Header() {
               <Link href="/contact" className="text-white hover:text-primary-orange transition-colors font-medium py-2 px-3 rounded-lg hover:bg-white/10 min-h-[44px] flex items-center">
                 Contact
               </Link>
+              {/*
               <Link href="/affiliation" className="text-white hover:text-primary-orange transition-colors font-medium py-2 px-3 rounded-lg hover:bg-white/10 min-h-[44px] flex items-center">
                 Affiliation
               </Link>
+              */}
             </div>
           </div>
         </div>

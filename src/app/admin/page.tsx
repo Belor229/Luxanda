@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { 
-  Users, 
-  Package, 
-  CreditCard, 
-  TrendingUp, 
-  MessageSquare, 
+import {
+  Users,
+  Package,
+  CreditCard,
+  TrendingUp,
+  MessageSquare,
   Settings,
   LogOut,
   Eye,
@@ -47,57 +47,142 @@ export default function AdminPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [recentActivities, setRecentActivities] = useState<RecentActivity | null>(null)
   const [loading, setLoading] = useState(true)
+  const [dataLoading, setDataLoading] = useState(false)
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState('dashboard')
+  const [users, setUsers] = useState<any[]>([])
+  const [products, setProducts] = useState<any[]>([])
+  const [subscriptions, setSubscriptions] = useState<any[]>([])
+  const [messages, setMessages] = useState<any[]>([])
   const router = useRouter()
 
   useEffect(() => {
-    // Check if user is admin
-    const token = localStorage.getItem('token')
-    const user = localStorage.getItem('user')
-    
-    if (!token || !user) {
-      router.push('/login')
-      return
+    const checkAdmin = async () => {
+      const { createClient } = await import('@/utils/supabase/client')
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+
+      if (!session) {
+        router.push('/login')
+        return
+      }
+
+      const { data: profile } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', session.user.id)
+        .single()
+
+      const userRole = profile?.role?.toUpperCase()
+      if (userRole !== 'ADMIN') {
+        router.push('/')
+        return
+      }
+
+      fetchDashboardData()
     }
 
-    const userData = JSON.parse(user)
-    const userRole = userData.role?.toUpperCase()
-    if (userRole !== 'ADMIN' && userRole !== 'admin') {
-      router.push('/')
-      return
-    }
-
-    fetchDashboardData()
+    checkAdmin()
   }, [router])
 
-  const fetchDashboardData = async () => {
-    try {
-      const token = localStorage.getItem('token')
-      const response = await fetch('/api/admin/dashboard', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
+  useEffect(() => {
+    if (activeTab === 'dashboard') fetchDashboardData()
+    else if (activeTab === 'users') fetchUsers()
+    else if (activeTab === 'products') fetchProducts()
+    else if (activeTab === 'subscriptions') fetchSubscriptions()
+    else if (activeTab === 'messages') fetchMessages()
+  }, [activeTab])
 
+  const fetchDashboardData = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch('/api/admin/dashboard')
       if (response.ok) {
         const data = await response.json()
         setStats(data.stats)
         setRecentActivities(data.recentActivities)
-      } else {
-        setError('Erreur lors du chargement des données')
       }
-    } catch (error) {
-      setError('Erreur de connexion')
-    } finally {
-      setLoading(false)
-    }
+    } catch (err) { setError('Erreur de connexion') }
+    finally { setLoading(false) }
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    router.push('/')
+  const fetchUsers = async () => {
+    setDataLoading(true)
+    try {
+      const response = await fetch('/api/admin/users')
+      if (response.ok) {
+        const data = await response.json()
+        setUsers(data.users)
+      }
+    } finally { setDataLoading(false) }
+  }
+
+  const fetchProducts = async () => {
+    setDataLoading(true)
+    try {
+      const response = await fetch('/api/admin/products')
+      if (response.ok) {
+        const data = await response.json()
+        setProducts(data.products)
+      }
+    } finally { setDataLoading(false) }
+  }
+
+  const fetchSubscriptions = async () => {
+    setDataLoading(true)
+    try {
+      const response = await fetch('/api/subscriptions/all')
+      if (response.ok) {
+        const data = await response.json()
+        setSubscriptions(data.subscriptions)
+      }
+    } finally { setDataLoading(false) }
+  }
+
+  const fetchMessages = async () => {
+    setDataLoading(true)
+    try {
+      const response = await fetch('/api/admin/contact-messages')
+      if (response.ok) {
+        const data = await response.json()
+        setMessages(data.messages)
+      }
+    } finally { setDataLoading(false) }
+  }
+
+  const handleUpdateUserRole = async (userId: string, newRole: string) => {
+    try {
+      const response = await fetch(`/api/admin/users/${userId}/role`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: newRole })
+      })
+      if (response.ok) fetchUsers()
+    } catch (err) { console.error(err) }
+  }
+
+  const handleUpdateProductStatus = async (productId: string, newStatus: string) => {
+    try {
+      const response = await fetch(`/api/admin/products/${productId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      })
+      if (response.ok) fetchProducts()
+    } catch (err) { console.error(err) }
+  }
+
+  const handleLogout = async () => {
+    try {
+      const { createClient } = await import('@/utils/supabase/client')
+      const supabase = createClient()
+      await supabase.auth.signOut()
+      router.push('/')
+      router.refresh()
+    } catch (error) {
+      console.error('Logout error:', error)
+      router.push('/')
+    }
   }
 
   const formatPrice = (price: number) => {
@@ -158,11 +243,10 @@ export default function AdminPage() {
               <li>
                 <button
                   onClick={() => setActiveTab('dashboard')}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                    activeTab === 'dashboard'
-                      ? 'bg-primary-orange text-white'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'dashboard'
+                    ? 'bg-primary-orange text-white'
+                    : 'text-gray-700 hover:bg-gray-100'
+                    }`}
                 >
                   <TrendingUp className="h-5 w-5" />
                   <span>Tableau de bord</span>
@@ -171,11 +255,10 @@ export default function AdminPage() {
               <li>
                 <button
                   onClick={() => setActiveTab('users')}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                    activeTab === 'users'
-                      ? 'bg-primary-orange text-white'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'users'
+                    ? 'bg-primary-orange text-white'
+                    : 'text-gray-700 hover:bg-gray-100'
+                    }`}
                 >
                   <Users className="h-5 w-5" />
                   <span>Utilisateurs</span>
@@ -184,11 +267,10 @@ export default function AdminPage() {
               <li>
                 <button
                   onClick={() => setActiveTab('products')}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                    activeTab === 'products'
-                      ? 'bg-primary-orange text-white'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'products'
+                    ? 'bg-primary-orange text-white'
+                    : 'text-gray-700 hover:bg-gray-100'
+                    }`}
                 >
                   <Package className="h-5 w-5" />
                   <span>Produits</span>
@@ -197,11 +279,10 @@ export default function AdminPage() {
               <li>
                 <button
                   onClick={() => setActiveTab('subscriptions')}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                    activeTab === 'subscriptions'
-                      ? 'bg-primary-orange text-white'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'subscriptions'
+                    ? 'bg-primary-orange text-white'
+                    : 'text-gray-700 hover:bg-gray-100'
+                    }`}
                 >
                   <CreditCard className="h-5 w-5" />
                   <span>Abonnements</span>
@@ -210,11 +291,10 @@ export default function AdminPage() {
               <li>
                 <button
                   onClick={() => setActiveTab('messages')}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                    activeTab === 'messages'
-                      ? 'bg-primary-orange text-white'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'messages'
+                    ? 'bg-primary-orange text-white'
+                    : 'text-gray-700 hover:bg-gray-100'
+                    }`}
                 >
                   <MessageSquare className="h-5 w-5" />
                   <span>Messages</span>
@@ -361,30 +441,133 @@ export default function AdminPage() {
           )}
 
           {activeTab === 'users' && (
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-white rounded-lg shadow-sm p-6 overflow-x-auto">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Gestion des utilisateurs</h2>
-              <p className="text-gray-600">Fonctionnalité en cours de développement...</p>
+              {dataLoading ? <div className="loading-spinner mx-auto"></div> : (
+                <table className="w-full text-left">
+                  <thead className="border-b bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3">Utilisateur</th>
+                      <th className="px-4 py-3">Email</th>
+                      <th className="px-4 py-3">Rôle</th>
+                      <th className="px-4 py-3">Date</th>
+                      <th className="px-4 py-3">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {users.map(u => (
+                      <tr key={u.id}>
+                        <td className="px-4 py-3">{u.profile?.firstName} {u.profile?.lastName}</td>
+                        <td className="px-4 py-3">{u.email}</td>
+                        <td className="px-4 py-3 text-sm font-semibold">{u.role}</td>
+                        <td className="px-4 py-3 text-sm">{new Date(u.createdAt).toLocaleDateString()}</td>
+                        <td className="px-4 py-3">
+                          <select
+                            value={u.role}
+                            onChange={(e) => handleUpdateUserRole(u.id, e.target.value)}
+                            className="text-xs border rounded p-1"
+                          >
+                            <option value="USER">USER</option>
+                            <option value="VENDOR">VENDOR</option>
+                            <option value="ADMIN">ADMIN</option>
+                          </select>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           )}
 
           {activeTab === 'products' && (
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-white rounded-lg shadow-sm p-6 overflow-x-auto">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Gestion des produits</h2>
-              <p className="text-gray-600">Fonctionnalité en cours de développement...</p>
+              {dataLoading ? <div className="loading-spinner mx-auto"></div> : (
+                <table className="w-full text-left">
+                  <thead className="border-b bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3">Produit</th>
+                      <th className="px-4 py-3">Vendeur</th>
+                      <th className="px-4 py-3">Prix</th>
+                      <th className="px-4 py-3">Statut</th>
+                      <th className="px-4 py-3">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {products.map(p => (
+                      <tr key={p.id}>
+                        <td className="px-4 py-3 font-medium">{p.name}</td>
+                        <td className="px-4 py-3 text-sm">{p.vendor?.user?.profile?.firstName}</td>
+                        <td className="px-4 py-3 text-sm">{formatPrice(p.price)}</td>
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-1 rounded-full text-xs font-bold ${p.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                            {p.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 space-x-2">
+                          <button onClick={() => handleUpdateProductStatus(p.id, 'ACTIVE')} className="text-green-600 hover:text-green-800"><CheckCircle className="h-4 w-4" /></button>
+                          <button onClick={() => handleUpdateProductStatus(p.id, 'INACTIVE')} className="text-red-600 hover:text-red-800"><XCircle className="h-4 w-4" /></button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           )}
 
           {activeTab === 'subscriptions' && (
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-white rounded-lg shadow-sm p-6 overflow-x-auto">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Gestion des abonnements</h2>
-              <p className="text-gray-600">Fonctionnalité en cours de développement...</p>
+              {dataLoading ? <div className="loading-spinner mx-auto"></div> : (
+                <table className="w-full text-left">
+                  <thead className="border-b bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3">Vendeur</th>
+                      <th className="px-4 py-3">Plan</th>
+                      <th className="px-4 py-3">Statut</th>
+                      <th className="px-4 py-3">Fin</th>
+                      <th className="px-4 py-3">Ref</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {subscriptions.map(s => (
+                      <tr key={s.id}>
+                        <td className="px-4 py-3">{s.user?.profile?.firstName}</td>
+                        <td className="px-4 py-3 font-bold">{s.plan}</td>
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-1 rounded-full text-xs font-bold ${s.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+                            {s.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-xs">{s.endDate ? new Date(s.endDate).toLocaleDateString() : 'N/A'}</td>
+                        <td className="px-4 py-3 text-xs font-mono">{s.paymentRef}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           )}
 
           {activeTab === 'messages' && (
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-white rounded-lg shadow-sm p-6 overflow-x-auto">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Messages de contact</h2>
-              <p className="text-gray-600">Fonctionnalité en cours de développement...</p>
+              {dataLoading ? <div className="loading-spinner mx-auto"></div> : (
+                <div className="space-y-4">
+                  {messages.map(m => (
+                    <div key={m.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                      <div className="flex justify-between mb-2">
+                        <span className="font-bold">{m.name}</span>
+                        <span className="text-xs text-gray-400">{new Date(m.createdAt).toLocaleString()}</span>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-2">{m.email}</p>
+                      <p className="text-gray-800 bg-gray-50 p-3 rounded">{m.message}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </main>

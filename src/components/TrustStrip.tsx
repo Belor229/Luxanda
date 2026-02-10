@@ -1,25 +1,32 @@
+import { ShieldCheck, Zap, CreditCard, MessageCircle } from 'lucide-react'
+
 export default function TrustStrip() {
+  const items = [
+    { icon: <ShieldCheck className="h-5 w-5" />, text: "Mise en relation de confiance" },
+    { icon: <Zap className="h-5 w-5" />, text: "Paiement direct au vendeur" },
+    { icon: <CreditCard className="h-5 w-5" />, text: "Paiements via Kkiapay certifiés" },
+    { icon: <MessageCircle className="h-5 w-5" />, text: "Support WhatsApp & Téléphone" },
+  ]
+
   return (
-    <section className="bg-gray-900 text-white py-4">
+    <section className="bg-primary-blue text-white py-6 border-y border-white/10 shadow-lg">
       <div className="container-custom">
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-4">
-            <span className="bg-primary-orange/20 text-primary-orange px-3 py-1 rounded-full text-sm font-semibold">
-              Mise en relation
-            </span>
-            <span className="bg-primary-orange/20 text-primary-orange px-3 py-1 rounded-full text-sm font-semibold">
-              Paiement direct au vendeur
-            </span>
-            <span className="bg-primary-orange/20 text-primary-orange px-3 py-1 rounded-full text-sm font-semibold">
-              Abonnements vendeurs via Kkiapay
-            </span>
-            <span className="bg-primary-orange/20 text-primary-orange px-3 py-1 rounded-full text-sm font-semibold">
-              Support: WhatsApp & Téléphone
-            </span>
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
+          <div className="flex flex-wrap justify-center lg:justify-start gap-6 sm:gap-10">
+            {items.map((item, i) => (
+              <div key={i} className="flex items-center space-x-3 group">
+                <div className="p-2 bg-white/10 rounded-lg group-hover:bg-primary-orange transition-colors">
+                  {item.icon}
+                </div>
+                <span className="text-sm font-medium">{item.text}</span>
+              </div>
+            ))}
           </div>
-          <div className="text-sm text-gray-300 text-center lg:text-right">
-            <p>Luxanda ne gère pas le paiement des commandes. Les transactions se font avec les vendeurs.</p>
-            <p>Les options de livraison seront annoncées prochainement.</p>
+          <div className="text-right hidden lg:block border-l border-white/20 pl-8">
+            <p className="text-xs text-gray-300 font-light italic">
+              Luxanda facilite vos échanges en toute sécurité.<br />
+              Transactions directes avec les vendeurs.
+            </p>
           </div>
         </div>
       </div>

@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { 
-  Package, 
-  TrendingUp, 
-  Users, 
+import {
+  Package,
+  TrendingUp,
+  Users,
   Eye,
   Plus,
   Edit,
@@ -55,34 +55,37 @@ export default function VendorDashboard() {
   const router = useRouter()
 
   useEffect(() => {
-    // Check if user is vendor
-    const token = localStorage.getItem('token')
-    const user = localStorage.getItem('user')
-    
-    if (!token || !user) {
-      router.push('/login')
-      return
+    const checkVendor = async () => {
+      const { createClient } = await import('@/utils/supabase/client')
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+
+      if (!session) {
+        router.push('/login')
+        return
+      }
+
+      const { data: profile } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', session.user.id)
+        .single()
+
+      const userRole = profile?.role?.toUpperCase()
+      if (userRole !== 'VENDOR' && userRole !== 'ADMIN') {
+        router.push('/')
+        return
+      }
+
+      fetchDashboardData()
     }
 
-    const userData = JSON.parse(user)
-    const userRole = userData.role?.toUpperCase()
-    if (userRole !== 'VENDOR' && userRole !== 'vendor' && userRole !== 'ADMIN' && userRole !== 'admin') {
-      router.push('/')
-      return
-    }
-
-    fetchDashboardData()
+    checkVendor()
   }, [router])
 
   const fetchDashboardData = async () => {
     try {
-      const token = localStorage.getItem('token')
-      const response = await fetch('/api/vendor/dashboard', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-
+      const response = await fetch('/api/vendor/dashboard')
       if (response.ok) {
         const data = await response.json()
         setStats(data.stats)
@@ -97,10 +100,12 @@ export default function VendorDashboard() {
     }
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
+  const handleLogout = async () => {
+    const { createClient } = await import('@/utils/supabase/client')
+    const supabase = createClient()
+    await supabase.auth.signOut()
     router.push('/')
+    router.refresh()
   }
 
   const formatPrice = (price: number) => {
@@ -177,11 +182,10 @@ export default function VendorDashboard() {
               <li>
                 <button
                   onClick={() => setActiveTab('overview')}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                    activeTab === 'overview'
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'overview'
                       ? 'bg-primary-orange text-white'
                       : 'text-gray-700 hover:bg-gray-100'
-                  }`}
+                    }`}
                 >
                   <BarChart3 className="h-5 w-5" />
                   <span>Vue d'ensemble</span>
@@ -190,11 +194,10 @@ export default function VendorDashboard() {
               <li>
                 <button
                   onClick={() => setActiveTab('products')}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                    activeTab === 'products'
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'products'
                       ? 'bg-primary-orange text-white'
                       : 'text-gray-700 hover:bg-gray-100'
-                  }`}
+                    }`}
                 >
                   <Package className="h-5 w-5" />
                   <span>Mes Produits</span>
@@ -203,11 +206,10 @@ export default function VendorDashboard() {
               <li>
                 <button
                   onClick={() => setActiveTab('analytics')}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                    activeTab === 'analytics'
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'analytics'
                       ? 'bg-primary-orange text-white'
                       : 'text-gray-700 hover:bg-gray-100'
-                  }`}
+                    }`}
                 >
                   <TrendingUp className="h-5 w-5" />
                   <span>Analytics</span>
@@ -216,11 +218,10 @@ export default function VendorDashboard() {
               <li>
                 <button
                   onClick={() => setActiveTab('settings')}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                    activeTab === 'settings'
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'settings'
                       ? 'bg-primary-orange text-white'
                       : 'text-gray-700 hover:bg-gray-100'
-                  }`}
+                    }`}
                 >
                   <Settings className="h-5 w-5" />
                   <span>Paramètres</span>
@@ -292,11 +293,10 @@ export default function VendorDashboard() {
                   </div>
                   <div className="text-right">
                     <p className="text-sm text-gray-600">Statut</p>
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      stats.subscription.status === 'active' 
-                        ? 'bg-green-100 text-green-800' 
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${stats.subscription.status === 'active'
+                        ? 'bg-green-100 text-green-800'
                         : 'bg-red-100 text-red-800'
-                    }`}>
+                      }`}>
                       {stats.subscription.status === 'active' ? 'Actif' : 'Inactif'}
                     </span>
                   </div>
@@ -324,11 +324,10 @@ export default function VendorDashboard() {
                       </div>
                       <div className="flex items-center space-x-2">
                         <span className="text-sm text-gray-500">{product.views} vues</span>
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          product.isActive 
-                            ? 'bg-green-100 text-green-800' 
+                        <span className={`px-2 py-1 text-xs rounded-full ${product.isActive
+                            ? 'bg-green-100 text-green-800'
                             : 'bg-red-100 text-red-800'
-                        }`}>
+                          }`}>
                           {product.isActive ? 'Actif' : 'Inactif'}
                         </span>
                       </div>
@@ -343,7 +342,7 @@ export default function VendorDashboard() {
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-gray-900">Mes Produits</h2>
-                <button 
+                <button
                   onClick={() => setShowAddProductModal(true)}
                   className="btn btn-primary"
                 >
@@ -362,11 +361,10 @@ export default function VendorDashboard() {
                       </div>
                       <div className="flex items-center space-x-4">
                         <span className="text-sm text-gray-500">{product.stockQuantity} en stock</span>
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          product.isActive 
-                            ? 'bg-green-100 text-green-800' 
+                        <span className={`px-2 py-1 text-xs rounded-full ${product.isActive
+                            ? 'bg-green-100 text-green-800'
                             : 'bg-red-100 text-red-800'
-                        }`}>
+                          }`}>
                           {product.isActive ? 'Actif' : 'Inactif'}
                         </span>
                         <div className="flex space-x-2">
@@ -386,7 +384,7 @@ export default function VendorDashboard() {
                   <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucun produit</h3>
                   <p className="text-gray-600 mb-6">Commencez par ajouter votre premier produit !</p>
-                  <button 
+                  <button
                     onClick={() => setShowAddProductModal(true)}
                     className="btn btn-primary"
                   >

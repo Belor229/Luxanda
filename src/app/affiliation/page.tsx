@@ -52,17 +52,16 @@ export default function AffiliationPage() {
 
   const fetchAffiliationData = async () => {
     try {
-      const token = localStorage.getItem('token')
-      if (!token) {
+      const { createClient } = await import('@/utils/supabase/client')
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+
+      if (!session) {
         router.push('/login')
         return
       }
 
-      const response = await fetch('/api/affiliation/my-affiliation', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
+      const response = await fetch('/api/affiliation/my-affiliation')
 
       if (response.ok) {
         const data = await response.json()
@@ -215,7 +214,7 @@ export default function AffiliationPage() {
         {/* Affiliation Link */}
         <div className="bg-white rounded-lg shadow-sm p-8 mb-12">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Votre Lien de Parrainage</h2>
-          
+
           <div className="space-y-6">
             <div className="flex items-center space-x-4">
               <div className="flex-1 p-4 bg-gray-50 rounded-lg border">
@@ -307,7 +306,7 @@ export default function AffiliationPage() {
         {/* Recent Referrals */}
         <div className="bg-white rounded-lg shadow-sm p-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Parrainages Récents</h2>
-          
+
           {referrals.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full">

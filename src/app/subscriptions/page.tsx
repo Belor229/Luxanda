@@ -84,10 +84,34 @@ export default function SubscriptionsPage() {
     setShowKkiapay(true)
   }
 
-  const handleKkiapaySuccess = (data: any) => {
+  const handleKkiapaySuccess = async (data: any) => {
     console.log('Paiement Kkiapay réussi:', data)
-    setSuccess(true)
-    setShowKkiapay(false)
+    setLoading(true)
+    try {
+      const response = await fetch('/api/subscriptions/confirm-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          transactionId: data.transactionId,
+          amount: subscriptionPlans.find(p => p.id === selectedPlan)?.price,
+          paymentMethod: 'kkiapay'
+        })
+      })
+
+      if (response.ok) {
+        setSuccess(true)
+      } else {
+        const errorData = await response.json()
+        setError(errorData.error || 'Erreur lors de la confirmation de l\'abonnement')
+      }
+    } catch (err) {
+      setError('Erreur de connexion lors de la confirmation')
+    } finally {
+      setLoading(false)
+      setShowKkiapay(false)
+    }
   }
 
   const handleKkiapayError = (error: any) => {
@@ -117,17 +141,24 @@ export default function SubscriptionsPage() {
               <Check className="h-8 w-8 text-green-600" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Abonnement créé !
+              Abonnement Activé !
             </h2>
             <p className="text-gray-600 mb-6">
-              Votre abonnement a été créé avec succès. Suivez les instructions de paiement pour l'activer.
+              Félicitations ! Votre abonnement est maintenant actif. Vous pouvez dès à présent ajouter vos produits et commencer à vendre.
             </p>
-            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-left">
-              <h3 className="font-semibold text-orange-800 mb-2">Instructions de paiement :</h3>
-              <p className="text-sm text-orange-700">
-                Veuillez effectuer le paiement via MTN Money au 0153932672 (Nom : DJAGBA Vioutou Odirick Belor). 
-                Vous recevrez une confirmation sous 24h.
-              </p>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => router.push('/vendor/dashboard')}
+                className="btn btn-primary w-full"
+              >
+                Accéder au Dashboard Vendeur
+              </button>
+              <button
+                onClick={() => setSuccess(false)}
+                className="text-gray-500 hover:text-gray-700 text-sm"
+              >
+                Retour aux abonnements
+              </button>
             </div>
           </div>
         </div>
@@ -157,13 +188,12 @@ export default function SubscriptionsPage() {
           {subscriptionPlans.map((plan) => (
             <div
               key={plan.id}
-              className={`relative bg-white rounded-2xl shadow-lg border-2 transition-all duration-300 hover:shadow-xl ${
-                selectedPlan === plan.id
-                  ? 'border-primary-orange ring-2 ring-primary-orange ring-opacity-50'
-                  : plan.popular
+              className={`relative bg-white rounded-2xl shadow-lg border-2 transition-all duration-300 hover:shadow-xl ${selectedPlan === plan.id
+                ? 'border-primary-orange ring-2 ring-primary-orange ring-opacity-50'
+                : plan.popular
                   ? 'border-orange-200'
                   : 'border-gray-200'
-              }`}
+                }`}
             >
               {plan.popular && (
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
@@ -196,13 +226,12 @@ export default function SubscriptionsPage() {
 
                 <button
                   onClick={() => handleSelectPlan(plan.id)}
-                  className={`w-full py-3 px-6 rounded-lg font-semibold transition-colors ${
-                    selectedPlan === plan.id
-                      ? 'bg-primary-orange text-white'
-                      : plan.popular
+                  className={`w-full py-3 px-6 rounded-lg font-semibold transition-colors ${selectedPlan === plan.id
+                    ? 'bg-primary-orange text-white'
+                    : plan.popular
                       ? 'bg-orange-100 text-orange-700 hover:bg-orange-200'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                    }`}
                 >
                   {selectedPlan === plan.id ? 'Sélectionné' : 'Sélectionner'}
                 </button>

@@ -257,6 +257,99 @@ router.patch('/contact-messages/:id/status', [
   }
 })
 
+// Get all users
+router.get('/users', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { role, page = 1, limit = 50 } = req.query
+    const where: any = {}
+    if (role) where.role = role
+
+    const users = await prisma.user.findMany({
+      where,
+      include: { profile: true },
+      orderBy: { createdAt: 'desc' },
+      skip: (Number(page) - 1) * Number(limit),
+      take: Number(limit)
+    })
+
+    const total = await prisma.user.count({ where })
+
+    res.json({
+      users,
+      pagination: { total, page: Number(page), limit: Number(limit), pages: Math.ceil(total / Number(limit)) }
+    })
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur lors de la récupération des utilisateurs' })
+  }
+})
+
+// Update user role
+router.patch('/users/:id/role', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params
+    const { role } = req.body
+
+    if (!['USER', 'VENDOR', 'ADMIN'].includes(role)) {
+      return res.status(400).json({ error: 'Rôle invalide' })
+    }
+
+    const user = await prisma.user.update({
+      where: { id },
+      data: { role }
+    })
+
+    res.json({ message: 'Rôle mis à jour', user })
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur lors de la mise à jour du rôle' })
+  }
+})
+
+// Get all products (admin)
+router.get('/products', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { status, page = 1, limit = 50 } = req.query
+    const where: any = {}
+    if (status) where.status = status
+
+    const products = await prisma.product.findMany({
+      where,
+      include: {
+        vendor: { include: { user: { include: { profile: true } } } },
+        category: true
+      },
+      orderBy: { createdAt: 'desc' },
+      skip: (Number(page) - 1) * Number(limit),
+      take: Number(limit)
+    })
+
+    const total = await prisma.product.count({ where })
+
+    res.json({
+      products,
+      pagination: { total, page: Number(page), limit: Number(limit), pages: Math.ceil(total / Number(limit)) }
+    })
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur lors de la récupération des produits' })
+  }
+})
+
+// Update product status
+router.patch('/products/:id/status', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params
+    const { status } = req.body
+
+    const product = await prisma.product.update({
+      where: { id },
+      data: { status }
+    })
+
+    res.json({ message: 'Statut du produit mis à jour', product })
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur lors de la mise à jour du produit' })
+  }
+})
+
 // Get system logs (placeholder)
 router.get('/logs', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
   try {

@@ -64,16 +64,9 @@ export default function AddProductModal({ isOpen, onClose, onProductAdded }: Add
     setError('')
 
     try {
-      const token = localStorage.getItem('token')
-      if (!token) {
-        setError('Vous devez être connecté pour ajouter un produit')
-        return
-      }
-
       const response = await fetch('/api/products', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({

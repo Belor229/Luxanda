@@ -86,14 +86,23 @@ export default function Footer() {
               © 2025 Luxanda.bj - Tous droits réservés
             </p>
             <div className="flex flex-wrap justify-center md:justify-end space-x-4 sm:space-x-6 text-xs sm:text-sm">
+              <Link href="/about" className="text-gray-400 hover:text-white transition-colors py-1">
+                À propos
+              </Link>
               <Link href="/terms" className="text-gray-400 hover:text-white transition-colors py-1">
                 CGU
               </Link>
               <Link href="/privacy" className="text-gray-400 hover:text-white transition-colors py-1">
-                Politique de confidentialité
+                Confidentialité
               </Link>
-              <Link href="/cookies" className="text-gray-400 hover:text-white transition-colors py-1">
-                Cookies
+              <Link href="/legal" className="text-gray-400 hover:text-white transition-colors py-1">
+                Mentions Légales
+              </Link>
+              <Link href="/faq" className="text-gray-400 hover:text-white transition-colors py-1">
+                FAQ
+              </Link>
+              <Link href="/refunds" className="text-gray-400 hover:text-white transition-colors py-1">
+                Remboursement
               </Link>
             </div>
           </div>

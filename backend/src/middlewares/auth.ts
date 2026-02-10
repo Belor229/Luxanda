@@ -11,7 +11,20 @@ interface AuthRequest extends Request {
 
 export const authenticateToken = (req: AuthRequest, res: Response, next: NextFunction) => {
   const authHeader = req.headers['authorization']
-  const token = authHeader && authHeader.split(' ')[1]
+  let token = authHeader && authHeader.split(' ')[1]
+
+  // If no auth header, try to get token from cookies (proxied by Next.js)
+  if (!token && req.headers.cookie) {
+    const cookies = req.headers.cookie.split(';').reduce((acc: any, cookie) => {
+      const [key, value] = cookie.trim().split('=')
+      acc[key] = value
+      return acc
+    }, {})
+    // Look for supbase auth cookie. The name might vary based on your supabase config, 
+    // but typically it starts with 'sb-' followed by the project ref
+    const sbTokenKey = Object.keys(cookies).find(k => k.includes('access-token'))
+    if (sbTokenKey) token = cookies[sbTokenKey]
+  }
 
   if (!token) {
     return res.status(401).json({

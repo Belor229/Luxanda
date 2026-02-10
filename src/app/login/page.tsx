@@ -13,7 +13,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  
+
   const router = useRouter()
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -40,17 +40,13 @@ export default function LoginPage() {
       const data = await response.json()
 
       if (response.ok) {
-        // Store token in localStorage
-        if (data.token) {
-          localStorage.setItem('token', data.token)
-        }
-        localStorage.setItem('user', JSON.stringify(data.user))
-        
-        // Redirect based on user role or redirectPath
-        const redirectPath = data.redirectPath || 
+        // Redirection based on user role or redirectPath
+        // The cookie is handled by the server-side route
+        const redirectPath = data.redirectPath ||
           (data.user.role === 'ADMIN' || data.user.role === 'admin' ? '/admin' :
-           data.user.role === 'VENDOR' || data.user.role === 'vendor' ? '/vendor/dashboard' : '/')
+            data.user.role === 'VENDOR' || data.user.role === 'vendor' ? '/vendor/dashboard' : '/')
         router.push(redirectPath)
+        router.refresh() // Refresh to update layouts with the new session
       } else {
         setError(data.error || 'Erreur de connexion')
       }

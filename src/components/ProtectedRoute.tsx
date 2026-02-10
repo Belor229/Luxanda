@@ -10,10 +10,10 @@ interface ProtectedRouteProps {
   redirectTo?: string
 }
 
-export default function ProtectedRoute({ 
-  children, 
-  allowedRoles = [], 
-  redirectTo = '/login' 
+export default function ProtectedRoute({
+  children,
+  allowedRoles = [],
+  redirectTo = '/login'
 }: ProtectedRouteProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -26,72 +26,47 @@ export default function ProtectedRoute({
         const supabase = createClient()
         const { data: { session }, error } = await supabase.auth.getSession()
 
+        // Check for session
         if (error || !session) {
           router.push(`${redirectTo}?redirect=${encodeURIComponent(pathname)}`)
           return
         }
 
-        // Get user role from localStorage or database
-        const userStr = localStorage.getItem('user')
-        if (userStr) {
-          const user = JSON.parse(userStr)
-          
-          // Check if user has required role
-          if (allowedRoles.length > 0) {
-            const userRole = user.role?.toUpperCase()
-            const hasAccess = allowedRoles.some(role => 
-              role.toUpperCase() === userRole || 
-              (userRole === 'ADMIN' && allowedRoles.includes('admin'))
-            )
-            
-            if (!hasAccess) {
-              // Redirect based on user role
-              if (userRole === 'ADMIN') {
-                router.push('/admin')
-              } else if (userRole === 'VENDOR') {
-                router.push('/vendor/dashboard')
-              } else {
-                router.push('/')
-              }
-              return
+        // Fetch user from database to check role
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('id, email, name, role')
+          .eq('id', session.user.id)
+          .single()
+
+        if (userError || !userData) {
+          console.error('Error fetching user for auth check:', userError)
+          router.push(redirectTo)
+          return
+        }
+
+        // Role-based authorization
+        if (allowedRoles.length > 0) {
+          const userRole = userData.role?.toUpperCase()
+          const hasAccess = allowedRoles.some(role =>
+            role.toUpperCase() === userRole ||
+            (userRole === 'ADMIN' && allowedRoles.includes('admin'))
+          )
+
+          if (!hasAccess) {
+            // Redirect based on user role if not authorized for this specific route
+            if (userRole === 'ADMIN') {
+              router.push('/admin')
+            } else if (userRole === 'VENDOR') {
+              router.push('/vendor/dashboard')
+            } else {
+              router.push('/')
             }
-          }
-
-          setIsAuthorized(true)
-        } else {
-          // Fetch user from database
-          const { data: userData } = await supabase
-            .from('users')
-            .select('id, email, name, role')
-            .eq('id', session.user.id)
-            .single()
-
-          if (userData) {
-            localStorage.setItem('user', JSON.stringify(userData))
-            
-            if (allowedRoles.length > 0) {
-              const userRole = userData.role?.toUpperCase()
-              const hasAccess = allowedRoles.some(role => 
-                role.toUpperCase() === userRole
-              )
-              
-              if (!hasAccess) {
-                if (userRole === 'ADMIN') {
-                  router.push('/admin')
-                } else if (userRole === 'VENDOR') {
-                  router.push('/vendor/dashboard')
-                } else {
-                  router.push('/')
-                }
-                return
-              }
-            }
-
-            setIsAuthorized(true)
-          } else {
-            router.push(redirectTo)
+            return
           }
         }
+
+        setIsAuthorized(true)
       } catch (error) {
         console.error('Auth check error:', error)
         router.push(redirectTo)
