@@ -1,31 +1,65 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { createClient } from '@/utils/supabase/server'
+import { cookies } from 'next/headers'
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
-    const token = request.headers.get('authorization')?.replace('Bearer ', '')
-    
-    if (!token) {
-      return NextResponse.json({ error: 'Token manquant' }, { status: 401 })
-    }
+    const cookieStore = cookies()
+    const supabase = createClient(cookieStore)
 
-    // Forward request to backend
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000'
-    const response = await fetch(`${backendUrl}/api/affiliation/my-affiliation`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+
+    const userId = session.user.id
+
+    // Get user's affiliation stats
+    const affiliationStats = await prisma.referral.aggregate({
+      where: { referrerId: userId },
+      _count: { referredId: true },
+      _sum: {
+        commission: true
       }
     })
 
-    const data = await response.json()
+    // Get recent referrals
+    const recentReferrals = await prisma.referral.findMany({
+      where: { referrerId: userId },
+      include: {
+        referred: {
+          include: {
+            profile: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 10
+    })
 
-    if (!response.ok) {
-      return NextResponse.json(data, { status: response.status })
-    }
+    const referrals = recentReferrals.map((ref: any) => ({
+      id: ref.id,
+      commission_amount: ref.commission,
+      status: ref.status,
+      created_at: ref.createdAt,
+      first_name: ref.referred.profile?.firstName,
+      last_name: ref.referred.profile?.lastName,
+      email: ref.referred.email
+    }))
 
-    return NextResponse.json(data)
+    const baseUrl = process.env.FRONTEND_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
+
+    return NextResponse.json({
+      affiliationLink: `${baseUrl}/register?ref=${userId}`,
+      stats: {
+        totalReferrals: affiliationStats._count?.referredId || 0,
+        totalEarnings: affiliationStats._sum?.commission || 0,
+        pendingEarnings: 0
+      },
+      recentReferrals: referrals
+    })
+
   } catch (error) {
-    console.error('Affiliation API error:', error)
-    return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 })
+    console.error('Affiliation stats error:', error)
+    return NextResponse.json({ error: 'Erreur lors de la récupération des statistiques d\'affiliation' }, { status: 500 })
   }
 }
