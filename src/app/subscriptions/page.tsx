@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Check, Star, Crown, Zap, ArrowRight, CreditCard, Shield } from 'lucide-react'
 import KkiapayWidget from '@/components/KkiapayWidget'
 
@@ -66,6 +67,7 @@ const subscriptionPlans: SubscriptionPlan[] = [
 ]
 
 export default function SubscriptionsPage() {
+  const router = useRouter()
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
   const [paymentMethod, setPaymentMethod] = useState<'kkiapay'>('kkiapay')
   const [loading, setLoading] = useState(false)

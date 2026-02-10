@@ -1,5 +1,5 @@
 import { Metadata, ResolvingMetadata } from 'next'
-import { prisma } from '../../../../backend/src/config/prisma'
+import { prisma } from '@/lib/prisma'
 import ProductDetail from './ProductDetail'
 
 interface Props {
