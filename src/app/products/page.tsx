@@ -2,22 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import ProductCard from '@/components/ProductCard'
+import ProductCard, { Product } from '@/components/ProductCard'
 import { Grid, List, Search } from 'lucide-react'
-
-interface Product {
-  id: number
-  name: string
-  description: string
-  price: number
-  category: string
-  images: string[]
-  vendor_name: string
-  vendor_email: string
-  is_featured: boolean
-  stock_quantity: number
-  created_at: string
-}
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
@@ -128,8 +114,8 @@ export default function ProductsPage() {
             </div>
           ) : products.length > 0 ? (
             <div className={`grid gap-6 ${viewMode === 'grid'
-                ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
-                : 'grid-cols-1'
+              ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+              : 'grid-cols-1'
               }`}>
               {products.map((product) => (
                 <ProductCard
@@ -162,7 +148,7 @@ export default function ProductsPage() {
                 <button
                   onClick={() => handlePageChange(pagination.page - 1)}
                   disabled={pagination.page === 1}
-                  className="btn btn-outline disabled:opacity-50 disabled:cursor-not-allowed"
+                  classNam="btn btn-outline disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Précédent
                 </button>
@@ -184,8 +170,8 @@ export default function ProductsPage() {
                       key={page}
                       onClick={() => handlePageChange(page)}
                       className={`px-4 py-2 rounded-lg font-medium ${isCurrentPage
-                          ? 'bg-primary-orange text-white'
-                          : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                        ? 'bg-primary-orange text-white'
+                        : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
                         }`}
                     >
                       {page}

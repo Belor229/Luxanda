@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
+import { prisma } from '@/lib/prisma'
+import { Role } from '@prisma/client'
+
+export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,6 +28,9 @@ export async function POST(request: NextRequest) {
     const cookieStore = cookies()
     const supabase = createClient(cookieStore)
 
+    // Debug logging
+    console.log('Register attempt for:', email)
+
     // Sign up with Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
@@ -38,6 +45,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (authError || !authData.user) {
+      console.error('Supabase Register Error:', authError)
       return NextResponse.json(
         { error: authError?.message || 'Erreur lors de la création du compte' },
         { status: 400 }
@@ -45,69 +53,61 @@ export async function POST(request: NextRequest) {
     }
 
     // Map role from form to database role
-    let dbRole = 'USER'
-    if (role === 'vendor') {
-      dbRole = 'VENDOR'
-    } else if (role === 'admin') {
-      dbRole = 'ADMIN'
+    // Only allow USER or VENDOR registration. ADMIN must be created manually/seeded.
+    let dbRole: Role = Role.USER
+    if (role === 'vendor' || role === 'VENDOR') {
+      dbRole = Role.VENDOR
     }
 
-    // Create user profile in database
-    const { data: userProfile, error: profileError } = await supabase
-      .from('users')
-      .insert({
-        id: authData.user.id,
-        email: authData.user.email!,
-        name: `${firstName || ''} ${lastName || ''}`.trim() || email.split('@')[0],
-        role: dbRole,
+    // Create user profile in database using Prisma (bypassing RLS)
+    // We strive to keep public.users in sync with auth.users
+    let userProfile;
+    try {
+      userProfile = await prisma.user.create({
+        data: {
+          id: authData.user.id,
+          email: authData.user.email!,
+          name: `${firstName || ''} ${lastName || ''}`.trim() || email.split('@')[0],
+          password: 'SUPABASE_AUTH', // Managed by Supabase
+          role: dbRole,
+          profile: {
+            create: {
+              firstName: firstName || undefined,
+              lastName: lastName || undefined,
+              phone: phone || undefined,
+            }
+          }
+        },
+        include: {
+          profile: true
+        }
       })
-      .select('id, email, name, role')
-      .single()
-
-    if (profileError) {
-      console.error('Profile creation error:', profileError)
-      // Try to get existing user
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('id, email, name, role')
-        .eq('id', authData.user.id)
-        .single()
-
-      if (existingUser) {
-        return NextResponse.json({
-          token: authData.session?.access_token,
-          user: {
-            id: existingUser.id,
-            email: existingUser.email,
-            name: existingUser.name,
-            role: existingUser.role || 'USER',
-          },
+    } catch (error: any) {
+      console.error('Prisma create error:', error)
+      // Check if user already exists (race condition or previous attempt)
+      if (error.code === 'P2002') {
+        userProfile = await prisma.user.findUnique({
+          where: { id: authData.user.id },
+          include: { profile: true }
         })
+      } else {
+        throw error
       }
+    }
 
+    if (!userProfile) {
+      console.error('Failed to create or retrieve user profile')
       return NextResponse.json(
-        { error: 'Erreur lors de la création du profil utilisateur' },
+        { error: 'Erreur: Impossible de créer le profil utilisateur (Doublon ou Erreur DB)' },
         { status: 500 }
       )
     }
 
-    // Create user profile details if provided
-    if (firstName || lastName || phone) {
-      await supabase
-        .from('user_profiles')
-        .insert({
-          userId: authData.user.id,
-          firstName: firstName || null,
-          lastName: lastName || null,
-          phone: phone || null,
-        })
-    }
-
     // Determine redirect path based on role
     let redirectPath = '/'
-    if (dbRole === 'ADMIN') {
+    if (userProfile.role === Role.ADMIN) {
       redirectPath = '/admin'
-    } else if (dbRole === 'VENDOR') {
+    } else if (userProfile.role === Role.VENDOR) {
       redirectPath = '/vendor/dashboard'
     }
 
@@ -117,14 +117,14 @@ export async function POST(request: NextRequest) {
         id: userProfile.id,
         email: userProfile.email,
         name: userProfile.name,
-        role: userProfile.role || 'USER',
+        role: userProfile.role,
       },
       redirectPath,
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Register error:', error)
     return NextResponse.json(
-      { error: 'Erreur lors de l\'inscription' },
+      { error: `Erreur lors de l'inscription: ${error.message || 'Erreur inconnue'}` },
       { status: 500 }
     )
   }

@@ -4,18 +4,17 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { MessageCircle, Eye } from 'lucide-react'
 
-interface Product {
-  id: number
+export interface Product {
+  id: string
   name: string
-  description: string
+  description: string | null
   price: number
-  category: string
+  category: { name: string } | null
   images: string[]
-  vendor_name: string
-  vendor_email: string
-  is_featured: boolean
-  stock_quantity: number
-  created_at: string
+  vendor: { storeName: string; userId?: string } | null
+  featured: boolean
+  quantity: number
+  createdAt: Date | string
 }
 
 interface ProductCardProps {
@@ -69,13 +68,13 @@ export default function ProductCard({ product, viewMode }: ProductCardProps) {
 
             <div className="flex items-center gap-4 mb-4">
               <span className="text-sm text-gray-500">
-                Par {product.vendor_name}
+                Par {product.vendor?.storeName || 'Luxanda'}
               </span>
               <span className="text-sm text-gray-500">
-                {product.category}
+                {product.category?.name || 'Général'}
               </span>
               <span className="text-sm text-gray-500">
-                Stock: {product.stock_quantity}
+                Stock: {product.quantity}
               </span>
             </div>
 

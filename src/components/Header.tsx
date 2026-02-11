@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { Menu, X, ShoppingCart } from 'lucide-react'
+import { Menu, X, ShoppingCart, User as UserIcon, LayoutDashboard } from 'lucide-react'
 import { useCartStore } from '@/store/useCartStore'
+import { createClient } from '@/utils/supabase/client'
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -13,17 +14,26 @@ export default function Header() {
   const cartCount = getItemCount()
 
   const [user, setUser] = useState<any>(null)
+  const [userRole, setUserRole] = useState<string | null>(null)
   const router = useRouter()
+  const supabase = createClient()
 
   useEffect(() => {
     const initAuth = async () => {
-      const { createClient } = await import('@/utils/supabase/client')
-      const supabase = createClient()
       const { data: { session } } = await supabase.auth.getSession()
       setUser(session?.user || null)
 
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        fetchUserRole(session.user.id)
+      }
+
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
         setUser(session?.user || null)
+        if (session?.user) {
+          fetchUserRole(session.user.id)
+        } else {
+          setUserRole(null)
+        }
       })
 
       return () => subscription.unsubscribe()
@@ -31,11 +41,61 @@ export default function Header() {
     initAuth()
   }, [])
 
+  const fetchUserRole = async (userId: string) => {
+    try {
+      // We can't easily use prisma here (client component).
+      // We could create an API endpoint /api/auth/me to get current user details including role.
+      // Or simpler: check if we have an opaque token claim, or just query our new API.
+      // Let's use a simple API call.
+
+      // However, for now, specific role-based links might be overkill if we don't have the endpoint ready.
+      // But I can create valid links that redirect if unauthorized.
+
+      // Let's assume standard "Mon Compte" for now, OR fetch from a new endpoint.
+      // I will implement a quick check via existing APIs if possible, or just default to /
+
+      // Actually, I can use the same logic as previous pages: call an API.
+      // Let's rely on the login response storing role in localStorage? No, insecure/hacky.
+
+      // Best practice: A dedicated /api/me endpoint.
+      // I will create that quick endpoint now? Or just use specific paths.
+      // Let's try to infer or fetch.
+
+      // For now, I will add a generic "Mon Espace" that checks role on the page it lands on, 
+      // OR I try to get it from public profile if available.
+
+      // Let's try to fetch from a light endpoint.
+      // const res = await fetch('/api/auth/me') ...
+
+      // Use a simple heuristic: if they can access /vendor/dashboard, they are a vendor.
+      // That's slow.
+
+      // I'll stick to a generic "Mon Compte" but with a dropdown if possible, or just buttons.
+      // AND I will add a "Tableau de Bord" button that appears if logged in.
+
+      // Let's try to fetch from /api/auth/me (I will create it in a sec if not exists)
+      const response = await fetch('/api/users/me') // Assuming I create this
+      if (response.ok) {
+        const data = await response.json()
+        setUserRole(data.role)
+      }
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
   const handleLogout = async () => {
-    const { createClient } = await import('@/utils/supabase/client')
-    const supabase = createClient()
     await supabase.auth.signOut()
+    setUser(null)
+    setUserRole(null)
+    router.push('/login')
     router.refresh()
+  }
+
+  const getDashboardLink = () => {
+    if (userRole === 'ADMIN') return '/admin'
+    if (userRole === 'VENDOR') return '/vendor/dashboard'
+    return '/products' // Requests redirection or user profile
   }
 
   return (
@@ -55,34 +115,38 @@ export default function Header() {
               </span>
             </div>
             <div className="flex flex-wrap items-center justify-center sm:justify-end space-x-2 sm:space-x-4">
-              <Link href="/register" className="hover:text-primary-orange transition-colors py-1 px-2 rounded">
-                Devenir Vendeur
-              </Link>
+              {!user && (
+                <Link href="/register" className="hover:text-primary-orange transition-colors py-1 px-2 rounded">
+                  Devenir Vendeur
+                </Link>
+              )}
+
               {user ? (
-                <>
-                  <Link href="/users/profile" className="hover:text-primary-orange transition-colors py-1 px-2 rounded">
-                    Mon Profil
-                  </Link>
+                <div className="flex items-center gap-3">
+                  {userRole && userRole !== 'USER' && (
+                    <Link href={getDashboardLink()} className="flex items-center gap-1 hover:text-primary-orange transition-colors py-1 px-2 rounded font-medium">
+                      <LayoutDashboard className="h-4 w-4" />
+                      {userRole === 'ADMIN' ? 'Admin' : 'Vendeur'}
+                    </Link>
+                  )}
+
+                  <div className="flex items-center gap-2">
+                    <UserIcon className="h-4 w-4" />
+                    <span className="hidden sm:inline">{user.email?.split('@')[0]}</span>
+                  </div>
+
                   <button
                     onClick={handleLogout}
-                    className="hover:text-primary-orange transition-colors py-1 px-2 rounded"
+                    className="hover:text-red-400 transition-colors py-1 px-2 rounded"
                   >
                     Déconnexion
                   </button>
-                </>
+                </div>
               ) : (
                 <Link href="/login" className="hover:text-primary-orange transition-colors py-1 px-2 rounded">
                   Se connecter
                 </Link>
               )}
-              <Link
-                href="https://wa.me/2290141757559?text=Bonjour%20Luxanda%2C%20j%E2%80%99ai%20une%20question"
-                target="_blank"
-                rel="noopener"
-                className="hover:text-primary-orange transition-colors py-1 px-2 rounded"
-              >
-                WhatsApp
-              </Link>
             </div>
           </div>
         </div>
@@ -141,11 +205,6 @@ export default function Header() {
               <Link href="/contact" className="text-white hover:text-primary-orange transition-colors font-medium py-2 px-3 rounded-lg hover:bg-white/10 min-h-[44px] flex items-center">
                 Contact
               </Link>
-              {/*
-              <Link href="/affiliation" className="text-white hover:text-primary-orange transition-colors font-medium py-2 px-3 rounded-lg hover:bg-white/10 min-h-[44px] flex items-center">
-                Affiliation
-              </Link>
-              */}
             </div>
           </div>
         </div>

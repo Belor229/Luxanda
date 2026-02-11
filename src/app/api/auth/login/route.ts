@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
+import { prisma } from '@/lib/prisma'
+import { Role } from '@prisma/client'
+
+export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,6 +21,10 @@ export async function POST(request: NextRequest) {
     const cookieStore = cookies()
     const supabase = createClient(cookieStore)
 
+    // Debug logging
+    console.log('Login attempt for:', email)
+    console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
+
     // Sign in with Supabase
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email,
@@ -24,51 +32,40 @@ export async function POST(request: NextRequest) {
     })
 
     if (authError || !authData.user) {
+      console.error('Supabase Auth Error:', authError)
       return NextResponse.json(
         { error: authError?.message || 'Email ou mot de passe incorrect' },
         { status: 401 }
       )
     }
 
-    // Get user profile from database
-    const { data: profile, error: profileError } = await supabase
-      .from('users')
-      .select('id, email, name, role')
-      .eq('id', authData.user.id)
-      .single()
+    // Get user profile from database using Prisma
+    let profile = await prisma.user.findUnique({
+      where: { id: authData.user.id }
+    })
 
-    if (profileError) {
-      console.error('Profile fetch error:', profileError)
-      // If profile doesn't exist, create a basic one
-      const { data: newProfile } = await supabase
-        .from('users')
-        .insert({
-          id: authData.user.id,
-          email: authData.user.email!,
-          name: authData.user.email?.split('@')[0] || 'User',
-          role: 'USER',
+    if (!profile) {
+      // If profile doesn't exist (legacy user?), create a basic one
+      try {
+        profile = await prisma.user.create({
+          data: {
+            id: authData.user.id,
+            email: authData.user.email!,
+            name: authData.user.email?.split('@')[0] || 'User',
+            password: 'SUPABASE_AUTH', // Managed by Supabase
+            role: Role.USER,
+          }
         })
-        .select('id, email, name, role')
-        .single()
-
-      if (newProfile) {
-        return NextResponse.json({
-          token: authData.session?.access_token,
-          user: {
-            id: newProfile.id,
-            email: newProfile.email,
-            name: newProfile.name,
-            role: newProfile.role || 'USER',
-          },
-        })
+      } catch (e) {
+        console.error('Error creating missing profile:', e)
       }
     }
 
     // Determine redirect path based on role
     let redirectPath = '/'
-    if (profile?.role === 'ADMIN') {
+    if (profile?.role === Role.ADMIN) {
       redirectPath = '/admin'
-    } else if (profile?.role === 'VENDOR') {
+    } else if (profile?.role === Role.VENDOR) {
       redirectPath = '/vendor/dashboard'
     }
 
@@ -82,10 +79,10 @@ export async function POST(request: NextRequest) {
       },
       redirectPath,
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Login error:', error)
     return NextResponse.json(
-      { error: 'Erreur lors de la connexion' },
+      { error: `Erreur lors de la connexion: ${error.message || 'Erreur inconnue'}` },
       { status: 500 }
     )
   }

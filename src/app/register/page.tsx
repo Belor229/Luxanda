@@ -107,8 +107,9 @@ export default function RegisterPage() {
           const redirectPath = data.redirectPath ||
             (data.user.role === 'ADMIN' || data.user.role === 'admin' ? '/admin' :
               data.user.role === 'VENDOR' || data.user.role === 'vendor' ? '/vendor/dashboard' : '/')
-          router.push(redirectPath)
-          router.refresh()
+          window.location.href = redirectPath
+          // router.push(redirectPath)
+          // router.refresh()
         }, 2000)
       } else {
         setError(data.error || 'Erreur lors de la création du compte')

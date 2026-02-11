@@ -1,49 +1,72 @@
-import React from 'react'
+import { Container } from '@/components/ui/Container'
 
 export default function TermsPage() {
   return (
-    <div className="container mx-auto px-4 py-16 max-w-4xl">
-      <h1 className="text-3xl font-bold mb-8 text-primary-blue">Conditions Générales d'Utilisation (CGU)</h1>
+    <Container className="py-12">
+      <div className="prose max-w-none">
+        <h1 className="text-3xl font-bold mb-6">Conditions Générales d'Utilisation (CGU)</h1>
+        <p className="text-gray-600 mb-4">Dernière mise à jour : {new Date().toLocaleDateString()}</p>
 
-      <div className="prose prose-orange max-w-none text-gray-700 space-y-8">
-        <p className="italic text-gray-500 text-sm">Dernière mise à jour : 10 Février 2026</p>
-
-        <section>
-          <h2 className="text-xl font-semibold mb-4">1. Acceptation des conditions</h2>
+        <section className="mb-8">
+          <h2 className="text-xl font-semibold mb-3">1. Introduction</h2>
           <p>
-            L'accès et l'utilisation de la plateforme Luxanda impliquent l'acceptation sans réserve des présentes CGU. Si vous n'acceptez pas ces conditions, vous devez cesser d'utiliser nos services.
+            Bienvenue sur Luxanda. En utilisant notre site web et nos services, vous acceptez d'être lié par les présentes Conditions Générales d'Utilisation.
+            Veuillez les lire attentivement.
           </p>
         </section>
 
-        <section>
-          <h2 className="text-xl font-semibold mb-4">2. Services de la plateforme</h2>
+        <section className="mb-8">
+          <h2 className="text-xl font-semibold mb-3">2. Utilisation du service</h2>
           <p>
-            Luxanda est une marketplace mettant en relation des vendeurs et des acheteurs. Luxanda agit en tant qu'intermédiaire et n'est pas partie au contrat de vente entre le vendeur et l'acheteur, sauf mention contraire.
+            Luxanda est une plateforme de marché en ligne permettant aux vendeurs de proposer des produits et aux acheteurs de les commander.
+            Vous vous engagez à utiliser le site conformément aux lois en vigueur et à ne pas perturber son fonctionnement.
           </p>
         </section>
 
-        <section>
-          <h2 className="text-xl font-semibold mb-4">3. Obligations des utilisateurs</h2>
-          <ul className="list-disc pl-6 space-y-2">
-            <li><strong>Vendeurs :</strong> Vous vous engagez à ne vendre que des produits légaux, conformes à la description et dont vous détenez les droits.</li>
-            <li><strong>Acheteurs :</strong> Vous vous engagez à fournir des informations exactes et à honorer vos engagements d'achat.</li>
-          </ul>
-        </section>
-
-        <section className="bg-orange-50 p-6 rounded-lg border-l-4 border-primary-orange">
-          <h2 className="text-xl font-semibold mb-2 text-orange-900">4. Système d'Abonnement</h2>
-          <p className="text-orange-800 text-sm">
-            Les vendeurs doivent souscrire à un abonnement actif pour publier des produits sur la plateforme. L'abonnement est facturé mensuellement et n'est pas remboursable, sauf cas exceptionnel prévu par la loi.
+        <section className="mb-8">
+          <h2 className="text-xl font-semibold mb-3">3. Comptes utilisateurs</h2>
+          <p>
+            Pour accéder à certaines fonctionnalités, vous devez créer un compte. Vous êtes responsable de la confidentialité de vos identifiants
+            et de toutes les activités effectuées sous votre compte.
           </p>
         </section>
 
-        <section>
-          <h2 className="text-xl font-semibold mb-4">5. Responsabilité</h2>
+        <section className="mb-8">
+          <h2 className="text-xl font-semibold mb-3">4. Vendeurs et Produits</h2>
           <p>
-            Luxanda décline toute responsabilité en cas de litige entre vendeurs et acheteurs, bien que nous puissions intervenir en tant que médiateur pour assurer la satisfaction de nos utilisateurs.
+            Les vendeurs sont responsables des produits qu'ils mettent en vente. Luxanda agit en tant qu'intermédiaire et ne garantit pas
+            la qualité ou la conformité des produits vendus par des tiers, sauf indication contraire.
+          </p>
+        </section>
+
+        <section className="mb-8">
+          <h2 className="text-xl font-semibold mb-3">5. Commandes et Paiements</h2>
+          <p>
+            Les prix sont indiqués en FCFA. Le paiement est exigible immédiatement à la commande, sauf option de paiement à la livraison si disponible.
+          </p>
+        </section>
+
+        <section className="mb-8">
+          <h2 className="text-xl font-semibold mb-3">6. Responsabilité</h2>
+          <p>
+            Luxanda ne saurait être tenu responsable des dommages directs ou indirects résultant de l'utilisation du site ou de l'incapacité à l'utiliser.
+          </p>
+        </section>
+
+        <section className="mb-8">
+          <h2 className="text-xl font-semibold mb-3">7. Modifications</h2>
+          <p>
+            Nous nous réservons le droit de modifier ces conditions à tout moment. Les modifications prennent effet dès leur publication sur le site.
+          </p>
+        </section>
+
+        <section className="mb-8">
+          <h2 className="text-xl font-semibold mb-3">8. Contact</h2>
+          <p>
+            Pour toute question concernant ces CGU, veuillez nous contacter à : contact@luxanda.bj
           </p>
         </section>
       </div>
-    </div>
+    </Container>
   )
 }
