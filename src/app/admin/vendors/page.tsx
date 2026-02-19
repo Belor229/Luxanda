@@ -13,7 +13,9 @@ interface Vendor {
     user: {
         email: string
         name: string
-        phone: string | null
+        profile?: {
+            phone: string | null
+        } | null
     }
     _count: {
         products: number
@@ -161,7 +163,7 @@ export default function AdminVendorsPage() {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="text-sm text-gray-900">{vendor.user.email}</div>
-                                            <div className="text-sm text-gray-500">{vendor.user.phone || '-'}</div>
+                                            <div className="text-sm text-gray-500">{vendor.user.profile?.phone || '-'}</div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             {getStatusBadge(vendor.status)}

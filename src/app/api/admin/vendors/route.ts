@@ -39,7 +39,13 @@ export async function GET(request: Request) {
             where,
             include: {
                 user: {
-                    select: { email: true, name: true, phone: true } // Assuming phone is on Profile, but checking user relations
+                    select: {
+                        email: true,
+                        name: true,
+                        profile: {
+                            select: { phone: true }
+                        }
+                    }
                 },
                 _count: {
                     select: { products: true }

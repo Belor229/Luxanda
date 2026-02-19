@@ -148,7 +148,7 @@ export default function ProductsPage() {
                 <button
                   onClick={() => handlePageChange(pagination.page - 1)}
                   disabled={pagination.page === 1}
-                  classNam="btn btn-outline disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn btn-outline disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Précédent
                 </button>
