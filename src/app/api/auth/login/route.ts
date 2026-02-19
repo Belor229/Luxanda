@@ -62,11 +62,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Determine redirect path based on role
-    let redirectPath = '/'
+    let redirectPath = '/cart' // Default for USER (acheteur)
     if (profile?.role === Role.ADMIN) {
       redirectPath = '/admin'
     } else if (profile?.role === Role.VENDOR) {
       redirectPath = '/vendor/dashboard'
+    } else if (profile?.role === Role.USER) {
+      redirectPath = '/cart' // Acheteur vers panier
     }
 
     return NextResponse.json({

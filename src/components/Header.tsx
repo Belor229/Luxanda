@@ -130,10 +130,10 @@ export default function Header() {
                     </Link>
                   )}
 
-                  <div className="flex items-center gap-2">
+                  <Link href="/profile" className="flex items-center gap-2 hover:text-primary-orange transition-colors py-1 px-2 rounded">
                     <UserIcon className="h-4 w-4" />
                     <span className="hidden sm:inline">{user.email?.split('@')[0]}</span>
-                  </div>
+                  </Link>
 
                   <button
                     onClick={handleLogout}

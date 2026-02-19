@@ -40,6 +40,23 @@ export async function POST(request: Request) {
             }
         })
 
+        // Create automatic 2-month trial subscription for new vendors
+        const trialStartDate = new Date()
+        const trialEndDate = new Date()
+        trialEndDate.setMonth(trialEndDate.getMonth() + 2) // 2 months free trial
+
+        await prisma.subscription.create({
+            data: {
+                userId: session.user.id,
+                plan: 'STARTER', // Default plan for trial
+                amount: 0, // Free during trial
+                status: 'ACTIVE',
+                startDate: trialStartDate,
+                trialEndDate: trialEndDate,
+                endDate: trialEndDate // Trial ends after 2 months
+            }
+        })
+
         return NextResponse.json(vendor)
     } catch (error) {
         console.error('Create vendor API error:', error)

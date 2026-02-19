@@ -67,10 +67,31 @@ export async function POST(request: Request) {
             }
         })
 
+        // Check if user has an active trial
+        const existingTrial = await prisma.subscription.findFirst({
+            where: {
+                userId: session.user.id,
+                status: SubscriptionStatus.ACTIVE,
+                trialEndDate: { not: null }
+            },
+            orderBy: { createdAt: 'desc' }
+        })
+
         // Create new subscription
         const startDate = new Date()
         const endDate = new Date()
-        endDate.setDate(startDate.getDate() + 30) // 30 days duration
+        endDate.setMonth(endDate.getMonth() + 1) // 1 month duration
+
+        // If there's an active trial, end it and start paid subscription
+        if (existingTrial && existingTrial.trialEndDate && new Date() < existingTrial.trialEndDate) {
+            await prisma.subscription.update({
+                where: { id: existingTrial.id },
+                data: {
+                    status: SubscriptionStatus.EXPIRED,
+                    endDate: new Date()
+                }
+            })
+        }
 
         const subscription = await prisma.subscription.create({
             data: {
@@ -80,7 +101,8 @@ export async function POST(request: Request) {
                 status: SubscriptionStatus.ACTIVE,
                 paymentRef: transactionId,
                 startDate: startDate,
-                endDate: endDate
+                endDate: endDate,
+                trialEndDate: null // No trial for paid subscriptions
             }
         })
 

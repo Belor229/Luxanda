@@ -35,14 +35,16 @@ export async function GET(request: NextRequest) {
       where: { vendorId: vendor.id, featured: true }
     })
 
-    // Get subscription info
+    // Get subscription info (including trial)
     const subscription = await prisma.subscription.findFirst({
       where: { userId },
       orderBy: { createdAt: 'desc' },
       select: {
         plan: true,
         status: true,
-        endDate: true
+        endDate: true,
+        trialEndDate: true,
+        amount: true
       }
     })
 
@@ -63,7 +65,10 @@ export async function GET(request: NextRequest) {
         subscription: {
           plan: subscription?.plan || 'NONE',
           status: subscription?.status || 'INACTIVE',
-          expiresAt: subscription?.endDate || null
+          expiresAt: subscription?.endDate || null,
+          trialEndDate: subscription?.trialEndDate || null,
+          isTrial: subscription?.trialEndDate !== null && subscription?.amount === 0,
+          amount: subscription?.amount || 0
         }
       },
       products: productsList

@@ -297,6 +297,7 @@ model Subscription {
   paymentRef   String?
   startDate    DateTime?
   endDate      DateTime?
+  trialEndDate DateTime?         // Date de fin de la période d'essai (2 mois gratuits au lancement)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

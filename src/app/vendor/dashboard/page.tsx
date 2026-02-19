@@ -15,6 +15,14 @@ interface VendorData {
     status: string
     quantity: number
   }[]
+  subscription?: {
+    plan: string
+    status: string
+    expiresAt: string | null
+    trialEndDate: string | null
+    isTrial: boolean
+    amount: number
+  }
 }
 
 export default function VendorDashboard() {
@@ -27,10 +35,24 @@ export default function VendorDashboard() {
 
   const fetchVendorData = async () => {
     try {
-      const response = await fetch('/api/vendor')
+      const response = await fetch('/api/vendor/dashboard')
       if (response.ok) {
         const data = await response.json()
-        setVendor(data)
+        // Transform the API response to match our interface
+        setVendor({
+          id: data.vendor?.id || '',
+          storeName: data.vendor?.storeName || '',
+          status: data.vendor?.status || 'PENDING',
+          products: data.products || [],
+          subscription: data.stats?.subscription
+        })
+      } else {
+        // Fallback to old API
+        const fallbackResponse = await fetch('/api/vendor')
+        if (fallbackResponse.ok) {
+          const fallbackData = await fallbackResponse.json()
+          setVendor(fallbackData)
+        }
       }
     } catch (error) {
       console.error('Error fetching vendor data:', error)
@@ -135,7 +157,7 @@ export default function VendorDashboard() {
           </div>
         </div>
 
-        {/* Subscription Plan Card (Placeholder) */}
+        {/* Subscription Plan Card */}
         <div className="bg-white overflow-hidden shadow rounded-lg">
           <div className="p-5">
             <div className="flex items-center">
@@ -149,8 +171,13 @@ export default function VendorDashboard() {
                   </dt>
                   <dd>
                     <div className="text-lg font-medium text-gray-900">
-                      Gratuit / Starter
+                      {vendor.subscription?.isTrial ? 'Essai Gratuit (2 mois)' : vendor.subscription?.plan || 'Aucun'}
                     </div>
+                    {vendor.subscription?.trialEndDate && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        Essai jusqu'au {new Date(vendor.subscription.trialEndDate).toLocaleDateString('fr-FR')}
+                      </div>
+                    )}
                   </dd>
                 </dl>
               </div>
@@ -159,7 +186,7 @@ export default function VendorDashboard() {
           <div className="bg-gray-50 px-5 py-3">
             <div className="text-sm">
               <Link href="/vendor/subscription" className="font-medium text-primary-orange hover:text-orange-600">
-                Voir les plans
+                {vendor.subscription?.isTrial ? 'Choisir un plan' : 'Voir les plans'}
               </Link>
             </div>
           </div>

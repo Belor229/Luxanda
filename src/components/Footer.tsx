@@ -98,11 +98,17 @@ export default function Footer() {
               <Link href="/legal" className="text-gray-400 hover:text-white transition-colors py-1">
                 Mentions Légales
               </Link>
+              <Link href="/charte-vendeur" className="text-gray-400 hover:text-white transition-colors py-1">
+                Charte Vendeur
+              </Link>
+              <Link href="/politique-anti-fraude" className="text-gray-400 hover:text-white transition-colors py-1">
+                Anti-Fraude
+              </Link>
               <Link href="/faq" className="text-gray-400 hover:text-white transition-colors py-1">
                 FAQ
               </Link>
-              <Link href="/refunds" className="text-gray-400 hover:text-white transition-colors py-1">
-                Remboursement
+              <Link href="/contact" className="text-gray-400 hover:text-white transition-colors py-1">
+                Contact
               </Link>
             </div>
           </div>
