@@ -7,8 +7,10 @@ export interface CartItem {
     price: number
     image: string
     quantity: number
+    sellerId: string
     vendorName?: string
 }
+
 
 interface CartStore {
     items: CartItem[]
@@ -47,7 +49,9 @@ export const useCartStore = create<CartStore>()(
                                 price: product.price,
                                 image: Array.isArray(product.images) ? product.images[0] : product.images,
                                 quantity: 1,
+                                sellerId: product.seller_id || product.sellerId || '',
                                 vendorName: product.vendorName || product.vendor_name,
+
                             },
                         ],
                     })

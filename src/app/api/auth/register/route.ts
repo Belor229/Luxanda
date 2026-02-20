@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
-import { prisma } from '@/lib/prisma'
-import { Role } from '@prisma/client'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,6 +8,9 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { firstName, lastName, email, phone, password, role } = body
+
+    // Vendor-specific fields
+    const { storeName, whatsapp, city, category, description } = body
 
     if (!email || !password) {
       return NextResponse.json(
@@ -25,11 +26,32 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const isVendor = role === 'vendor' || role === 'vendeur'
+
+    // Validate vendor fields server-side
+    if (isVendor) {
+      if (!storeName?.trim()) {
+        return NextResponse.json({ error: 'Le nom de boutique est obligatoire' }, { status: 400 })
+      }
+      if (!whatsapp?.trim()) {
+        return NextResponse.json({ error: 'Le numéro WhatsApp est obligatoire pour les vendeurs' }, { status: 400 })
+      }
+      if (!city?.trim()) {
+        return NextResponse.json({ error: 'La ville est obligatoire' }, { status: 400 })
+      }
+      if (!category?.trim()) {
+        return NextResponse.json({ error: 'La catégorie est obligatoire' }, { status: 400 })
+      }
+      if (!description?.trim() || description.trim().length < 20) {
+        return NextResponse.json({ error: 'La description doit contenir au moins 20 caractères' }, { status: 400 })
+      }
+    }
+
     const cookieStore = cookies()
     const supabase = createClient(cookieStore)
 
-    // Debug logging
-    console.log('Register attempt for:', email)
+    // Map role to Postgres enum values: 'USER' or 'VENDOR'
+    const targetRole = isVendor ? 'VENDOR' : 'USER'
 
     // Sign up with Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -37,9 +59,9 @@ export async function POST(request: NextRequest) {
       password,
       options: {
         data: {
-          first_name: firstName,
-          last_name: lastName,
+          full_name: `${firstName || ''} ${lastName || ''}`.trim(),
           phone: phone,
+          role: targetRole,
         },
       },
     })
@@ -52,72 +74,34 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Map role from form to database role
-    // Only allow USER or VENDOR registration. ADMIN must be created manually/seeded.
-    let dbRole: Role = Role.USER
-    if (role === 'vendor' || role === 'VENDOR') {
-      dbRole = Role.VENDOR
-    }
-
-    // Create user profile in database using Prisma (bypassing RLS)
-    // We strive to keep public.users in sync with auth.users
-    let userProfile;
-    try {
-      userProfile = await prisma.user.create({
-        data: {
-          id: authData.user.id,
-          email: authData.user.email!,
-          name: `${firstName || ''} ${lastName || ''}`.trim() || email.split('@')[0],
-          password: 'SUPABASE_AUTH', // Managed by Supabase
-          role: dbRole,
-          profile: {
-            create: {
-              firstName: firstName || undefined,
-              lastName: lastName || undefined,
-              phone: phone || undefined,
-            }
-          }
-        },
-        include: {
-          profile: true
-        }
+    // If vendor, create the vendor row (this also triggers the 60-day trial subscription via DB trigger)
+    if (isVendor) {
+      const { error: vendorError } = await supabase.from('vendors').insert({
+        userId: authData.user.id,
+        store_name: storeName.trim(),
+        description: description.trim(),
+        whatsapp: whatsapp.trim(),
+        city: city.trim(),
+        category: category.trim(),
+        status: 'PENDING', // Will be set to APPROVED by the trigger
       })
-    } catch (error: any) {
-      console.error('Prisma create error:', error)
-      // Check if user already exists (race condition or previous attempt)
-      if (error.code === 'P2002') {
-        userProfile = await prisma.user.findUnique({
-          where: { id: authData.user.id },
-          include: { profile: true }
-        })
-      } else {
-        throw error
+
+      if (vendorError) {
+        console.error('Vendor creation error:', vendorError)
+        // Don't fail the signup — the user account is already created
       }
     }
 
-    if (!userProfile) {
-      console.error('Failed to create or retrieve user profile')
-      return NextResponse.json(
-        { error: 'Erreur: Impossible de créer le profil utilisateur (Doublon ou Erreur DB)' },
-        { status: 500 }
-      )
-    }
-
     // Determine redirect path based on role
-    let redirectPath = '/'
-    if (userProfile.role === Role.ADMIN) {
-      redirectPath = '/admin'
-    } else if (userProfile.role === Role.VENDOR) {
-      redirectPath = '/vendor/dashboard'
-    }
+    const redirectPath = isVendor ? '/vendor/dashboard' : '/'
 
     return NextResponse.json({
       token: authData.session?.access_token,
       user: {
-        id: userProfile.id,
-        email: userProfile.email,
-        name: userProfile.name,
-        role: userProfile.role,
+        id: authData.user.id,
+        email: authData.user.email,
+        full_name: authData.user.user_metadata.full_name,
+        role: targetRole,
       },
       redirectPath,
     })

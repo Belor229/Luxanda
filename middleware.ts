@@ -38,16 +38,13 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Protected routes
-  const protectedRoutes = ['/admin', '/vendor/dashboard', '/vendor']
+  const protectedRoutes = ['/admin', '/vendor', '/account']
   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
 
   // Admin only routes
-  const adminRoutes = ['/admin']
-  const isAdminRoute = adminRoutes.some(route => pathname.startsWith(route))
-
-  // Vendor only routes
-  const vendorRoutes = ['/vendor']
-  const isVendorRoute = vendorRoutes.some(route => pathname.startsWith(route))
+  const isAdminRoute = pathname.startsWith('/admin')
+  // Seller only routes
+  const isSellerRoute = pathname.startsWith('/vendor')
 
   // If accessing protected route without session, redirect to login
   if (isProtectedRoute && !session) {
@@ -57,27 +54,42 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl)
   }
 
-  // Create a supabase client for checking roles
-  // We need to fetch the user role effectively
-  if ((isAdminRoute || isVendorRoute) && session) {
-    const { data: userProfile } = await supabase
+  // Role verification from database
+  if (session) {
+    const { data: profile } = await supabase
       .from('users')
       .select('role')
       .eq('id', session.user.id)
       .single()
 
-    const userRole = userProfile?.role?.toUpperCase()
+    const role = profile?.role?.toUpperCase()
 
-    if (isAdminRoute && userRole !== 'ADMIN') {
+    // Admin access control
+    if (isAdminRoute && role !== 'ADMIN') {
       return NextResponse.redirect(new URL('/', request.url))
     }
 
-    if (isVendorRoute && userRole !== 'VENDOR' && userRole !== 'ADMIN') {
+    // Seller access control
+    if (isSellerRoute && role !== 'VENDOR' && role !== 'ADMIN') {
       return NextResponse.redirect(new URL('/', request.url))
+    }
+
+    // CGU Acceptance check (simplified for now - checking legal_acceptance table)
+    if (isSellerRoute && pathname !== '/vendor/subscription') {
+      const { data: acceptance } = await supabase
+        .from('legal_acceptance')
+        .select('id')
+        .eq('userId', session.user.id)
+        .limit(1)
+        .single()
+
+      // If not accepted CGU, redirect to a page where they must (or just keep the modal)
+      // For now, we rely on the LegalAcceptanceModal in the layout, but this could be a redirect.
     }
   }
 
   return supabaseResponse
+
 }
 
 export const config = {

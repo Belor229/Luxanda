@@ -1,49 +1,40 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
-import { Role } from '@prisma/client'
-
-// Force dynamic since we use cookies
-export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
     try {
         const cookieStore = cookies()
         const supabase = createClient(cookieStore)
 
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        const { data: { session } } = await supabase.auth.getSession()
 
-        if (sessionError || !session) {
+        if (!session) {
             return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
         }
 
-        // Check admin role
-        const user = await prisma.user.findUnique({
-            where: { id: session.user.id }
-        })
+        // Check admin role from users table
+        const { data: profile } = await supabase
+            .from('users')
+            .select('role')
+            .eq('id', session.user.id)
+            .single()
 
-        if (!user || user.role !== Role.ADMIN) {
+        if (!profile || profile.role !== 'ADMIN') {
             return NextResponse.json({ error: 'Accès administrateur requis.' }, { status: 403 })
         }
 
-        const [
-            totalUsers,
-            totalVendors,
-            totalProducts,
-            pendingVendors
-        ] = await Promise.all([
-            prisma.user.count(),
-            prisma.vendor.count(),
-            prisma.product.count(),
-            prisma.vendor.count({ where: { status: 'PENDING' } })
-        ])
+        // Fetch counts
+        const { count: totalUsers } = await supabase.from('users').select('*', { count: 'exact', head: true })
+        const { count: totalVendors } = await supabase.from('vendors').select('*', { count: 'exact', head: true })
+        const { count: totalProducts } = await supabase.from('products').select('*', { count: 'exact', head: true })
+        const { count: pendingVendors } = await supabase.from('vendors').select('*', { count: 'exact', head: true }).eq('status', 'PENDING')
 
         return NextResponse.json({
-            totalUsers,
-            totalVendors,
-            totalProducts,
-            pendingVendors
+            totalUsers: totalUsers || 0,
+            totalVendors: totalVendors || 0,
+            totalProducts: totalProducts || 0,
+            pendingVendors: pendingVendors || 0
         })
     } catch (error) {
         console.error('Admin Stats API error:', error)

@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
-import { prisma } from '@/lib/prisma'
-import { Role } from '@prisma/client'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,10 +19,6 @@ export async function POST(request: NextRequest) {
     const cookieStore = cookies()
     const supabase = createClient(cookieStore)
 
-    // Debug logging
-    console.log('Login attempt for:', email)
-    console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
-
     // Sign in with Supabase
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email,
@@ -39,45 +33,37 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get user profile from database using Prisma
-    let profile = await prisma.user.findUnique({
-      where: { id: authData.user.id }
-    })
+    // Get user profile from database using Supabase Client
+    const { data: profile, error: profileError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', authData.user.id)
+      .single()
 
-    if (!profile) {
-      // If profile doesn't exist (legacy user?), create a basic one
-      try {
-        profile = await prisma.user.create({
-          data: {
-            id: authData.user.id,
-            email: authData.user.email!,
-            name: authData.user.email?.split('@')[0] || 'User',
-            password: 'SUPABASE_AUTH', // Managed by Supabase
-            role: Role.USER,
-          }
-        })
-      } catch (e) {
-        console.error('Error creating missing profile:', e)
-      }
+    if (profileError || !profile) {
+      console.error('Profile fetch error:', profileError)
+      // Even if profile fetch fails, we have the auth user, but we need the role
     }
 
+    const role = profile?.role || 'client'
+
     // Determine redirect path based on role
-    let redirectPath = '/cart' // Default for USER (acheteur)
-    if (profile?.role === Role.ADMIN) {
+    let redirectPath = '/' // Default for client
+    if (role === 'admin') {
       redirectPath = '/admin'
-    } else if (profile?.role === Role.VENDOR) {
-      redirectPath = '/vendor/dashboard'
-    } else if (profile?.role === Role.USER) {
-      redirectPath = '/cart' // Acheteur vers panier
+    } else if (role === 'vendeur') {
+      redirectPath = '/dashboard'
+    } else {
+      redirectPath = '/cart' // Buyers go to cart or home
     }
 
     return NextResponse.json({
       token: authData.session?.access_token,
       user: {
-        id: profile?.id || authData.user.id,
-        email: profile?.email || authData.user.email,
-        name: profile?.name || authData.user.email?.split('@')[0] || 'User',
-        role: profile?.role || 'USER',
+        id: authData.user.id,
+        email: authData.user.email,
+        name: profile?.full_name || authData.user.email?.split('@')[0] || 'User',
+        role: role,
       },
       redirectPath,
     })

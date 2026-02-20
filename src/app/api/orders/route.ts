@@ -1,56 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { createClient } from '@/utils/supabase/server'
-import { cookies } from 'next/headers'
+import { createOrder } from '@/lib/services/orders'
+import { orderCreateSchema } from '@/lib/validations'
+import { z } from 'zod'
 
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json()
-        const { items, addressId, paymentMethod, total, notes } = body
 
-        if (!items || !Array.isArray(items) || items.length === 0) {
-            return NextResponse.json({ error: 'Panier vide' }, { status: 400 })
-        }
+        // Use Zod for strict validation
+        const validatedData = orderCreateSchema.parse(body)
 
-        if (!addressId || !paymentMethod) {
-            return NextResponse.json({ error: 'Informations de livraison ou de paiement manquantes' }, { status: 400 })
-        }
-
-        const cookieStore = cookies()
-        const supabase = createClient(cookieStore)
-
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
-
-        const userId = session.user.id
-
-        const order = await prisma.order.create({
-            data: {
-                userId,
-                addressId,
-                paymentMethod,
-                total: Number(total),
-                subtotal: Number(total), // Simplified
-                status: 'PENDING',
-                paymentStatus: 'PENDING',
-                notes,
-                items: {
-                    create: items.map((item: any) => ({
-                        productId: item.id,
-                        quantity: item.quantity,
-                        price: item.price,
-                        total: item.price * item.quantity
-                    }))
-                }
-            },
-            include: {
-                items: true
-            }
+        const order = await createOrder({
+            seller_id: validatedData.seller_id,
+            total_amount: validatedData.total_amount,
+            shipping_address: validatedData.shipping_address,
+            phone_contact: validatedData.phone_contact,
+            items: validatedData.items.map((item) => ({
+                product_id: item.id,
+                quantity: item.quantity,
+                price: item.price
+            }))
         })
 
         return NextResponse.json({ message: 'Commande créée avec succès', order }, { status: 201 })
-    } catch (error) {
+    } catch (error: any) {
+        if (error instanceof z.ZodError) {
+            return NextResponse.json({
+                error: 'Données de commande invalides',
+                details: error.issues.map((e: z.ZodIssue) => e.message).join(', ')
+            }, { status: 400 })
+        }
+
         console.error('Create order error:', error)
-        return NextResponse.json({ error: 'Erreur lors de la création de la commande' }, { status: 500 })
+        return NextResponse.json({ error: error.message || 'Erreur lors de la création de la commande' }, { status: 500 })
     }
 }

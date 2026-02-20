@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
+import { productSchema } from '@/lib/validations'
 
-// Force dynamic since we use cookies
+
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
@@ -13,49 +13,48 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get('limit') || '20')
     const search = searchParams.get('search') || ''
     const categoryId = searchParams.get('categoryId')
+    const featured = searchParams.get('featured') === 'true'
 
-    const skip = (page - 1) * limit
+    const from = (page - 1) * limit
+    const to = from + limit - 1
 
-    const where: any = {
-      status: 'ACTIVE' // Ensure we only show active products
-    }
+    const cookieStore = cookies()
+    const supabase = createClient(cookieStore)
+
+    let query = supabase
+      .from('products')
+      .select(`
+        *,
+        vendor:vendors(store_name, userId),
+        category:categories(name)
+      `, { count: 'exact' })
+      .eq('status', 'ACTIVE')
 
     if (search) {
-      where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } }
-      ]
+      query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`)
     }
 
     if (categoryId) {
-      where.categoryId = categoryId
+      query = query.eq('category_id', categoryId)
     }
 
-    const [products, total] = await Promise.all([
-      prisma.product.findMany({
-        where,
-        skip,
-        take: limit,
-        include: {
-          vendor: {
-            select: { storeName: true, userId: true }
-          },
-          category: {
-            select: { name: true }
-          }
-        },
-        orderBy: { createdAt: 'desc' }
-      }),
-      prisma.product.count({ where })
-    ])
+    if (featured) {
+      query = query.eq('featured', true)
+    }
+
+    const { data: products, count, error } = await query
+      .order('created_at', { ascending: false })
+      .range(from, to)
+
+    if (error) throw error
 
     return NextResponse.json({
-      products,
+      products: products || [],
       pagination: {
         page,
         limit,
-        total,
-        pages: Math.ceil(total / limit)
+        total: count || 0,
+        pages: Math.ceil((count || 0) / limit)
       }
     })
   } catch (error) {
@@ -69,52 +68,42 @@ export async function POST(request: Request) {
     const cookieStore = cookies()
     const supabase = createClient(cookieStore)
 
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
-    if (sessionError || !session) {
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
-    }
-
-    // Check role, for now assume we fetch it from DB or metadata
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', session.user.id)
+    // Check if user is a seller
+    const { data: vendor } = await supabase
+      .from('vendors')
+      .select('id, verified')
+      .eq('userId', session.user.id)
       .single()
 
-    const role = userProfile?.role?.toUpperCase()
-
-    if (role !== 'VENDOR' && role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Accès refusé. Rôle Vendeur requis.' }, { status: 403 })
+    if (!vendor) {
+      return NextResponse.json({ error: 'Profil vendeur requis.' }, { status: 403 })
     }
 
     const body = await request.json()
+    const validatedData = productSchema.parse(body)
 
-    // Check if the user is a vendor and has a vendor profile
-    let vendorId = body.vendorId
-    if (role === 'VENDOR') {
-      const vendor = await prisma.vendor.findUnique({
-        where: { userId: session.user.id }
+    // Create product in Supabase
+    const { data: product, error } = await supabase
+      .from('products')
+      .insert({
+        name: validatedData.name,
+        description: validatedData.description,
+        price: validatedData.price,
+        vendorId: vendor.id,
+        categoryId: validatedData.category_id,
+        image_urls: validatedData.image_urls,
+        quantity: validatedData.stock,
+        status: vendor.verified ? 'ACTIVE' : 'DRAFT',
+        featured: false
       })
-      if (!vendor) {
-        return NextResponse.json({ error: 'Profil vendeur introuvable.' }, { status: 404 })
-      }
-      vendorId = vendor.id
-    }
 
-    // Create product
-    const product = await prisma.product.create({
-      data: {
-        name: body.name,
-        description: body.description,
-        price: parseFloat(body.price),
-        vendorId: vendorId, // Must be provided or inferred
-        categoryId: body.categoryId,
-        images: body.images || [],
-        quantity: parseInt(body.quantity || '0'),
-        status: 'DRAFT', // Default to draft
-      }
-    })
+      .select()
+      .single()
+
+    if (error) throw error
 
     return NextResponse.json(product)
   } catch (error) {

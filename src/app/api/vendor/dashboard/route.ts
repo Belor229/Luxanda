@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
 
@@ -11,67 +10,76 @@ export async function GET(request: NextRequest) {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
 
-    const userId = session.user.id
+    // 1. Get Vendor info
+    const { data: vendor, error: vendorError } = await supabase
+      .from('vendors')
+      .select('*')
+      .eq('userId', session.user.id)
+      .single()
 
-    // Find vendor record
-    const vendor = await prisma.vendor.findUnique({
-      where: { userId }
-    })
-
-    if (!vendor) {
+    if (vendorError || !vendor) {
       return NextResponse.json({ error: 'Compte vendeur non trouvé' }, { status: 404 })
     }
 
-    // Get products stats
-    const totalProducts = await prisma.product.count({
-      where: { vendorId: vendor.id }
-    })
+    // 2. Get Statistics (Using correct field names and capitalized status)
+    const [{ count: totalProducts }, { count: activeProducts }, { count: pendingOrders }, { data: totalSalesData }] = await Promise.all([
+      supabase.from('products').select('*', { count: 'exact', head: true }).eq('vendorId', vendor.id),
+      supabase.from('products').select('*', { count: 'exact', head: true }).eq('vendorId', vendor.id).eq('status', 'ACTIVE'),
+      supabase.from('orders').select('*', { count: 'exact', head: true }).eq('vendorId', vendor.id).eq('status', 'PENDING'),
+      supabase.from('orders').select('total_amount').eq('vendorId', vendor.id).eq('status', 'DELIVERED')
+    ])
 
-    const activeProducts = await prisma.product.count({
-      where: { vendorId: vendor.id, status: 'ACTIVE' }
-    })
+    const totalRevenue = totalSalesData?.reduce((acc, curr) => acc + Number(curr.total_amount), 0) || 0
 
-    const featuredProducts = await prisma.product.count({
-      where: { vendorId: vendor.id, featured: true }
-    })
+    // 3. Get Recent Data
+    const [{ data: recentProducts }, { data: recentOrders }] = await Promise.all([
+      supabase.from('products').select('*').eq('vendorId', vendor.id).order('created_at', { ascending: false }).limit(5),
+      supabase.from('orders').select('*, profile:users(full_name)').eq('vendorId', vendor.id).order('created_at', { ascending: false }).limit(5)
+    ])
 
-    // Get subscription info (including trial)
-    const subscription = await prisma.subscription.findFirst({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-      select: {
-        plan: true,
-        status: true,
-        endDate: true,
-        trialEndDate: true,
-        amount: true
-      }
-    })
+    // 4. Get Subscription info (Linked via userId as per schema)
+    const { data: subscription } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('userId', session.user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
 
-    // Get recent products
-    const productsList = await prisma.product.findMany({
-      where: { vendorId: vendor.id },
-      orderBy: { createdAt: 'desc' },
-      take: 10
-    })
+    // Calculate days left in trial or subscription
+    let daysLeft = 0
+    const end = subscription?.trial_end_date ? new Date(subscription.trial_end_date) : (subscription?.end_date ? new Date(subscription.end_date) : null)
+
+    if (end) {
+      const now = new Date()
+      daysLeft = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+    }
 
     return NextResponse.json({
+      vendor: {
+        id: vendor.id,
+        storeName: vendor.store_name,
+        status: vendor.status
+      },
       stats: {
         products: {
-          total: totalProducts,
-          active: activeProducts,
-          featured: featuredProducts
+          total: totalProducts || 0,
+          active: activeProducts || 0
         },
-        subscription: {
-          plan: subscription?.plan || 'NONE',
-          status: subscription?.status || 'INACTIVE',
-          expiresAt: subscription?.endDate || null,
-          trialEndDate: subscription?.trialEndDate || null,
-          isTrial: subscription?.trialEndDate !== null && subscription?.amount === 0,
-          amount: subscription?.amount || 0
-        }
+        orders: {
+          pending: pendingOrders || 0,
+          revenue: totalRevenue
+        },
+        subscription: subscription ? {
+          plan: subscription.plan,
+          status: subscription.status,
+          expiresAt: subscription.end_date || subscription.trial_end_date,
+          isTrial: !!subscription.trial_end_date && subscription.amount === 0,
+          daysLeft: Math.max(0, daysLeft)
+        } : null
       },
-      products: productsList
+      products: recentProducts || [],
+      orders: recentOrders || []
     })
 
   } catch (error) {

@@ -1,28 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server'
-
-const API_BASE_URL = process.env.BACKEND_URL || 'http://localhost:5000'
+import { createClient } from '@/utils/supabase/server'
+import { cookies } from 'next/headers'
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    
-    const response = await fetch(`${API_BASE_URL}/api/contact`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    })
-    
-    const data = await response.json()
-    
-    return NextResponse.json(data, { status: response.status })
-  } catch (error) {
-    console.error('API Error:', error)
+    const { name, email, subject, message } = body
+
+    if (!name || !email || !message) {
+      return NextResponse.json({ error: 'Champs obligatoires manquants' }, { status: 400 })
+    }
+
+    const cookieStore = cookies()
+    const supabase = createClient(cookieStore)
+
+    const { error } = await supabase
+      .from('contact_messages')
+      .insert({
+        name,
+        email,
+        subject,
+        message,
+        status: 'new'
+      })
+
+    if (error) throw error
+
+    return NextResponse.json({ success: true, message: 'Message envoyé avec succès' })
+  } catch (error: any) {
+    console.error('Contact API Error:', error)
     return NextResponse.json(
-      { error: 'Erreur lors de l\'envoi du message' },
+      { error: 'Erreur lors de l\'envoi du message', details: error.message },
       { status: 500 }
     )
   }
 }
-

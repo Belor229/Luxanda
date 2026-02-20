@@ -4,8 +4,9 @@ export default function TrustStrip() {
   const items = [
     { icon: <ShieldCheck className="h-5 w-5" />, text: "Mise en relation de confiance" },
     { icon: <Zap className="h-5 w-5" />, text: "Paiement direct au vendeur" },
-    { icon: <CreditCard className="h-5 w-5" />, text: "Paiements via Kkiapay certifiés" },
+    { icon: <CreditCard className="h-5 w-5" />, text: "Paiement à la livraison" },
     { icon: <MessageCircle className="h-5 w-5" />, text: "Support WhatsApp & Téléphone" },
+
   ]
 
   return (

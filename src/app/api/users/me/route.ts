@@ -1,33 +1,26 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
 
-export const dynamic = 'force-dynamic'
-
-export async function GET(request: Request) {
+export async function GET() {
     try {
         const cookieStore = cookies()
         const supabase = createClient(cookieStore)
 
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
 
-        if (sessionError || !session) {
-            return NextResponse.json({ error: 'Non connecté' }, { status: 401 })
-        }
+        const { data: profile, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .single()
 
-        const user = await prisma.user.findUnique({
-            where: { id: session.user.id },
-            select: { role: true, email: true, name: true }
-        })
+        if (error) throw error
 
-        if (!user) {
-            return NextResponse.json({ error: 'Utilisateur introuvable' }, { status: 404 })
-        }
-
-        return NextResponse.json(user)
+        return NextResponse.json(profile)
     } catch (error) {
-        console.error('Me API error:', error)
-        return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
+        console.error('Fetch me error:', error)
+        return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 })
     }
 }

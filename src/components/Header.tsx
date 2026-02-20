@@ -4,14 +4,12 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { Menu, X, ShoppingCart, User as UserIcon, LayoutDashboard } from 'lucide-react'
-import { useCartStore } from '@/store/useCartStore'
+import { Menu, X, User as UserIcon, LayoutDashboard } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const getItemCount = useCartStore((state: any) => state.getItemCount)
-  const cartCount = getItemCount()
+
 
   const [user, setUser] = useState<any>(null)
   const [userRole, setUserRole] = useState<string | null>(null)
@@ -95,8 +93,9 @@ export default function Header() {
   const getDashboardLink = () => {
     if (userRole === 'ADMIN') return '/admin'
     if (userRole === 'VENDOR') return '/vendor/dashboard'
-    return '/products' // Requests redirection or user profile
+    return '/products'
   }
+
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
@@ -129,6 +128,7 @@ export default function Header() {
                       {userRole === 'ADMIN' ? 'Admin' : 'Vendeur'}
                     </Link>
                   )}
+
 
                   <Link href="/profile" className="flex items-center gap-2 hover:text-primary-orange transition-colors py-1 px-2 rounded">
                     <UserIcon className="h-4 w-4" />
@@ -169,15 +169,7 @@ export default function Header() {
 
           {/* Header Icons */}
           <div className="flex items-center space-x-4">
-            {/* Cart Link */}
-            <Link href="/cart" className="relative p-3 text-gray-600 hover:text-primary-orange transition-colors rounded-lg hover:bg-gray-50 group min-h-[44px] min-w-[44px] flex items-center justify-center">
-              <ShoppingCart className="h-6 w-6" />
-              {cartCount > 0 && (
-                <span className="absolute top-1 right-1 bg-primary-orange text-white text-[10px] font-bold h-5 w-5 flex items-center justify-center rounded-full border-2 border-white shadow-sm transition-transform group-hover:scale-110">
-                  {cartCount}
-                </span>
-              )}
-            </Link>
+            {/* Cart Link hidden for MVP - Subscription-only phase */}
 
             {/* Mobile Menu Button */}
             <button

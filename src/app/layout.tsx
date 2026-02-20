@@ -4,14 +4,18 @@ import './globals.css'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import WhatsAppFloat from '@/components/WhatsAppFloat'
+import CartSync from '@/components/CartSync'
+import LegalAcceptanceModal from '@/components/LegalAcceptanceModal'
 
-const inter = Inter({ 
+
+
+const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
   display: 'swap',
 })
 
-const poppins = Poppins({ 
+const poppins = Poppins({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
   variable: '--font-poppins',
@@ -35,9 +39,9 @@ export const metadata: Metadata = {
     canonical: '/',
   },
   icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon.ico',
-    apple: '/favicon.ico',
+    icon: '/favicon.jpg',
+    shortcut: '/favicon.jpg',
+    apple: '/favicon.jpg',
   },
   openGraph: {
     title: 'Luxanda - Le marché en ligne qui inspire confiance',
@@ -83,10 +87,14 @@ export default function RootLayout({
     <html lang="fr" className={`${inter.variable} ${poppins.variable}`}>
       <body className={`${inter.className} antialiased`}>
         <Header />
+        <CartSync />
+        <LegalAcceptanceModal />
         {children}
         <Footer />
         <WhatsAppFloat />
+
       </body>
+
     </html>
   )
 }

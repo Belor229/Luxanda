@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
 
@@ -13,53 +12,64 @@ export async function GET(request: NextRequest) {
 
     const userId = session.user.id
 
-    // Get user's affiliation stats
-    const affiliationStats = await prisma.referral.aggregate({
-      where: { referrerId: userId },
-      _count: { referredId: true },
-      _sum: {
-        commission: true
-      }
-    })
+    // 1. Get referral statistics
+    // Since aggregations are limited in Supabase client, we fetch basic counts/sums
+    const { data: referralsData, error: referralsError } = await supabase
+      .from('referrals')
+      .select('commission, status, created_at, referred_id')
+      .eq('referrer_id', userId)
 
-    // Get recent referrals
-    const recentReferrals = await prisma.referral.findMany({
-      where: { referrerId: userId },
-      include: {
-        referred: {
-          include: {
-            profile: true
-          }
-        }
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 10
-    })
+    if (referralsError && referralsError.code !== 'PGRST116') throw referralsError
 
-    const referrals = recentReferrals.map((ref: any) => ({
+    const totalReferrals = referralsData?.length || 0
+    const totalEarnings = referralsData?.reduce((acc, curr) => acc + (curr.commission || 0), 0) || 0
+
+    // 2. Get recent referrals with details (joining profiles)
+    // Note: Assuming referred_id links to profiles
+    const { data: recentReferrals, error: recentError } = await supabase
+      .from('referrals')
+      .select(`
+        id,
+        commission,
+        status,
+        created_at,
+        referred:users!referred_id (
+          full_name,
+          avatar_url
+        )
+      `)
+      .eq('referrer_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(10)
+
+    if (recentError) throw recentError
+
+    const formattedReferrals = (recentReferrals || []).map((ref: any) => ({
       id: ref.id,
       commission_amount: ref.commission,
       status: ref.status,
-      created_at: ref.createdAt,
-      first_name: ref.referred.profile?.firstName,
-      last_name: ref.referred.profile?.lastName,
-      email: ref.referred.email
+      created_at: ref.created_at,
+      full_name: ref.referred?.full_name || 'Utilisateur Luxanda',
+      avatar_url: ref.referred?.avatar_url
     }))
 
-    const baseUrl = process.env.FRONTEND_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://luxanda.bj'
 
     return NextResponse.json({
       affiliationLink: `${baseUrl}/register?ref=${userId}`,
       stats: {
-        totalReferrals: affiliationStats._count?.referredId || 0,
-        totalEarnings: affiliationStats._sum?.commission || 0,
+        totalReferrals,
+        totalEarnings,
         pendingEarnings: 0
       },
-      recentReferrals: referrals
+      recentReferrals: formattedReferrals
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Affiliation stats error:', error)
-    return NextResponse.json({ error: 'Erreur lors de la récupération des statistiques d\'affiliation' }, { status: 500 })
+    return NextResponse.json({
+      error: 'Erreur lors de la récupération des statistiques d\'affiliation',
+      details: error.message
+    }, { status: 500 })
   }
 }

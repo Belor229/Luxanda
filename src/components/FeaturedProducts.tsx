@@ -1,123 +1,171 @@
 'use client'
 
+import React, { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { MessageCircle, Eye, Heart } from 'lucide-react'
+import { MessageCircle, Eye, Heart, ShoppingBag } from 'lucide-react'
+import { motion } from 'framer-motion'
 
-const featuredProducts: any[] = []
+interface Product {
+  id: string
+  name: string
+  price: number
+  image_urls: string[]
+  category: { name: string } | null
+  description: string
+  seller_id: string
+}
+
+const containerVars = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+}
+
+const itemVars = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' as const } }
+}
+
 
 export default function FeaturedProducts() {
-  return (
-    <section className="section-padding bg-white">
-      <div className="container-custom">
-        <div className="text-center mb-8 sm:mb-12">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Produits mis en avant
-          </h2>
-          <div className="w-16 sm:w-24 h-1 bg-gradient-to-r from-primary-orange to-primary-blue mx-auto rounded-full"></div>
-        </div>
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
 
-        {featuredProducts.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {featuredProducts.map((product) => (
-              <div key={product.id} className="card group">
-                <div className="relative overflow-hidden">
+  useEffect(() => {
+    async function fetchFeatured() {
+      try {
+        const response = await fetch('/api/products?featured=true&limit=4')
+        if (response.ok) {
+          const data = await response.json()
+          setProducts(data.products)
+        }
+      } catch (error) {
+        console.error('Error fetching featured products:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchFeatured()
+  }, [])
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'XOF',
+      minimumFractionDigits: 0
+    }).format(price)
+  }
+
+  return (
+    <section className="py-24 bg-white overflow-hidden">
+      <div className="container-custom">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6"
+        >
+          <div className="text-left">
+            <h2 className="text-4xl sm:text-5xl font-black text-gray-900 tracking-tight mb-4">
+              Produits Mis en Avant
+            </h2>
+            <p className="text-gray-500 font-medium max-w-xl text-lg">
+              Une sélection exclusive des meilleures boutiques partenaires Luxanda au Bénin.
+            </p>
+          </div>
+          <Link href="/products" className="text-primary-orange font-black flex items-center group text-lg bg-orange-50 px-6 py-3 rounded-2xl hover:bg-primary-orange hover:text-white transition-all shadow-sm">
+            Tout explorer
+            <Eye className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+          </Link>
+        </motion.div>
+
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <div className="bg-gray-100 h-72 rounded-[40px] mb-6"></div>
+                <div className="h-4 bg-gray-100 rounded-full w-2/3 mb-3"></div>
+                <div className="h-6 bg-gray-100 rounded-full w-1/3"></div>
+              </div>
+            ))}
+          </div>
+        ) : products.length > 0 ? (
+          <motion.div
+            variants={containerVars}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10"
+          >
+            {products.map((product) => (
+              <motion.div
+                key={product.id}
+                variants={itemVars}
+                className="group relative bg-white border border-gray-100 rounded-[40px] p-3 hover:shadow-2xl hover:shadow-primary-orange/10 transition-all duration-500 hover:-translate-y-2"
+              >
+                <div className="relative h-72 overflow-hidden rounded-[32px]">
                   <Image
-                    src={product.image}
+                    src={product.image_urls[0] || '/images/placeholder-product.jpg'}
                     alt={product.name}
-                    width={300}
-                    height={200}
-                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                    fill
+                    className="object-cover group-hover:scale-110 transition-transform duration-1000"
                   />
-                  <div className="absolute top-3 right-3 bg-primary-orange text-white px-2 py-1 rounded-full text-xs font-semibold">
-                    {product.category}
-                  </div>
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex space-x-2">
-                      <button className="p-2 bg-white rounded-full hover:bg-primary-orange hover:text-white transition-colors">
-                        <Heart className="h-4 w-4" />
-                      </button>
-                      <button className="p-2 bg-white rounded-full hover:bg-primary-orange hover:text-white transition-colors">
-                        <Eye className="h-4 w-4" />
-                      </button>
-                    </div>
+                  <div className="absolute top-5 left-5">
+                    <span className="bg-white/95 backdrop-blur-md text-gray-900 px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg">
+                      {product.category?.name || 'Exclusive'}
+                    </span>
                   </div>
                 </div>
 
                 <div className="p-6">
-                  <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
+                  <h3 className="text-lg font-black text-gray-900 line-clamp-1 mb-2 group-hover:text-primary-orange transition-colors">
                     {product.name}
                   </h3>
-                  
-                  <div className="flex items-center mb-3">
-                    <div className="flex items-center">
-                      {[...Array(5)].map((_, i) => (
-                        <svg
-                          key={i}
-                          className={`h-4 w-4 ${
-                            i < Math.floor(product.rating)
-                              ? 'text-yellow-400'
-                              : 'text-gray-300'
-                          }`}
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                      ))}
-                    </div>
-                    <span className="ml-2 text-sm text-gray-600">
-                      ({product.reviews})
-                    </span>
-                  </div>
+                  <p className="text-3xl font-black text-primary-orange mb-8 tracking-tighter">
+                    {formatPrice(product.price)}
+                  </p>
 
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-2xl font-bold text-primary-orange">
-                      {product.price}
-                    </span>
-                  </div>
-
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-4">
                     <Link
                       href={`https://wa.me/2290193389564?text=Bonjour%2C%20je%20suis%20intéressé%20par%20${encodeURIComponent(product.name)}%20sur%20Luxanda`}
                       target="_blank"
-                      rel="noopener"
-                      className="w-full btn btn-outline text-sm py-2 flex items-center justify-center space-x-2"
+                      className="flex items-center justify-center p-4 bg-gray-900 text-white rounded-2xl hover:bg-primary-blue transition-all shadow-lg shadow-gray-900/10 hover:shadow-primary-blue/20"
+                      title="Contact WhatsApp"
                     >
-                      <MessageCircle className="h-4 w-4" />
-                      <span>Contacter sur WhatsApp</span>
+                      <MessageCircle className="h-6 w-6" />
                     </Link>
                     <Link
-                      href="/products"
-                      className="w-full btn btn-secondary text-sm py-2"
+                      href={`/products/${product.id}`}
+                      className="flex items-center justify-center p-4 bg-primary-orange/5 text-primary-orange rounded-2xl hover:bg-primary-orange hover:text-white transition-all font-black"
                     >
-                      Voir la boutique
+                      Details
                     </Link>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         ) : (
-          <div className="text-center py-12">
-            <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-              </svg>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            className="text-center py-24 bg-gray-50 rounded-[60px] border-2 border-dashed border-gray-200"
+          >
+            <div className="bg-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-gray-200/50">
+              <ShoppingBag className="h-10 w-10 text-primary-blue" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Aucun produit en vedette</h3>
-            <p className="text-gray-600 mb-6">Les vendeurs ajouteront bientôt leurs produits mis en avant.</p>
-            <Link href="/products" className="btn btn-primary">
-              Découvrir tous les produits
+            <h3 className="text-2xl font-black text-gray-900 mb-3 tracking-tight">Prochainement disponibles</h3>
+            <p className="text-gray-500 mb-10 max-w-sm mx-auto font-medium italic">Nos vendeurs préparent leurs meilleures offres pour vous. Revenez très bientôt !</p>
+            <Link href="/products" className="btn btn-primary px-12 py-4 shadow-xl shadow-primary-orange/20">
+              Tout le catalogue
             </Link>
-          </div>
+          </motion.div>
         )}
-
-        <div className="text-center mt-12">
-          <Link href="/products" className="btn btn-primary text-lg px-8 py-3">
-            Voir tous les produits
-          </Link>
-        </div>
       </div>
     </section>
   )

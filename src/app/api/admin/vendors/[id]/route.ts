@@ -1,11 +1,7 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
-import { Role } from '@prisma/client'
-
-// Force dynamic since we use cookies
-export const dynamic = 'force-dynamic'
+import { vendorStatusSchema } from '@/lib/validations'
 
 export async function PATCH(
     request: Request,
@@ -15,40 +11,43 @@ export async function PATCH(
         const cookieStore = cookies()
         const supabase = createClient(cookieStore)
 
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        const { data: { session } } = await supabase.auth.getSession()
 
-        if (sessionError || !session) {
+        if (!session) {
             return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
         }
 
         // Check admin role
-        const user = await prisma.user.findUnique({
-            where: { id: session.user.id }
-        })
+        const { data: profile } = await supabase
+            .from('users')
+            .select('role')
+            .eq('id', session.user.id)
+            .single()
 
-        if (!user || user.role !== Role.ADMIN) {
+        if (!profile || profile.role !== 'ADMIN') {
             return NextResponse.json({ error: 'Accès administrateur requis.' }, { status: 403 })
         }
 
         const body = await request.json()
-        const { status } = body
+        const validatedData = vendorStatusSchema.parse(body)
 
-        if (!status || !['APPROVED', 'REJECTED', 'SUSPENDED', 'PENDING'].includes(status)) {
-            return NextResponse.json({ error: 'Statut invalide' }, { status: 400 })
-        }
+        const { data: updatedVendor, error } = await supabase
+            .from('vendors')
+            .update({
+                status: validatedData.status,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', params.id)
+            .select()
+            .single()
 
-        const updatedVendor = await prisma.vendor.update({
-            where: { id: params.id },
-            data: { status }
-        })
-
-        // If approved, maybe ensure User role is VENDOR? (It should optionally be USER until aproved?)
-        // But currently we set VENDOR on registration if checkbox selected.
-
-        // Send email notification? (Future enhancement)
+        if (error) throw error
 
         return NextResponse.json(updatedVendor)
     } catch (error) {
+        if (error instanceof Error && error.name === 'ZodError') {
+            return NextResponse.json({ error: 'Données invalides' }, { status: 400 })
+        }
         console.error('Admin Vendor Update API error:', error)
         return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 })
     }
