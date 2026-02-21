@@ -68,7 +68,7 @@ export default function LegalAcceptanceModal() {
                 setTimeout(() => {
                     console.log('Reloading page...')
                     window.location.href = window.location.href // Force complete reload
-                }, 1000)
+                }, 500)
             } else {
                 const errorData = await res.json().catch(() => ({}))
                 console.error('Acceptance failed:', res.status, res.statusText, errorData)
@@ -81,6 +81,11 @@ export default function LegalAcceptanceModal() {
         } finally {
             setSubmitting(false)
         }
+    }
+
+    const handleRefuse = () => {
+        // Rediriger vers une page externe ou fermer le site
+        window.location.href = 'https://www.google.com'
     }
 
     if (loading || !isOpen) return null
@@ -122,6 +127,13 @@ export default function LegalAcceptanceModal() {
                             >
                                 {submitting ? 'Validation...' : 'Accepter et Continuer'}
                                 {!submitting && <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />}
+                            </button>
+
+                            <button
+                                onClick={handleRefuse}
+                                className="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 text-lg font-medium rounded-full transition-colors"
+                            >
+                                Refuser et Quitter
                             </button>
 
                             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest"> Version 1.0 — Février 2026 </p>
