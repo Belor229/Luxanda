@@ -12,8 +12,8 @@ export async function POST(request: Request) {
         const cookieStore = cookies()
         const supabase = createClient(cookieStore)
 
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
+        if (authError || !user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
         const body = await request.json()
         const { version } = acceptanceSchema.parse(body)
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
         const { error } = await supabase
             .from('legal_acceptance')
             .insert({
-                user_id: session.user.id,
+                user_id: user.id,
                 cgu_version: version,
                 accepted_at: new Date().toISOString()
             })
@@ -43,13 +43,13 @@ export async function GET(request: Request) {
         const cookieStore = cookies()
         const supabase = createClient(cookieStore)
 
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
+        if (authError || !user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
         const { data, error } = await supabase
             .from('legal_acceptance')
             .select('cgu_version, accepted_at')
-            .eq('user_id', session.user.id)
+            .eq('user_id', user.id)
             .order('accepted_at', { ascending: false })
             .limit(1)
             .single()
