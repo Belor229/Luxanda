@@ -30,8 +30,14 @@ export default function LegalAcceptanceModal() {
                 }
 
                 const data = await res.json()
+                console.log('Legal acceptance data:', data) // Debug log
+                
                 if (!data.cgu_version || data.cgu_version !== '1.0') {
+                    console.log('Showing legal modal - version mismatch or missing')
                     setIsOpen(true)
+                } else {
+                    console.log('Legal acceptance already completed')
+                    setIsOpen(false)
                 }
             } catch (err) {
                 console.error('Failed to check legal status', err)
@@ -51,9 +57,21 @@ export default function LegalAcceptanceModal() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ version: '1.0' })
             })
-            if (res.ok) setIsOpen(false)
+            
+            if (res.ok) {
+                setIsOpen(false)
+                // Force recheck after successful acceptance
+                setTimeout(() => {
+                    window.location.reload()
+                }, 500)
+            } else {
+                console.error('Acceptance failed:', res.status, res.statusText)
+                // Show error to user
+                alert('Erreur lors de l\'acceptation. Veuillez réessayer.')
+            }
         } catch (err) {
             console.error('Acceptance failed', err)
+            alert('Erreur réseau. Veuillez réessayer.')
         } finally {
             setSubmitting(false)
         }
