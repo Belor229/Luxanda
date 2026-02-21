@@ -16,17 +16,62 @@ export async function POST(request: NextRequest) {
     const kkiapayData = await verifyKkiapayTransaction(transactionId)
 
     if (!kkiapayData || kkiapayData.status !== 'SUCCESS') {
+      // Log failed transaction attempt
+      await supabase.from('payment_logs').insert({
+        userId: session.user.id,
+        transactionId,
+        status: 'FAILED',
+        amount: kkiapayData?.amount || 0,
+        plan,
+        error: 'Transaction Kkiapay invalide'
+      })
       return NextResponse.json({ error: 'Paiement non valide ou échoué' }, { status: 400 })
     }
 
-    // 2. Validate amount (Optionnel mais recommandé)
-    // Ici on devrait normalement vérifier que kkiapayData.amount correspond au montant du plan Luxanda
+    // 2. Validate amount and plan
+    const planPrices: Record<string, number> = { STARTER: 5000, PRO: 15000, PREMIUM: 30000 }
+    const planKey = plan.toUpperCase() as keyof typeof planPrices
+    const expectedAmount = planPrices[planKey]
+    
+    if (!expectedAmount || kkiapayData.amount !== expectedAmount) {
+      await supabase.from('payment_logs').insert({
+        userId: session.user.id,
+        transactionId,
+        status: 'FAILED',
+        amount: kkiapayData.amount,
+        expectedAmount,
+        plan,
+        error: 'Montant invalide'
+      })
+      return NextResponse.json({ error: 'Montant invalide' }, { status: 400 })
+    }
 
-    // 3. Update or Create Subscription in Supabase
+    // 3. Check for duplicate transaction
+    const { data: existingPayment } = await supabase
+      .from('subscriptions')
+      .select('payment_ref')
+      .eq('payment_ref', transactionId)
+      .single()
+
+    if (existingPayment) {
+      return NextResponse.json({ error: 'Transaction déjà traitée' }, { status: 400 })
+    }
+
+    // 4. Update or Create Subscription in Supabase
     const duration = 30 // standard 30 days
     const startDate = new Date()
     const endDate = new Date()
     endDate.setDate(startDate.getDate() + duration)
+
+    // Log successful transaction
+    await supabase.from('payment_logs').insert({
+      userId: session.user.id,
+      transactionId,
+      status: 'SUCCESS',
+      amount: kkiapayData.amount,
+      plan,
+      clientPhone: kkiapayData.client_phone
+    })
 
     const { data: subscription, error: subError } = await supabase
       .from('subscriptions')

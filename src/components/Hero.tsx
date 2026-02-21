@@ -109,7 +109,7 @@ export default function Hero() {
               </motion.div>
 
               <div className="mt-12 text-center">
-                <p className="text-sm font-black text-primary-blue uppercase tracking-[0.3em] mb-2 opacity-60">Depuis 2024</p>
+                <p className="text-sm font-black text-primary-blue uppercase tracking-[0.3em] mb-2 opacity-60">Depuis 2026</p>
                 <h2 className="text-3xl font-black text-gray-900 tracking-tighter">Élégance & Fiabilité</h2>
               </div>
             </div>

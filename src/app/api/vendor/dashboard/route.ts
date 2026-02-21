@@ -48,11 +48,26 @@ export async function GET(request: NextRequest) {
 
     // Calculate days left in trial or subscription
     let daysLeft = 0
-    const end = subscription?.trial_end_date ? new Date(subscription.trial_end_date) : (subscription?.end_date ? new Date(subscription.end_date) : null)
-
-    if (end) {
-      const now = new Date()
+    let isExpired = false
+    const now = new Date()
+    
+    // Check trial expiration first
+    if (subscription?.trial_end_date) {
+      const trialEnd = new Date(subscription.trial_end_date)
+      daysLeft = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+      isExpired = daysLeft <= 0
+    } else if (subscription?.end_date) {
+      const end = new Date(subscription.end_date)
       daysLeft = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+      isExpired = daysLeft <= 0
+    }
+
+    // Force status to EXPIRED if past due date
+    if (isExpired && subscription?.status === 'ACTIVE') {
+      await supabase
+        .from('subscriptions')
+        .update({ status: 'EXPIRED' })
+        .eq('id', subscription.id)
     }
 
     return NextResponse.json({
@@ -72,7 +87,7 @@ export async function GET(request: NextRequest) {
         },
         subscription: subscription ? {
           plan: subscription.plan,
-          status: subscription.status,
+          status: isExpired ? 'EXPIRED' : subscription.status,
           expiresAt: subscription.end_date || subscription.trial_end_date,
           isTrial: !!subscription.trial_end_date && subscription.amount === 0,
           daysLeft: Math.max(0, daysLeft)

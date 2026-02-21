@@ -25,7 +25,7 @@ export default function AboutPage() {
         <section>
           <h2 className="text-2xl font-semibold text-gray-900 mb-4">Notre Histoire</h2>
           <p>
-            Lancée en 2024, Luxanda a commencé comme une réponse à la fragmentation du e-commerce local. Nous avons compris que le principal frein aux achats en ligne n'était pas la technologie, mais la confiance. C'est pourquoi nous avons mis l'accent sur la vérification des vendeurs et un service client irréprochable.
+            Lancée en 2026, Luxanda a commencé comme une réponse à la fragmentation du e-commerce local. Nous avons compris que le principal frein aux achats en ligne n'était pas la technologie, mais la confiance. C'est pourquoi nous avons mis l'accent sur la vérification des vendeurs et un service client irréprochable.
           </p>
         </section>
 

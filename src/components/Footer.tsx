@@ -13,11 +13,11 @@ export default function Footer() {
           <div className="lg:col-span-2">
             <div className="flex items-center space-x-2 mb-4 sm:mb-6">
               <Image
-                src="/images/logo-white.png"
+                src="/images/logo.png"
                 alt="Luxanda"
                 width={120}
                 height={40}
-                className="h-8 sm:h-10 w-auto"
+                className="h-8 sm:h-10 w-auto filter brightness-0 invert"
               />
             </div>
             <p className="text-gray-300 leading-relaxed mb-4 max-w-md text-sm sm:text-base">
@@ -108,7 +108,7 @@ export default function Footer() {
         <div className="border-t border-gray-800 mt-8 sm:mt-12 pt-6 sm:pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-3 sm:space-y-4 md:space-y-0">
             <p className="text-gray-400 text-xs sm:text-sm">
-              © 2025 Luxanda.bj - Tous droits réservés
+              © 2026 Luxanda.bj - Tous droits réservés
             </p>
             <div className="flex flex-wrap justify-center md:justify-end gap-x-4 sm:gap-x-6 gap-y-1 text-xs sm:text-sm">
               <Link href="/about" className="text-gray-400 hover:text-white transition-colors py-1">

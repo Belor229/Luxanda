@@ -96,38 +96,53 @@ CREATE TABLE IF NOT EXISTS public.subscriptions (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- Legal Acceptance [NEW]
+-- Legal Acceptance [CORRECTED]
 CREATE TABLE IF NOT EXISTS public.legal_acceptance (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    "userId" UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
+    "userId" UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
     version TEXT NOT NULL,
     accepted_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 -- 4. ROW LEVEL SECURITY (RLS)
 
-ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+-- Enable RLS on all tables
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.vendors ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.legal_acceptance ENABLE ROW LEVEL SECURITY;
 
--- Policies for Users
-CREATE POLICY "Users - Self Read" ON public.users FOR SELECT USING (auth.uid() = id);
-CREATE POLICY "Users - Self Update" ON public.users FOR UPDATE USING (auth.uid() = id);
-CREATE POLICY "Users - Admin All" ON public.users FOR ALL USING (EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'ADMIN'));
+-- Policies for Profiles
+CREATE POLICY "Profiles - Self Read" ON public.profiles FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "Profiles - Self Update" ON public.profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Profiles - Admin All" ON public.profiles FOR ALL USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'ADMIN'));
 
 -- Policies for Vendors
-CREATE POLICY "Vendors - Public Read" ON public.vendors FOR SELECT USING (true);
+CREATE POLICY "Vendors - Public Read" ON public.vendors FOR SELECT USING (status = 'APPROVED');
 CREATE POLICY "Vendors - Owner Update" ON public.vendors FOR UPDATE USING (auth.uid() = "userId");
 CREATE POLICY "Vendors - Owner Insert" ON public.vendors FOR INSERT WITH CHECK (auth.uid() = "userId");
+CREATE POLICY "Vendors - Admin All" ON public.vendors FOR ALL USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'ADMIN'));
+
+-- Policies for Categories
+CREATE POLICY "Categories - Public Read" ON public.categories FOR SELECT USING (true);
+CREATE POLICY "Categories - Admin All" ON public.categories FOR ALL USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'ADMIN'));
 
 -- Policies for Products
-CREATE POLICY "Products - Public Read Active" ON public.products FOR SELECT USING (status = 'ACTIVE');
+CREATE POLICY "Products - Public Read Active" ON public.products FOR SELECT USING (status = 'ACTIVE' AND EXISTS (SELECT 1 FROM public.vendors WHERE id = "vendorId" AND status = 'APPROVED'));
 CREATE POLICY "Products - Seller Management" ON public.products FOR ALL USING (EXISTS (SELECT 1 FROM public.vendors WHERE id = "vendorId" AND "userId" = auth.uid()));
+CREATE POLICY "Products - Admin All" ON public.products FOR ALL USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'ADMIN'));
 
 -- Policies for Subscriptions
 CREATE POLICY "Subscriptions - Owner Read" ON public.subscriptions FOR SELECT USING (auth.uid() = "userId");
+CREATE POLICY "Subscriptions - Owner Update" ON public.subscriptions FOR UPDATE USING (auth.uid() = "userId");
+CREATE POLICY "Subscriptions - Admin All" ON public.subscriptions FOR ALL USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'ADMIN'));
+
+-- Policies for Legal Acceptance
+CREATE POLICY "Legal Acceptance - Self Read" ON public.legal_acceptance FOR SELECT USING (auth.uid() = "userId");
+CREATE POLICY "Legal Acceptance - Self Insert" ON public.legal_acceptance FOR INSERT WITH CHECK (auth.uid() = "userId");
+CREATE POLICY "Legal Acceptance - Admin All" ON public.legal_acceptance FOR ALL USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'ADMIN'));
 
 -- 5. FUNCTIONS & TRIGGERS
 
@@ -135,7 +150,7 @@ CREATE POLICY "Subscriptions - Owner Read" ON public.subscriptions FOR SELECT US
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.users (id, full_name, avatar_url, role, email)
+  INSERT INTO public.profiles (id, full_name, avatar_url, role, email)
   VALUES (
     NEW.id,
     COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'first_name' || ' ' || NEW.raw_user_meta_data->>'last_name'),
