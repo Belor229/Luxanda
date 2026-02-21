@@ -5,29 +5,101 @@
 -- Exécuter avec précaution - DÉTRUIT TOUTES LES DONNÉES EXISTANTES
 
 -- ========================================
--- 1. SUPPRESSION DES TABLES EXISTANTES (si elles existent)
+-- 1. SUPPRESSION DES ÉLÉMENTS EXISTANTS
 -- ========================================
 
--- Suppression des triggers (ordre inverse de création)
-DROP TRIGGER IF EXISTS tr_subscriptions_updated ON public.subscriptions;
-DROP TRIGGER IF EXISTS tr_products_updated ON public.products;
-DROP TRIGGER IF EXISTS tr_vendors_updated ON public.vendors;
-DROP TRIGGER IF EXISTS tr_profiles_updated ON public.profiles;
-DROP TRIGGER IF EXISTS on_vendor_created_subscription ON public.vendors;
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+-- Suppression des triggers (avec gestion d'erreur)
+DO $$
+BEGIN
+    DROP TRIGGER IF EXISTS tr_subscriptions_updated ON public.subscriptions;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
 
--- Suppression des fonctions
-DROP FUNCTION IF EXISTS public.update_updated_at_column() CASCADE;
-DROP FUNCTION IF EXISTS public.handle_new_vendor_subscription() CASCADE;
-DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
+DO $$
+BEGIN
+    DROP TRIGGER IF EXISTS tr_products_updated ON public.products;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
 
--- Suppression des tables (ordre inverse des dépendances)
-DROP TABLE IF EXISTS public.payment_logs CASCADE;
-DROP TABLE IF EXISTS public.legal_acceptance CASCADE;
-DROP TABLE IF EXISTS public.subscriptions CASCADE;
-DROP TABLE IF EXISTS public.products CASCADE;
-DROP TABLE IF EXISTS public.vendors CASCADE;
-DROP TABLE IF EXISTS public.profiles CASCADE;
+DO $$
+BEGIN
+    DROP TRIGGER IF EXISTS tr_vendors_updated ON public.vendors;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+    DROP TRIGGER IF EXISTS tr_profiles_updated ON public.profiles;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+    DROP TRIGGER IF EXISTS on_vendor_created_subscription ON public.vendors;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+    DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+-- Suppression des fonctions (avec gestion d'erreur)
+DO $$
+BEGIN
+    DROP FUNCTION IF EXISTS public.update_updated_at_column() CASCADE;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+    DROP FUNCTION IF EXISTS public.handle_new_vendor_subscription() CASCADE;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+    DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+-- Suppression des tables (avec gestion d'erreur)
+DO $$
+BEGIN
+    DROP TABLE IF EXISTS public.payment_logs CASCADE;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+    DROP TABLE IF EXISTS public.legal_acceptance CASCADE;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+    DROP TABLE IF EXISTS public.subscriptions CASCADE;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+    DROP TABLE IF EXISTS public.products CASCADE;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+    DROP TABLE IF EXISTS public.vendors CASCADE;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+    DROP TABLE IF EXISTS public.profiles CASCADE;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
 
 -- ========================================
 -- 2. CRÉATION DES OPÉRATEURS PERSONNALISÉS
