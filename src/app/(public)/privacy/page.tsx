@@ -1,3 +1,5 @@
+import React from 'react'
+
 export default function PrivacyPage() {
   return (
     <div className="container-custom py-12">
@@ -139,7 +141,7 @@ export default function PrivacyPage() {
         </section>
 
         <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-3">10. Réclamations</h3>
+          <h2 className="text-xl font-semibold mb-3">10. Réclamations</h2>
           <p>
             En cas de litige, vous pouvez contacter :
           </p>
