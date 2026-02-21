@@ -67,7 +67,7 @@ export default function LegalAcceptanceModal() {
                 // Force recheck after successful acceptance
                 setTimeout(() => {
                     console.log('Reloading page...')
-                    window.location.reload()
+                    window.location.href = window.location.href // Force complete reload
                 }, 1000)
             } else {
                 const errorData = await res.json().catch(() => ({}))
