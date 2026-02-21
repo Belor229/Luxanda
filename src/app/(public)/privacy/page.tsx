@@ -1,8 +1,6 @@
-import { Container } from '@/components/ui/Container'
-
 export default function PrivacyPage() {
   return (
-    <Container className="py-12">
+    <div className="container-custom py-12">
       <div className="prose max-w-none">
         <h1 className="text-3xl font-bold mb-6">Politique de Confidentialité - Luxanda.bj</h1>
         <p className="text-gray-600 mb-4">Dernière mise à jour : 21 février 2026</p>
@@ -160,6 +158,6 @@ export default function PrivacyPage() {
           </p>
         </div>
       </div>
-    </Container>
+    </div>
   )
 }
