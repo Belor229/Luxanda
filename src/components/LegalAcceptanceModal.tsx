@@ -58,16 +58,22 @@ export default function LegalAcceptanceModal() {
                 body: JSON.stringify({ version: '1.0' })
             })
             
+            console.log('Acceptance response status:', res.status)
+            console.log('Acceptance response ok:', res.ok)
+            
             if (res.ok) {
+                console.log('Setting isOpen to false')
                 setIsOpen(false)
                 // Force recheck after successful acceptance
                 setTimeout(() => {
+                    console.log('Reloading page...')
                     window.location.reload()
-                }, 500)
+                }, 1000)
             } else {
-                console.error('Acceptance failed:', res.status, res.statusText)
+                const errorData = await res.json().catch(() => ({}))
+                console.error('Acceptance failed:', res.status, res.statusText, errorData)
                 // Show error to user
-                alert('Erreur lors de l\'acceptation. Veuillez réessayer.')
+                alert(`Erreur ${res.status}: ${errorData.error || 'Veuillez réessayer.'}`)
             }
         } catch (err) {
             console.error('Acceptance failed', err)

@@ -99,7 +99,7 @@ export default function Hero() {
               >
 
                 <Image
-                  src="/images/logoluxanda.png"
+                  src="/images/accueille.png"
                   alt="Luxanda - Branding"
                   width={500}
                   height={250}
