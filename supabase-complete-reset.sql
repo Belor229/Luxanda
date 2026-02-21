@@ -4,11 +4,8 @@
 -- Ce script supprime et recrée toute la base de données
 -- Exécuter avec précaution - DÉTRUIT TOUTES LES DONNÉES EXISTANTES
 
--- Désactiver temporairement les contraintes
-SET session_replication_role = replica;
-
 -- ========================================
--- 1. SUPPRESSION DES TABLES EXISTANTES
+-- 1. SUPPRESSION DES TABLES EXISTANTES (si elles existent)
 -- ========================================
 
 -- Suppression des triggers (ordre inverse de création)
@@ -31,9 +28,6 @@ DROP TABLE IF EXISTS public.subscriptions CASCADE;
 DROP TABLE IF EXISTS public.products CASCADE;
 DROP TABLE IF EXISTS public.vendors CASCADE;
 DROP TABLE IF EXISTS public.profiles CASCADE;
-
--- Réactiver les contraintes
-SET session_replication_role = DEFAULT;
 
 -- ========================================
 -- 2. CRÉATION DES OPÉRATEURS PERSONNALISÉS
@@ -155,33 +149,33 @@ CREATE TABLE IF NOT EXISTS public.legal_acceptance (
 -- ========================================
 
 -- Index profiles
-CREATE INDEX idx_profiles_user_id ON public.profiles(user_id);
-CREATE INDEX idx_profiles_email ON public.profiles(email);
+CREATE INDEX IF NOT EXISTS idx_profiles_user_id ON public.profiles(user_id);
+CREATE INDEX IF NOT EXISTS idx_profiles_email ON public.profiles(email);
 
 -- Index vendors
-CREATE INDEX idx_vendors_user_id ON public.vendors(user_id);
-CREATE INDEX idx_vendors_status ON public.vendors(status);
-CREATE INDEX idx_vendors_category ON public.vendors(category);
+CREATE INDEX IF NOT EXISTS idx_vendors_user_id ON public.vendors(user_id);
+CREATE INDEX IF NOT EXISTS idx_vendors_status ON public.vendors(status);
+CREATE INDEX IF NOT EXISTS idx_vendors_category ON public.vendors(category);
 
 -- Index products
-CREATE INDEX idx_products_vendor_id ON public.products(vendor_id);
-CREATE INDEX idx_products_status ON public.products(status);
-CREATE INDEX idx_products_category ON public.products(category);
-CREATE INDEX idx_products_price ON public.products(price);
+CREATE INDEX IF NOT EXISTS idx_products_vendor_id ON public.products(vendor_id);
+CREATE INDEX IF NOT EXISTS idx_products_status ON public.products(status);
+CREATE INDEX IF NOT EXISTS idx_products_category ON public.products(category);
+CREATE INDEX IF NOT EXISTS idx_products_price ON public.products(price);
 
 -- Index subscriptions
-CREATE INDEX idx_subscriptions_vendor_id ON public.subscriptions(vendor_id);
-CREATE INDEX idx_subscriptions_status ON public.subscriptions(status);
-CREATE INDEX idx_subscriptions_plan ON public.subscriptions(plan);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_vendor_id ON public.subscriptions(vendor_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON public.subscriptions(status);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_plan ON public.subscriptions(plan);
 
 -- Index payment_logs
-CREATE INDEX idx_payment_logs_user_id ON public.payment_logs(user_id);
-CREATE INDEX idx_payment_logs_transaction_id ON public.payment_logs(transaction_id);
-CREATE INDEX idx_payment_logs_status ON public.payment_logs(status);
+CREATE INDEX IF NOT EXISTS idx_payment_logs_user_id ON public.payment_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_payment_logs_transaction_id ON public.payment_logs(transaction_id);
+CREATE INDEX IF NOT EXISTS idx_payment_logs_status ON public.payment_logs(status);
 
 -- Index legal_acceptance
-CREATE INDEX idx_legal_acceptance_user_id ON public.legal_acceptance(user_id);
-CREATE INDEX idx_legal_acceptance_version ON public.legal_acceptance(cgu_version);
+CREATE INDEX IF NOT EXISTS idx_legal_acceptance_user_id ON public.legal_acceptance(user_id);
+CREATE INDEX IF NOT EXISTS idx_legal_acceptance_version ON public.legal_acceptance(cgu_version);
 
 -- ========================================
 -- 5. ACTIVATION RLS ET POLITIQUES
