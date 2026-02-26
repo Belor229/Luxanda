@@ -23,6 +23,9 @@ router.post('/send', [
 
     const { name, email, subject, message } = req.body
 
+    // Ensure message is a string for .replace()
+    const sanitizedMessage = typeof message === 'string' ? message.replace(/\n/g, '<br>') : ''
+
     // Save to database
     await prisma.contactMessage.create({
       data: {
@@ -55,7 +58,7 @@ router.post('/send', [
           <p><strong>Email:</strong> ${email}</p>
           <p><strong>Sujet:</strong> ${subject || 'Sans objet'}</p>
           <p><strong>Message:</strong></p>
-          <p>${message.replace(/\n/g, '<br>')}</p>
+          <p>${sanitizedMessage}</p>
           <hr>
           <p><em>Message envoyé depuis le site web Luxanda</em></p>
         `

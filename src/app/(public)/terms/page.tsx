@@ -10,7 +10,7 @@ export default function TermsPage() {
         <section className="mb-8">
           <h2 className="text-xl font-semibold mb-3">1. Objet et acceptation</h2>
           <p>
-            Les présentes Conditions Générales d'Utilisation (CGU) régissent l'accès et l'utilisation de la plateforme 
+            Les présentes Conditions Générales d'Utilisation (CGU) régissent l'accès et l'utilisation de la plateforme
             Luxanda.bj, marketplace de mise en relation entre vendeurs et acheteurs au Bénin.
           </p>
           <p className="mt-2">
@@ -41,11 +41,11 @@ export default function TermsPage() {
           </p>
           <ul className="list-disc pl-5 mt-2 space-y-1">
             <li><strong>Compte Acheteur (USER) :</strong> Gratuit, accès à tous les produits</li>
-            <li><strong>Compte Vendeur (VENDOR) :</strong> Abonnement requis, 2 mois gratuits</li>
+            <li><strong>Compte Vendeur (VENDOR) :</strong> Abonnement requis, 14 jours d'essai gratuit</li>
             <li><strong>Compte Administrateur (ADMIN) :</strong> Réservé à l'équipe Luxanda</li>
           </ul>
           <p className="mt-3">
-            Vous êtes responsable de la confidentialité de vos identifiants et de toutes les activités 
+            Vous êtes responsable de la confidentialité de vos identifiants et de toutes les activités
             réalisées sous votre compte.
           </p>
         </section>
@@ -63,7 +63,7 @@ export default function TermsPage() {
             </ul>
           </div>
           <p className="mt-3">
-            <strong>Offre spéciale lancement :</strong> 2 mois gratuits pour tout nouveau vendeur.
+            <strong>Offre spéciale lancement :</strong> 14 jours d'essai gratuit pour tout nouveau vendeur après validation par l'administration.
           </p>
           <p className="mt-2">
             Les abonnements sont prépayés mensuels via Kkiapay et non remboursables.
@@ -110,7 +110,7 @@ export default function TermsPage() {
             <li>Paiement et livraison convenus directement entre les parties</li>
           </ol>
           <p className="mt-3 text-orange-600">
-            Luxanda n'est pas partie prenante aux transactions finales et ne peut être tenu responsable 
+            Luxanda n'est pas partie prenante aux transactions finales et ne peut être tenu responsable
             des litiges commerciaux entre acheteurs et vendeurs.
           </p>
         </section>
@@ -121,7 +121,7 @@ export default function TermsPage() {
             Les vendeurs conservent la propriété de leur contenu (photos, descriptions, prix).
           </p>
           <p className="mt-2">
-            En publiant du contenu sur Luxanda, vous accordez une licence d'utilisation non exclusive 
+            En publiant du contenu sur Luxanda, vous accordez une licence d'utilisation non exclusive
             à la plateforme pour la promotion des produits.
           </p>
           <p className="mt-2">
@@ -187,7 +187,7 @@ export default function TermsPage() {
             Luxanda se réserve le droit de modifier les présentes CGU à tout moment.
           </p>
           <p className="mt-2">
-            Les modifications prendront effet dès leur publication sur la plateforme 
+            Les modifications prendront effet dès leur publication sur la plateforme
             et vous seront notifiées par email.
           </p>
         </section>
@@ -206,8 +206,8 @@ export default function TermsPage() {
 
         <div className="bg-blue-50 p-6 rounded-lg mt-8">
           <p className="text-sm text-gray-700">
-            <strong>Date d'entrée en vigueur :</strong> 21 février 2026<br/>
-            En utilisant Luxanda.bj, vous reconnaissez avoir lu, compris et accepté 
+            <strong>Date d'entrée en vigueur :</strong> 21 février 2026<br />
+            En utilisant Luxanda.bj, vous reconnaissez avoir lu, compris et accepté
             l'intégralité des présentes Conditions Générales d'Utilisation.
           </p>
         </div>

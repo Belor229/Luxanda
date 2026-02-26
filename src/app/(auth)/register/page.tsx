@@ -22,7 +22,10 @@ export default function RegisterPage() {
     whatsapp: '',
     city: '',
     category: '',
-    description: ''
+    description: '',
+    idCard: null as File | null,
+    selfie: null as File | null,
+    acceptTerms: false
   })
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -32,6 +35,14 @@ export default function RegisterPage() {
   const [referrerId, setReferrerId] = useState<string | null>(null)
 
   const router = useRouter()
+
+  const validateRedirectPath = (path: string) => {
+    if (!path || typeof path !== 'string') return '/'
+    if (path.startsWith('/') && !path.startsWith('//')) {
+      return path
+    }
+    return '/'
+  }
   const searchParams = useSearchParams()
 
   const isVendor = formData.role === 'vendor'
@@ -80,6 +91,18 @@ export default function RegisterPage() {
         setError('La description de votre boutique doit contenir au moins 20 caractères')
         return false
       }
+      if (!formData.idCard) {
+        setError('La pièce d\'identité est obligatoire pour les vendeurs')
+        return false
+      }
+      if (!formData.selfie) {
+        setError('Le selfie avec pièce d\'identité est obligatoire pour les vendeurs')
+        return false
+      }
+    }
+    if (!formData.acceptTerms) {
+      setError('Vous devez accepter les conditions d\'utilisation')
+      return false
     }
     return true
   }
@@ -95,27 +118,27 @@ export default function RegisterPage() {
     setLoading(true)
 
     try {
+      const form = new FormData()
+      form.append('firstName', formData.firstName)
+      form.append('lastName', formData.lastName)
+      form.append('email', formData.email)
+      form.append('phone', formData.phone)
+      form.append('password', formData.password)
+      form.append('role', formData.role)
+
+      if (isVendor) {
+        form.append('storeName', formData.storeName)
+        form.append('whatsapp', formData.whatsapp)
+        form.append('city', formData.city)
+        form.append('category', formData.category)
+        form.append('description', formData.description)
+        if (formData.idCard) form.append('idCard', formData.idCard)
+        if (formData.selfie) form.append('selfie', formData.selfie)
+      }
+
       const response = await fetch('/api/auth/register', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          phone: formData.phone,
-          password: formData.password,
-          role: formData.role,
-          // Vendor fields
-          ...(isVendor && {
-            storeName: formData.storeName,
-            whatsapp: formData.whatsapp,
-            city: formData.city,
-            category: formData.category,
-            description: formData.description
-          })
-        }),
+        body: form,
       })
 
       const data = await response.json()
@@ -144,9 +167,9 @@ export default function RegisterPage() {
 
         // Redirect after 2 seconds
         setTimeout(() => {
-          const redirectPath = data.redirectPath ||
+          const redirectPath = validateRedirectPath(data.redirectPath ||
             (data.user.role === 'ADMIN' || data.user.role === 'admin' ? '/admin' :
-              data.user.role === 'VENDOR' || data.user.role === 'vendor' ? '/vendor/dashboard' : '/')
+              data.user.role === 'VENDOR' || data.user.role === 'vendor' ? '/vendor/dashboard' : '/'))
           window.location.href = redirectPath
         }, 2000)
       } else {
@@ -172,7 +195,7 @@ export default function RegisterPage() {
             </h2>
             <p className="text-gray-600 mb-6">
               {isVendor
-                ? 'Votre boutique a été créée. Vous bénéficiez de 2 mois d\'essai Premium gratuit ! Redirection...'
+                ? 'Votre demande d\'inscription a été envoyée. Elle sera validée par un administrateur sous 24-48h. Une fois validée, vos 14 jours d\'essai gratuit commenceront.'
                 : 'Votre compte a été créé. Vous allez être redirigé dans quelques secondes...'}
             </p>
             <div className="loading-spinner mx-auto"></div>
@@ -269,7 +292,7 @@ export default function RegisterPage() {
               {/* Phone */}
               <div>
                 <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Téléphone {isVendor ? '' : '(optionnel)'}
+                  Téléphone *
                 </label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -277,7 +300,7 @@ export default function RegisterPage() {
                     id="phone"
                     name="phone"
                     type="tel"
-                    required={isVendor}
+                    required
                     value={formData.phone}
                     onChange={handleChange}
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-orange focus:border-transparent"
@@ -308,7 +331,7 @@ export default function RegisterPage() {
                 <div className="p-3.5 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200/50 rounded-xl flex items-center gap-3">
                   <Gift className="h-5 w-5 text-green-600 flex-shrink-0" />
                   <p className="text-xs sm:text-sm font-bold text-green-800">
-                    🎁 Profitez de 2 mois d'essai gratuit Premium !
+                    🎁 Profitez de 14 jours d'essai gratuit après validation !
                   </p>
                 </div>
               )}
@@ -412,6 +435,37 @@ export default function RegisterPage() {
                     />
                     <p className="mt-1 text-xs text-gray-500">{formData.description.length}/20 caractères minimum</p>
                   </div>
+
+                  {/* ID Uploads */}
+                  <div className="space-y-4 pt-2 border-t border-gray-100">
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider pt-2">Vérification d'identité</p>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                        Pièce d'identité (Recto/Verso ou Passeport) *
+                      </label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setFormData({ ...formData, idCard: e.target.files?.[0] || null })}
+                        className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-orange file:text-white hover:file:bg-orange-600"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                        Selfie avec votre pièce d'identité *
+                      </label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setFormData({ ...formData, selfie: e.target.files?.[0] || null })}
+                        className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-orange file:text-white hover:file:bg-orange-600"
+                        required
+                      />
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -476,17 +530,21 @@ export default function RegisterPage() {
                 name="terms"
                 type="checkbox"
                 required
+                checked={formData.acceptTerms}
+                onChange={(e) => setFormData({ ...formData, acceptTerms: e.target.checked })}
                 className="h-4 w-4 text-primary-orange focus:ring-primary-orange border-gray-300 rounded mt-1"
               />
               <label htmlFor="terms" className="ml-2 block text-sm text-gray-700">
                 J'accepte les{' '}
-                <Link href="/terms" className="text-primary-orange hover:text-orange-600">
-                  conditions d'utilisation
-                </Link>{' '}
-                et la{' '}
-                <Link href="/privacy" className="text-primary-orange hover:text-orange-600">
-                  politique de confidentialité
-                </Link>
+                <Link href="/terms" className="text-primary-orange hover:text-orange-600">CGU</Link>, la{' '}
+                <Link href="/privacy" className="text-primary-orange hover:text-orange-600">Politique de confidentialité</Link>, la{' '}
+                <Link href="/politique-anti-fraude" className="text-primary-orange hover:text-orange-600">Politique anti-fraude</Link>
+                {isVendor && (
+                  <>
+                    {' '}et la{' '}
+                    <Link href="/charte-vendeur" className="text-primary-orange hover:text-orange-600">Charte Vendeur</Link>
+                  </>
+                )}
               </label>
             </div>
 

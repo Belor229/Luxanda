@@ -71,10 +71,21 @@ export async function POST(request: Request) {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
-    // Check if user is a seller
+    const body = await request.json()
+    const validatedData = productSchema.parse(body)
+
+    // Rate Limiting
+    const ip = request.headers.get('x-forwarded-for') || '0.0.0.0'
+    const { rateLimit } = await import('@/lib/rate-limit')
+    const rl = await rateLimit(`product_create_${session.user.id}`, 10, 3600) // 10 products / hour
+    if (!rl.success) {
+      return NextResponse.json({ error: 'Limite de création de produits atteinte. Veuillez réessayer plus tard.' }, { status: 429 })
+    }
+
+    // Check if user is a seller and approved
     const { data: vendor } = await supabase
       .from('vendors')
-      .select('id, verified')
+      .select('id, status, trial_end_date')
       .eq('userId', session.user.id)
       .single()
 
@@ -82,8 +93,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Profil vendeur requis.' }, { status: 403 })
     }
 
-    const body = await request.json()
-    const validatedData = productSchema.parse(body)
+    if (vendor.status !== 'APPROVED') {
+      return NextResponse.json({ error: 'Votre compte doit être approuvé pour publier des produits.' }, { status: 403 })
+    }
+
+    if (!vendor.trial_end_date || new Date(vendor.trial_end_date) < new Date()) {
+      return NextResponse.json({ error: 'Votre période d\'essai a expiré.' }, { status: 403 })
+    }
+
+    if (validatedData.price <= 0) {
+      return NextResponse.json({ error: 'Le prix doit être supérieur à 0' }, { status: 400 })
+    }
 
     // Create product in Supabase
     const { data: product, error } = await supabase
@@ -96,7 +116,7 @@ export async function POST(request: Request) {
         categoryId: validatedData.category_id,
         image_urls: validatedData.image_urls,
         quantity: validatedData.stock,
-        status: vendor.verified ? 'ACTIVE' : 'DRAFT',
+        status: 'ACTIVE',
         featured: false
       })
 

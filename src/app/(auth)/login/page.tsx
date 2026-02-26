@@ -16,6 +16,16 @@ export default function LoginPage() {
 
   const router = useRouter()
 
+  const validateRedirectPath = (path: string) => {
+    if (!path || typeof path !== 'string') return '/'
+    // Only allow relative paths starting with /
+    // Block double slashes (e.g. //google.com)
+    if (path.startsWith('/') && !path.startsWith('//')) {
+      return path
+    }
+    return '/'
+  }
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
@@ -42,9 +52,9 @@ export default function LoginPage() {
       if (response.ok) {
         // Redirection based on user role or redirectPath
         // The cookie is handled by the server-side route
-        const redirectPath = data.redirectPath ||
+        const redirectPath = validateRedirectPath(data.redirectPath ||
           (data.user.role === 'ADMIN' || data.user.role === 'admin' ? '/admin' :
-            data.user.role === 'VENDOR' || data.user.role === 'vendor' ? '/vendor/dashboard' : '/cart')
+            data.user.role === 'VENDOR' || data.user.role === 'vendor' ? '/vendor/dashboard' : '/cart'))
         // Force hard redirect to ensure session is applied and middleware re-runs correctly
         window.location.href = redirectPath
         // router.push(redirectPath)

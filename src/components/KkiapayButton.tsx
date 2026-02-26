@@ -22,7 +22,7 @@ declare global {
 export default function KkiapayButton({ amount, callback, data }: KkiapayProps) {
     // This is a simplified integration. Ideally use a library or the official snippet properly.
     // For Vercel deployment, we need the public key in env vars.
-    const PUBLIC_KEY = process.env.NEXT_PUBLIC_KKIAPAY_PUBLIC_KEY || 'YOUR_PUBLIC_KEY'
+    const PUBLIC_KEY = process.env.NEXT_PUBLIC_KKIAPAY_PUBLIC_KEY!
 
     useEffect(() => {
         const script = document.createElement('script')

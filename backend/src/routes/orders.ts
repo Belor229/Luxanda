@@ -32,12 +32,12 @@ router.post('/', authenticateToken, [
                 paymentStatus: 'PENDING',
                 notes,
                 items: {
-                    create: items.map((item: any) => ({
-                        productId: item.id,
-                        quantity: item.quantity,
-                        price: item.price,
-                        total: item.price * item.quantity
-                    }))
+                    create: Array.isArray(items) ? items.map((item: any) => ({
+                        productId: String(item.id),
+                        quantity: Number(item.quantity) || 1,
+                        price: Number(item.price) || 0,
+                        total: (Number(item.price) || 0) * (Number(item.quantity) || 1)
+                    })) : []
                 }
             },
             include: {

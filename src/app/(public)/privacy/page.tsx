@@ -5,12 +5,12 @@ export default function PrivacyPage() {
     <div className="container-custom py-12">
       <div className="prose max-w-none">
         <h1 className="text-3xl font-bold mb-6">Politique de Confidentialité - Luxanda.bj</h1>
-        <p className="text-gray-600 mb-4">Dernière mise à jour : 21 février 2026</p>
+        <p className="text-gray-600 mb-4">Dernière mise à jour : 25 février 2026</p>
 
         <section className="mb-8">
           <h2 className="text-xl font-semibold mb-3">1. Données personnelles collectées</h2>
           <p>
-            Conformément à la loi n°2009-10 du 23 juin 2009 relative à la protection des données personnelles au Bénin, 
+            Conformément à la loi n°2009-10 du 23 juin 2009 relative à la protection des données personnelles au Bénin,
             Luxanda collecte les informations suivantes :
           </p>
           <ul className="list-disc pl-5 mt-2 space-y-1">
@@ -46,10 +46,10 @@ export default function PrivacyPage() {
             <li><strong>Obligation légale :</strong> Facturation, lutte anti-blanchiment</li>
           </ul>
           <p className="mt-3">
-            <strong>Durées de conservation :</strong><br/>
-            - Comptes utilisateurs : 2 ans après inactivité<br/>
-            - Données transactionnelles : 10 ans (obligation fiscale)<br/>
-            - Cookies session : 30 jours<br/>
+            <strong>Durées de conservation :</strong><br />
+            - Comptes utilisateurs : 2 ans après inactivité<br />
+            - Données transactionnelles : 10 ans (obligation fiscale)<br />
+            - Cookies session : 30 jours<br />
             - Messages support : 1 an
           </p>
         </section>
@@ -99,9 +99,9 @@ export default function PrivacyPage() {
             <li><strong>Droit d'opposition :</strong> Refuser certains traitements</li>
           </ul>
           <p className="mt-3">
-            <strong>Pour exercer ces droits :</strong><br/>
-            Email : luxanda@yahoo.com<br/>
-            WhatsApp : +229 01 41 75 75 59<br/>
+            <strong>Pour exercer ces droits :</strong><br />
+            Email : luxanda@yahoo.com<br />
+            WhatsApp : +229 01 41 75 75 59<br />
             Réponse sous 30 jours maximum
           </p>
         </section>
@@ -124,7 +124,7 @@ export default function PrivacyPage() {
         <section className="mb-8">
           <h2 className="text-xl font-semibold mb-3">8. Transferts internationaux</h2>
           <p>
-            Les données sont hébergées chez Supabase (Union Européenne) et Vercel (USA) 
+            Les données sont hébergées chez Supabase (Union Européenne) et Vercel (USA)
             avec des garanties adéquates (Privacy Shield, clauses contractuelles types).
           </p>
         </section>
@@ -132,10 +132,10 @@ export default function PrivacyPage() {
         <section className="mb-8">
           <h2 className="text-xl font-semibold mb-3">9. Contact DPO</h2>
           <p>
-            <strong>Délégué à la Protection des Données :</strong><br/>
-            DJAGBA Belor<br/>
-            Email : dpo@luxanda.bj<br/>
-            Téléphone : +229 01 41 75 75 59<br/>
+            <strong>Délégué à la Protection des Données :</strong><br />
+            DJAGBA Belor<br />
+            Email : dpo@luxanda.bj<br />
+            Téléphone : +229 01 41 75 75 59<br />
             Adresse : Cotonou, Bénin
           </p>
         </section>
@@ -154,11 +154,12 @@ export default function PrivacyPage() {
 
         <div className="bg-gray-100 p-6 rounded-lg mt-8">
           <p className="text-sm text-gray-600">
-            Cette politique s'applique à tous les utilisateurs de la plateforme Luxanda.bj 
-            et peut être modifiée pour respecter l'évolution légale et technique. 
+            Cette politique s'applique à tous les utilisateurs de la plateforme Luxanda.bj
+            et peut être modifiée pour respecter l'évolution légale et technique.
             Les modifications vous seront notifiées par email.
           </p>
         </div>
+        <p className="mt-4 text-xs text-gray-400">Dernière mise à jour : 25 février 2026</p>
       </div>
     </div>
   )

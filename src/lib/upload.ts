@@ -77,3 +77,36 @@ export async function uploadProductImage(file: File, sellerId: string): Promise<
         return null
     }
 }
+
+/**
+ * Upload an identity document to a private Supabase Storage bucket.
+ */
+export async function uploadIdentityDocument(file: File, userId: string, type: 'id_card' | 'selfie'): Promise<string | null> {
+    const supabase = createClient()
+
+    try {
+        // 1. Validate
+        if (!file.type.startsWith('image/')) throw new Error('Le fichier doit être une image')
+        if (file.size > 10 * 1024 * 1024) throw new Error("L'image est trop lourde (max 10MB)")
+
+        // 2. Compress (optional but good for speed)
+        const compressedBlob = await compressImage(file, 1600, 0.7)
+
+        // 3. Upload to private bucket 'identity-documents'
+        const fileName = `${userId}/${type}-${Date.now()}.jpg`
+        const { data, error } = await supabase.storage
+            .from('identity-documents')
+            .upload(fileName, compressedBlob, {
+                contentType: 'image/jpeg',
+                upsert: true
+            })
+
+        if (error) throw error
+
+        // 4. Return the path (not public URL as it's a private bucket)
+        return data.path
+    } catch (error: any) {
+        console.error('Identity upload error:', error)
+        return null
+    }
+}

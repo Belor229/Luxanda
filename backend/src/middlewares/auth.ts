@@ -32,7 +32,7 @@ export const authenticateToken = (req: AuthRequest, res: Response, next: NextFun
     })
   }
 
-  jwt.verify(token, process.env.JWT_SECRET || 'LuxandaSecretKey2025', (err: any, user: any) => {
+  jwt.verify(token, process.env.JWT_SECRET!, (err: any, user: any) => {
     if (err) {
       return res.status(403).json({
         error: 'Token invalide ou expiré'

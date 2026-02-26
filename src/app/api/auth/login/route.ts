@@ -2,10 +2,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
 
+import { rateLimit } from '@/lib/rate-limit'
+
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = request.headers.get('x-forwarded-for') || '0.0.0.0'
+    const rl = await rateLimit(`login_${ip}`, 5, 900) // 5 attempts / 15 min
+    if (!rl.success) {
+      return NextResponse.json({ error: 'Trop de tentatives. Veuillez réessayer plus tard.' }, { status: 429 })
+    }
+
     const body = await request.json()
     const { email, password } = body
 

@@ -64,8 +64,20 @@ export async function PATCH(
 
         const body = await request.json()
 
-        // If Vendor, check if they own the product
+        // If Vendor, check if they own the product and if their status is APPROVED and trial not expired
         if (role === 'VENDOR') {
+            const vendor = await prisma.vendor.findUnique({
+                where: { userId: session.user.id }
+            })
+
+            if (!vendor || vendor.status !== 'APPROVED') {
+                return NextResponse.json({ error: 'Votre compte doit être approuvé pour modifier des produits.' }, { status: 403 })
+            }
+
+            if (!vendor.trial_end_date || new Date(vendor.trial_end_date) < new Date()) {
+                return NextResponse.json({ error: 'Votre période d\'essai a expiré.' }, { status: 403 })
+            }
+
             const product = await prisma.product.findUnique({
                 where: { id: params.id },
                 include: { vendor: true }
@@ -74,6 +86,11 @@ export async function PATCH(
             if (!product || product.vendor.userId !== session.user.id) {
                 return NextResponse.json({ error: 'Produit non trouvé ou accès refusé.' }, { status: 404 })
             }
+        }
+
+        // Validation - Basic price check
+        if (body.price !== undefined && parseFloat(body.price) <= 0) {
+            return NextResponse.json({ error: 'Le prix doit être supérieur à 0' }, { status: 400 })
         }
 
         // Update product
@@ -125,8 +142,16 @@ export async function DELETE(
             return NextResponse.json({ error: 'Accès refusé.' }, { status: 403 })
         }
 
-        // If Vendor, check if they own the product
+        // If Vendor, check if they own the product and if their status is APPROVED
         if (role === 'VENDOR') {
+            const vendor = await prisma.vendor.findUnique({
+                where: { userId: session.user.id }
+            })
+
+            if (!vendor || vendor.status !== 'APPROVED') {
+                return NextResponse.json({ error: 'Action non autorisée.' }, { status: 403 })
+            }
+
             const product = await prisma.product.findUnique({
                 where: { id: params.id },
                 include: { vendor: true }

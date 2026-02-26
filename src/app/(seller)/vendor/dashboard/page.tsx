@@ -55,6 +55,14 @@ export default function VendorDashboard() {
     }).format(price)
   }
 
+  const sanitizeImageUrl = (url: string) => {
+    if (!url) return ''
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/') || url.startsWith('data:image/')) {
+      return url
+    }
+    return ''
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-full min-h-[500px]">
@@ -269,7 +277,7 @@ export default function VendorDashboard() {
               <div key={product.id} className="flex items-center space-x-4 group">
                 <div className="w-14 h-14 bg-gray-50 rounded-2xl flex-shrink-0 flex items-center justify-center overflow-hidden border border-gray-100 group-hover:scale-105 transition-transform">
                   {product.image_urls?.[0] ? (
-                    <img src={product.image_urls[0]} alt={product.title} className="object-cover w-full h-full" />
+                    <img src={sanitizeImageUrl(product.image_urls[0])} alt={product.title} className="object-cover w-full h-full" />
                   ) : (
                     <ShoppingBag className="text-gray-300 w-6 h-6" />
                   )}

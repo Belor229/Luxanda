@@ -32,6 +32,8 @@ model User {
   referralsAsReferrer Referral[] @relation("UserReferralsReferrer")
   referralsAsReferred Referral[] @relation("UserReferralsReferred")
   subscriptions Subscription[]
+  reports       Report[]
+  legalLogs     LegalAcceptanceLog[]
 
   @@map("users")
 }
@@ -59,8 +61,10 @@ model Vendor {
   userId      String       @unique
   storeName   String
   description String?
-  logo        String?
-  banner      String?
+  id_card_url    String?
+  selfie_url     String?
+  trial_start_date DateTime?
+  trial_end_date   DateTime?
   status      VendorStatus @default(PENDING)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
@@ -68,6 +72,7 @@ model Vendor {
   // Relations
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   products Product[]
+  reports  Report[]
 
   @@map("vendors")
 }
@@ -114,6 +119,7 @@ model Product {
   reviews    Review[]
   orderItems OrderItem[]
   cartItems  CartItem[]
+  reports    Report[]
 
   @@map("products")
 }
@@ -256,6 +262,37 @@ model Review {
   @@map("reviews")
 }
 
+model Report {
+  id          String   @id @default(uuid())
+  productId   String?
+  vendorId    String?
+  userId      String?
+  motif       String
+  description String?
+  status      ReportStatus @default(PENDING)
+  createdAt   DateTime @default(now())
+
+  // Relations
+  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  vendor      Vendor?  @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("reports")
+}
+
+model LegalAcceptanceLog {
+  id              String   @id @default(uuid())
+  userId          String
+  date            DateTime @default(now())
+  ip              String?
+  documentVersion String
+  userAgent       String?
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("legal_acceptance_logs")
+}
+
 model Rewards {
   id          String   @id @default(uuid())
   userId      String   @unique
@@ -396,5 +433,11 @@ enum ContactMessageStatus {
   NEW
   READ
   REPLIED
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  VALIDATED
 }
 

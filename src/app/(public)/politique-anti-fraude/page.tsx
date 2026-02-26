@@ -13,12 +13,12 @@ export default function PolitiqueAntiFraudePage() {
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
             Politique Anti-Fraude
           </h1>
-          
+
           <div className="prose prose-lg max-w-none space-y-8">
             <section>
               <p className="text-gray-700 leading-relaxed">
-                Luxanda s'engage à protéger ses utilisateurs contre toute forme de fraude. Cette politique 
-                définit les mesures que nous prenons pour détecter, prévenir et sanctionner les activités 
+                Luxanda s'engage à protéger ses utilisateurs contre toute forme de fraude. Cette politique
+                définit les mesures que nous prenons pour détecter, prévenir et sanctionner les activités
                 frauduleuses sur notre plateforme.
               </p>
             </section>
@@ -92,23 +92,23 @@ export default function PolitiqueAntiFraudePage() {
             <section>
               <h2 className="text-2xl font-semibold text-gray-900 mt-8 mb-4">6. Confidentialité</h2>
               <p className="text-gray-700 leading-relaxed">
-                Tous les signalements sont traités de manière confidentielle. Les informations collectées 
-                dans le cadre de la lutte anti-fraude sont utilisées uniquement à des fins de prévention 
+                Tous les signalements sont traités de manière confidentielle. Les informations collectées
+                dans le cadre de la lutte anti-fraude sont utilisées uniquement à des fins de prévention
                 et de sanction.
               </p>
             </section>
 
             <div className="mt-12 p-6 bg-red-50 border-l-4 border-red-500 rounded">
               <p className="text-sm text-gray-700">
-                <strong>Important :</strong> Luxanda ne gère pas directement les transactions entre vendeurs 
-                et acheteurs. Les paiements se font directement entre les parties via les moyens convenus 
+                <strong>Important :</strong> Luxanda ne gère pas directement les transactions entre vendeurs
+                et acheteurs. Les paiements se font directement entre les parties via les moyens convenus
                 (Kkiapay, mobile money, etc.). Luxanda n'est pas responsable des litiges de paiement.
               </p>
             </div>
 
             <div className="mt-6 p-6 bg-orange-50 border-l-4 border-primary-orange rounded">
               <p className="text-sm text-gray-700">
-                <strong>Dernière mise à jour :</strong> Janvier 2025
+                <strong>Dernière mise à jour :</strong> 25 février 2026
               </p>
             </div>
           </div>

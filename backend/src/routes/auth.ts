@@ -65,7 +65,7 @@ router.post('/register', [
     // Generate JWT token
     const token = jwt.sign(
       { userId: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'LuxandaSecretKey2025',
+      process.env.JWT_SECRET!,
       { expiresIn: '7d' }
     )
 
@@ -128,7 +128,7 @@ router.post('/login', [
     // Generate JWT token
     const token = jwt.sign(
       { userId: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'LuxandaSecretKey2025',
+      process.env.JWT_SECRET!,
       { expiresIn: '7d' }
     )
 
@@ -163,7 +163,7 @@ router.get('/verify', async (req: Request, res: Response) => {
       })
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'LuxandaSecretKey2025') as any
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any
 
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },

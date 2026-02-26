@@ -49,7 +49,9 @@ router.post('/create', [
       })
     }
 
-    const { plan: planName, paymentMethod } = (req as any).body
+    const planNameRaw = (req as any).body.plan
+    const planName = typeof planNameRaw === 'string' ? planNameRaw : 'starter'
+    const { paymentMethod } = (req as any).body
     const userId = (req as any).user.userId
 
     const planInfo = SUBSCRIPTION_PLANS[planName as keyof typeof SUBSCRIPTION_PLANS]
@@ -79,7 +81,7 @@ router.post('/create', [
     const subscription = await prisma.subscription.create({
       data: {
         userId: userId,
-        plan: (planName as string).toUpperCase() as any,
+        plan: planName.toUpperCase() as any,
         amount: planInfo.price,
         status: 'PENDING'
       }

@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
         data: {
           email: 'test@example.com',
           name: 'Test User',
-          password: 'hashedpassword123',
+          password: 'temp_hashed_password', // Should be properly hashed in reality
           role: 'USER'
         }
       })

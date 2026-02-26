@@ -8,7 +8,8 @@ const router = express.Router()
 // Get all products
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const { category, featured, search, page = 1, limit = 20 } = req.query
+    const { category, featured, search, page = '1', limit = '20' } = req.query as any
+    const searchQuery = typeof search === 'string' ? search : undefined
 
     const where: any = {
       status: 'ACTIVE'
@@ -24,10 +25,10 @@ router.get('/', async (req: Request, res: Response) => {
       where.featured = true
     }
 
-    if (search) {
+    if (searchQuery) {
       where.OR = [
-        { name: { contains: search as string, mode: 'insensitive' } },
-        { description: { contains: search as string, mode: 'insensitive' } }
+        { name: { contains: searchQuery, mode: 'insensitive' } },
+        { description: { contains: searchQuery, mode: 'insensitive' } }
       ]
     }
 

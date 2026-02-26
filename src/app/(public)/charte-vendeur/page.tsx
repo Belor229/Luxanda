@@ -13,13 +13,13 @@ export default function CharteVendeurPage() {
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
             Charte Vendeur Luxanda
           </h1>
-          
+
           <div className="prose prose-lg max-w-none space-y-8">
             <section>
               <h2 className="text-2xl font-semibold text-gray-900 mt-8 mb-4">1. Engagement de qualité</h2>
               <p className="text-gray-700 leading-relaxed">
-                En tant que vendeur sur Luxanda, vous vous engagez à proposer des produits de qualité, 
-                conformes aux descriptions fournies et aux images présentées. Toute fausse représentation 
+                En tant que vendeur sur Luxanda, vous vous engagez à proposer des produits de qualité,
+                conformes aux descriptions fournies et aux images présentées. Toute fausse représentation
                 est strictement interdite.
               </p>
             </section>
@@ -53,8 +53,8 @@ export default function CharteVendeurPage() {
             <section>
               <h2 className="text-2xl font-semibold text-gray-900 mt-8 mb-4">4. Modération et sanctions</h2>
               <p className="text-gray-700 leading-relaxed">
-                Luxanda se réserve le droit de modérer tous les contenus et peut, en cas de non-respect 
-                de cette charte, suspendre ou supprimer votre compte vendeur sans préavis. Les sanctions 
+                Luxanda se réserve le droit de modérer tous les contenus et peut, en cas de non-respect
+                de cette charte, suspendre ou supprimer votre compte vendeur sans préavis. Les sanctions
                 peuvent inclure :
               </p>
               <ul className="list-disc pl-6 space-y-2 text-gray-700 mt-4">
@@ -68,7 +68,7 @@ export default function CharteVendeurPage() {
             <section>
               <h2 className="text-2xl font-semibold text-gray-900 mt-8 mb-4">5. Abonnements</h2>
               <p className="text-gray-700 leading-relaxed">
-                Les vendeurs doivent maintenir un abonnement actif pour continuer à vendre sur la plateforme. 
+                Les vendeurs doivent maintenir un abonnement actif pour continuer à vendre sur la plateforme.
                 En cas d'expiration de l'abonnement, les produits seront masqués jusqu'au renouvellement.
               </p>
             </section>
@@ -89,7 +89,7 @@ export default function CharteVendeurPage() {
 
             <div className="mt-12 p-6 bg-orange-50 border-l-4 border-primary-orange rounded">
               <p className="text-sm text-gray-700">
-                <strong>Dernière mise à jour :</strong> Janvier 2025
+                <strong>Dernière mise à jour :</strong> 25 février 2026
               </p>
             </div>
           </div>

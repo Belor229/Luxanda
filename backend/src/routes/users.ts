@@ -98,19 +98,21 @@ router.put('/profile', [
 // Get all users (Admin only)
 router.get('/', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
   try {
-    const { role, page = 1, limit = 20, search } = req.query
+    const { role, page = '1', limit = '20', search } = req.query as any
+    const searchQuery = typeof search === 'string' ? search : undefined
+    const roleQuery = typeof role === 'string' ? role : undefined
 
     const where: any = {}
 
-    if (role) {
-      where.role = (role as string).toUpperCase()
+    if (roleQuery) {
+      where.role = roleQuery.toUpperCase()
     }
 
-    if (search) {
+    if (searchQuery) {
       where.OR = [
-        { email: { contains: search as string, mode: 'insensitive' } },
-        { profile: { firstName: { contains: search as string, mode: 'insensitive' } } },
-        { profile: { lastName: { contains: search as string, mode: 'insensitive' } } }
+        { email: { contains: searchQuery, mode: 'insensitive' } },
+        { profile: { firstName: { contains: searchQuery, mode: 'insensitive' } } },
+        { profile: { lastName: { contains: searchQuery, mode: 'insensitive' } } }
       ]
     }
 
