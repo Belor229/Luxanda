@@ -1,14 +1,25 @@
-import express, { Request, Response } from 'express'
+import express, { Response } from 'express'
 import { body, validationResult } from 'express-validator'
 import { authenticateToken, requireVendor } from '../middlewares/auth'
 import { prisma } from '../config/prisma'
+import { AuthRequest } from '../types'
+import { ProductStatus } from '@prisma/client'
 
 const router = express.Router()
 
+// Validation middleware
+const validate = (req: express.Request, res: Response, next: express.NextFunction) => {
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ error: 'Données invalides', details: errors.array() })
+  }
+  next()
+}
+
 // Get vendor dashboard stats
-router.get('/dashboard', authenticateToken, requireVendor, async (req: Request, res: Response) => {
+router.get('/dashboard', authenticateToken, requireVendor, async (req: AuthRequest, res: Response) => {
   try {
-    const userId = (req as any).user.userId
+    const userId = req.user!.userId
 
     // Find vendor record
     const vendor = await prisma.vendor.findUnique({
@@ -27,7 +38,7 @@ router.get('/dashboard', authenticateToken, requireVendor, async (req: Request, 
     })
 
     const activeProducts = await prisma.product.count({
-      where: { vendorId: vendor.id, status: 'ACTIVE' }
+      where: { vendorId: vendor.id, status: ProductStatus.ACTIVE }
     })
 
     const featuredProducts = await prisma.product.count({
@@ -79,13 +90,23 @@ router.get('/dashboard', authenticateToken, requireVendor, async (req: Request, 
 })
 
 // Get vendor products
-router.get('/products', authenticateToken, requireVendor, async (req: Request, res: Response) => {
+router.get('/products', authenticateToken, requireVendor, async (req: AuthRequest, res: Response) => {
   try {
-    const userId = (req as any).user.userId
+    const userId = req.user!.userId
+
+    const vendor = await prisma.vendor.findUnique({
+      where: { userId }
+    })
+
+    if (!vendor) {
+      return res.status(404).json({
+        error: 'Compte vendeur non trouvé'
+      })
+    }
 
     const products = await prisma.product.findMany({
-      where: { vendor_id: userId },
-      orderBy: { created_at: 'desc' }
+      where: { vendorId: vendor.id },
+      orderBy: { createdAt: 'desc' }
     })
 
     res.json({
@@ -102,23 +123,18 @@ router.get('/products', authenticateToken, requireVendor, async (req: Request, r
 
 // Create product
 router.post('/products', [
+  authenticateToken,
+  requireVendor,
   body('name').notEmpty().withMessage('Le nom est requis'),
   body('description').notEmpty().withMessage('La description est requise'),
   body('price').isNumeric().withMessage('Le prix doit être un nombre'),
   body('categoryId').notEmpty().withMessage('La catégorie est requise'),
-  body('quantity').isInt({ min: 0 }).withMessage('La quantité doit être un nombre positif')
-], authenticateToken, requireVendor, async (req: Request, res: Response) => {
+  body('quantity').isInt({ min: 0 }).withMessage('La quantité doit être un nombre positif'),
+  validate
+], async (req: AuthRequest, res: Response) => {
   try {
-    const errors = validationResult(req)
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        error: 'Données invalides',
-        details: errors.array()
-      })
-    }
-
     const { name, description, price, categoryId, quantity, images = [] } = req.body
-    const userId = (req as any).user.userId
+    const userId = req.user!.userId
 
     const vendor = await prisma.vendor.findUnique({
       where: { userId }
@@ -139,7 +155,7 @@ router.post('/products', [
         categoryId,
         quantity,
         images,
-        status: 'ACTIVE',
+        status: ProductStatus.ACTIVE,
         featured: false
       }
     })
@@ -159,23 +175,18 @@ router.post('/products', [
 
 // Update product
 router.put('/products/:id', [
+  authenticateToken,
+  requireVendor,
   body('name').optional().notEmpty(),
   body('description').optional().notEmpty(),
   body('price').optional().isNumeric(),
   body('categoryId').optional().notEmpty(),
-  body('quantity').optional().isInt({ min: 0 })
-], authenticateToken, requireVendor, async (req: Request, res: Response) => {
+  body('quantity').optional().isInt({ min: 0 }),
+  validate
+], async (req: AuthRequest, res: Response) => {
   try {
-    const errors = validationResult(req)
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        error: 'Données invalides',
-        details: errors.array()
-      })
-    }
-
     const { id } = req.params
-    const userId = (req as any).user.userId
+    const userId = req.user!.userId
 
     const vendor = await prisma.vendor.findUnique({
       where: { userId }
@@ -234,10 +245,10 @@ router.put('/products/:id', [
 })
 
 // Delete product
-router.delete('/products/:id', authenticateToken, requireVendor, async (req: Request, res: Response) => {
+router.delete('/products/:id', authenticateToken, requireVendor, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params
-    const userId = (req as any).user.userId
+    const userId = req.user!.userId
 
     const vendor = await prisma.vendor.findUnique({
       where: { userId }
@@ -263,8 +274,9 @@ router.delete('/products/:id', authenticateToken, requireVendor, async (req: Req
       })
     }
 
-    await prisma.product.delete({
-      where: { id: id }
+    await prisma.product.update({
+      where: { id: id },
+      data: { status: ProductStatus.ARCHIVED }
     })
 
     res.json({
@@ -280,4 +292,3 @@ router.delete('/products/:id', authenticateToken, requireVendor, async (req: Req
 })
 
 export default router
-

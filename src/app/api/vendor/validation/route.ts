@@ -17,8 +17,8 @@ const vendorValidationSchema = z.object({
 
 export async function POST(request: Request) {
     try {
-        const cookieStore = cookies()
-        const supabase = createClient(cookieStore)
+        const cookieStore = await cookies()
+        const supabase = createClient(cookieStore as any)
 
         const { data: { user }, error: authError } = await supabase.auth.getUser()
         if (authError || !user) {
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
         const { data: existingVendor } = await supabase
             .from('vendors')
             .select('id, status')
-            .eq('user_id', user.id)
+            .eq('userId', user.id)
             .single()
 
         if (existingVendor) {
@@ -46,36 +46,27 @@ export async function POST(request: Request) {
         const { data: vendor, error } = await supabase
             .from('vendors')
             .insert({
-                user_id: user.id,
-                business_name: validatedData.business_name,
-                business_description: validatedData.business_description,
-                business_email: validatedData.business_email,
-                business_phone: validatedData.business_phone,
-                business_address: validatedData.business_address,
-                business_city: validatedData.business_city,
-                category: validatedData.category,
-                status: 'PENDING_VALIDATION',
-                verification_documents: {
-                    identity_document_url: validatedData.identity_document_url,
-                    selfie_document_url: validatedData.selfie_document_url
-                },
-                identity_document_url: validatedData.identity_document_url,
-                selfie_document_url: validatedData.selfie_document_url,
-                phone_verified: false,
-                email_verified: user.email_confirmed_at ? true : false
+                userId: user.id,
+                store_name: validatedData.business_name,
+                description: validatedData.business_description,
+                status: 'PENDING', // Mapped to VendorStatus.PENDING in schema.prisma
+                id_card_url: validatedData.identity_document_url,
+                selfie_url: validatedData.selfie_document_url,
+                verified: false
             })
             .select()
             .single()
 
         if (error) throw error
 
-        // Créer l'abonnement (sans trial pour l'instant)
+        // Créer l'abonnement
         const { error: subscriptionError } = await supabase
             .from('subscriptions')
             .insert({
-                vendor_id: vendor.id,
+                userId: user.id,
                 plan: 'PREMIUM',
-                status: 'PENDING' // En attente de validation admin
+                amount: 30000,
+                status: 'PENDING'
             })
 
         if (subscriptionError) throw subscriptionError
@@ -90,7 +81,7 @@ export async function POST(request: Request) {
         if (error instanceof z.ZodError) {
             return NextResponse.json({ 
                 error: 'Données invalides', 
-                details: error.errors 
+                details: error.issues
             }, { status: 400 })
         }
 
@@ -101,10 +92,10 @@ export async function POST(request: Request) {
     }
 }
 
-export async function GET(request: Request) {
+export async function GET(_request: Request) {
     try {
-        const cookieStore = cookies()
-        const supabase = createClient(cookieStore)
+        const cookieStore = await cookies()
+        const supabase = createClient(cookieStore as any)
 
         const { data: { user }, error: authError } = await supabase.auth.getUser()
         if (authError || !user) {
@@ -115,10 +106,10 @@ export async function GET(request: Request) {
         const { data: vendor, error } = await supabase
             .from('vendors')
             .select('*')
-            .eq('user_id', user.id)
+            .eq('userId', user.id)
             .single()
 
-        if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+        if (error && error.code !== 'PGRST116') {
             throw error
         }
 

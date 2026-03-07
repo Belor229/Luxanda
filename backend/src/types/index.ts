@@ -1,11 +1,14 @@
-import { Request, Response } from 'express'
+import { Request } from 'express'
+import { Role } from '@prisma/client'
+
+export interface UserPayload {
+  userId: string
+  email: string
+  role: Role
+}
 
 export interface AuthRequest extends Request {
-  user?: {
-    userId: number
-    email: string
-    role: string
-  }
+  user?: UserPayload
 }
 
 export interface ApiResponse<T = any> {
@@ -14,4 +17,3 @@ export interface ApiResponse<T = any> {
   error?: string
   data?: T
 }
-

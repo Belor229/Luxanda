@@ -5,11 +5,12 @@ import { vendorStatusSchema } from '@/lib/validations'
 
 export async function PATCH(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const cookieStore = cookies()
-        const supabase = createClient(cookieStore)
+        const { id } = await params
+        const cookieStore = await cookies()
+        const supabase = createClient(Promise.resolve(cookieStore) as any)
 
         const { data: { session } } = await supabase.auth.getSession()
 
@@ -50,7 +51,7 @@ export async function PATCH(
         const { data: updatedVendor, error } = await supabase
             .from('vendors')
             .update(updatePayload)
-            .eq('id', params.id)
+            .eq('id', id)
             .select()
             .single()
 

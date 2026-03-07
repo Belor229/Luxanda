@@ -2,17 +2,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
+import { ProductStatus } from '@prisma/client'
 
 export async function PATCH(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const { id } = params
+        const { id } = await params
         const { status } = await request.json()
 
-        const cookieStore = cookies()
-        const supabase = createClient(cookieStore)
+        const cookieStore = await cookies()
+        const supabase = createClient(Promise.resolve(cookieStore) as any)
 
         const { data: { session } } = await supabase.auth.getSession()
         if (!session) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
@@ -21,23 +22,18 @@ export async function PATCH(
             .from('users')
             .select('role')
             .eq('id', session.user.id)
-            .single() as any
+            .single()
 
         if (profile?.role !== 'ADMIN') {
             return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
         }
 
-        if (!['ACTIVE', 'DRAFT', 'ARCHIVED', 'INACTIVE'].includes(status)) {
-            // Note: 'INACTIVE' might be mapped to 'ARCHIVED' or 'DRAFT' depending on business logic
-            // But let's check the enum in schema.prisma: DRAFT, ACTIVE, ARCHIVED
-        }
-
         // Mapping 'INACTIVE' to 'ARCHIVED' if that's what's intended in the UI
-        const finalStatus = status === 'INACTIVE' ? 'ARCHIVED' : status
+        const finalStatus = status === 'INACTIVE' ? ProductStatus.ARCHIVED : (status as ProductStatus)
 
         const product = await prisma.product.update({
             where: { id },
-            data: { status: finalStatus as any }
+            data: { status: finalStatus }
         })
 
         return NextResponse.json({ message: 'Statut du produit mis à jour', product })

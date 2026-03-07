@@ -2,17 +2,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
+import { Role } from '@prisma/client'
 
 export async function PATCH(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const { id } = params
+        const { id } = await params
         const { role } = await request.json()
 
-        const cookieStore = cookies()
-        const supabase = createClient(cookieStore)
+        const cookieStore = await cookies()
+        const supabase = createClient(Promise.resolve(cookieStore) as any)
 
         const { data: { session } } = await supabase.auth.getSession()
         if (!session) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
@@ -21,19 +22,19 @@ export async function PATCH(
             .from('users')
             .select('role')
             .eq('id', session.user.id)
-            .single() as any
+            .single()
 
         if (profile?.role !== 'ADMIN') {
             return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
         }
 
-        if (!['USER', 'VENDOR', 'ADMIN'].includes(role)) {
+        if (!Object.values(Role).includes(role as Role)) {
             return NextResponse.json({ error: 'Rôle invalide' }, { status: 400 })
         }
 
         const user = await prisma.user.update({
             where: { id },
-            data: { role }
+            data: { role: role as Role }
         })
 
         return NextResponse.json({ message: 'Rôle mis à jour', user })

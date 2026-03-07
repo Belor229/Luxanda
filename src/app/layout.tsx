@@ -1,13 +1,12 @@
 import type { Metadata } from 'next'
 import { Inter, Poppins } from 'next/font/google'
+import Script from 'next/script'
 import './globals.css'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import WhatsAppFloat from '@/components/WhatsAppFloat'
 import CartSync from '@/components/CartSync'
 import LegalAcceptanceModal from '@/components/LegalAcceptanceModal'
-
-
 
 const inter = Inter({
   subsets: ['latin'],
@@ -85,6 +84,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr" className={`${inter.variable} ${poppins.variable}`}>
+      <head>
+        <Script
+          defer
+          data-domain="luxanda.bj"
+          src="https://plausible.io/js/script.js"
+          strategy="afterInteractive"
+        />
+      </head>
       <body className={`${inter.className} antialiased`}>
         <Header />
         <CartSync />
@@ -92,9 +99,7 @@ export default function RootLayout({
         {children}
         <Footer />
         <WhatsAppFloat />
-
       </body>
-
     </html>
   )
 }
