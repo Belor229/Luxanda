@@ -20,9 +20,10 @@ export interface Product {
 interface ProductCardProps {
   product: Product
   viewMode: 'grid' | 'list'
+  priority?: boolean
 }
 
-export default function ProductCard({ product, viewMode }: ProductCardProps) {
+export default function ProductCard({ product, viewMode, priority = false }: ProductCardProps) {
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
@@ -49,6 +50,8 @@ export default function ProductCard({ product, viewMode }: ProductCardProps) {
               alt={product.name}
               fill
               className="object-cover rounded-lg"
+              loading={priority ? undefined : "lazy"}
+              priority={priority}
             />
           </div>
 
@@ -109,6 +112,8 @@ export default function ProductCard({ product, viewMode }: ProductCardProps) {
           width={300}
           height={200}
           className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+          loading={priority ? undefined : "lazy"}
+          priority={priority}
         />
       </div>
 

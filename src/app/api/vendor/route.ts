@@ -2,14 +2,15 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
+import { SubscriptionPlan, SubscriptionStatus } from '@prisma/client'
 
 // Force dynamic since we use cookies
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: Request) {
     try {
-        const cookieStore = cookies()
-        const supabase = createClient(cookieStore)
+        const cookieStore = await cookies()
+        const supabase = createClient(Promise.resolve(cookieStore) as any)
 
         const { data: { session }, error: sessionError } = await supabase.auth.getSession()
 
@@ -34,8 +35,6 @@ export async function POST(request: Request) {
                 userId: session.user.id,
                 storeName: body.storeName,
                 description: body.description,
-                logo: body.logo,
-                banner: body.banner,
                 status: 'PENDING'
             }
         })
@@ -48,9 +47,9 @@ export async function POST(request: Request) {
         await prisma.subscription.create({
             data: {
                 userId: session.user.id,
-                plan: 'STARTER', // Default plan for trial
+                plan: SubscriptionPlan.STARTER, // Default plan for trial
                 amount: 0, // Free during trial
-                status: 'ACTIVE',
+                status: SubscriptionStatus.ACTIVE,
                 startDate: trialStartDate,
                 trialEndDate: trialEndDate,
                 endDate: trialEndDate // Trial ends after 2 months
@@ -64,19 +63,16 @@ export async function POST(request: Request) {
     }
 }
 
-export async function GET(request: Request) {
+export async function GET(_request: Request) {
     try {
-        const cookieStore = cookies()
-        const supabase = createClient(cookieStore)
+        const cookieStore = await cookies()
+        const supabase = createClient(Promise.resolve(cookieStore) as any)
 
         const { data: { session }, error: sessionError } = await supabase.auth.getSession()
 
         if (sessionError || !session) {
             return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
         }
-
-        const { searchParams } = new URL(request.url)
-        const userIdPromise = searchParams.get('userId')
 
         const vendor = await prisma.vendor.findUnique({
             where: { userId: session.user.id },
@@ -101,8 +97,8 @@ export async function GET(request: Request) {
 
 export async function PATCH(request: Request) {
     try {
-        const cookieStore = cookies()
-        const supabase = createClient(cookieStore)
+        const cookieStore = await cookies()
+        const supabase = createClient(Promise.resolve(cookieStore) as any)
 
         const { data: { session }, error: sessionError } = await supabase.auth.getSession()
 
@@ -125,8 +121,6 @@ export async function PATCH(request: Request) {
             data: {
                 storeName: body.storeName,
                 description: body.description,
-                logo: body.logo,
-                banner: body.banner,
                 // Status update is reserved for Admin
             }
         })

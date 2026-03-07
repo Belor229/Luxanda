@@ -30,13 +30,10 @@ export default function LegalAcceptanceModal() {
                 }
 
                 const data = await res.json()
-                console.log('Legal acceptance data:', data) // Debug log
                 
                 if (!data.cgu_version || data.cgu_version !== '1.0') {
-                    console.log('Showing legal modal - version mismatch or missing')
                     setIsOpen(true)
                 } else {
-                    console.log('Legal acceptance already completed')
                     setIsOpen(false)
                 }
             } catch (err) {
@@ -58,15 +55,11 @@ export default function LegalAcceptanceModal() {
                 body: JSON.stringify({ version: '1.0' })
             })
             
-            console.log('Acceptance response status:', res.status)
-            console.log('Acceptance response ok:', res.ok)
             
             if (res.ok) {
-                console.log('Setting isOpen to false')
                 setIsOpen(false)
                 // Force recheck after successful acceptance
                 setTimeout(() => {
-                    console.log('Reloading page...')
                     window.location.href = window.location.href // Force complete reload
                 }, 500)
             } else {

@@ -87,7 +87,6 @@ export default function SubscriptionsPage() {
   }
 
   const handleKkiapaySuccess = async (data: any) => {
-    console.log('Paiement Kkiapay réussi:', data)
     setLoading(true)
     try {
       const response = await fetch('/api/subscriptions/confirm-payment', {

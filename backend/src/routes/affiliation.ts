@@ -1,15 +1,25 @@
-import express from 'express'
-import { body, validationResult } from 'express-validator'
+import express, { Response } from 'express'
+import { body, query, validationResult } from 'express-validator'
 import { prisma } from '../config/prisma'
 import { authenticateToken } from '../middlewares/auth'
 import { AuthRequest } from '../types'
+import { ReferralStatus } from '@prisma/client'
 
 const router = express.Router()
 
+// Validation middleware
+const validate = (req: express.Request, res: Response, next: express.NextFunction) => {
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ error: 'Données invalides', details: errors.array() })
+  }
+  next()
+}
+
 // Get user's affiliation link and stats
-router.get('/my-affiliation', authenticateToken, async (req: AuthRequest, res: any) => {
+router.get('/my-affiliation', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user?.userId
+    const userId = req.user!.userId
 
     // Get user's affiliation stats using Prisma
     const affiliationStats = await prisma.referral.aggregate({
@@ -25,10 +35,8 @@ router.get('/my-affiliation', authenticateToken, async (req: AuthRequest, res: a
       where: { referrerId: userId },
       include: {
         referred: {
-          select: {
-            firstName: true,
-            lastName: true,
-            email: true
+          include: {
+            profile: true
           }
         }
       },
@@ -37,13 +45,13 @@ router.get('/my-affiliation', authenticateToken, async (req: AuthRequest, res: a
     })
 
     const stats = affiliationStats
-    const referrals = recentReferrals.map((ref: any) => ({
+    const referrals = recentReferrals.map((ref) => ({
       id: ref.id,
       commission_amount: ref.commission,
       status: ref.status,
       created_at: ref.createdAt,
-      first_name: ref.referred.firstName,
-      last_name: ref.referred.lastName,
+      first_name: ref.referred.profile?.firstName,
+      last_name: ref.referred.profile?.lastName,
       email: ref.referred.email
     }))
 
@@ -64,12 +72,15 @@ router.get('/my-affiliation', authenticateToken, async (req: AuthRequest, res: a
 })
 
 // Get all referrals with pagination
-router.get('/referrals', authenticateToken, async (req: AuthRequest, res: any) => {
+router.get('/referrals', [
+  authenticateToken,
+  query('page').optional().isInt({ min: 1 }).toInt(),
+  query('limit').optional().isInt({ min: 1, max: 100 }).toInt(),
+  validate
+], async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user?.userId
-    const page = parseInt(req.query.page as string) || 1
-    const limit = parseInt(req.query.limit as string) || 20
-    const offset = (page - 1) * limit
+    const userId = req.user!.userId
+    const { page = 1, limit = 20 } = req.query as any
 
     // Get referrals with pagination using Prisma
     const [referrals, totalCount] = await Promise.all([
@@ -77,16 +88,13 @@ router.get('/referrals', authenticateToken, async (req: AuthRequest, res: any) =
         where: { referrerId: userId },
         include: {
           referred: {
-            select: {
-              firstName: true,
-              lastName: true,
-              email: true,
-              phone: true
+            include: {
+              profile: true
             }
           }
         },
         orderBy: { createdAt: 'desc' },
-        skip: offset,
+        skip: (page - 1) * limit,
         take: limit
       }),
       prisma.referral.count({
@@ -94,15 +102,15 @@ router.get('/referrals', authenticateToken, async (req: AuthRequest, res: any) =
       })
     ])
 
-    const formattedReferrals = referrals.map((ref: any) => ({
+    const formattedReferrals = referrals.map((ref) => ({
       id: ref.id,
       commission_amount: ref.commission,
       status: ref.status,
       created_at: ref.createdAt,
-      first_name: ref.referred.firstName,
-      last_name: ref.referred.lastName,
+      first_name: ref.referred.profile?.firstName,
+      last_name: ref.referred.profile?.lastName,
       email: ref.referred.email,
-      phone: ref.referred.phone
+      phone: ref.referred.profile?.phone
     }))
 
     res.json({
@@ -125,17 +133,10 @@ router.get('/referrals', authenticateToken, async (req: AuthRequest, res: any) =
 router.post('/create-referral', [
   body('referrer_id').isString().notEmpty(),
   body('referred_id').isString().notEmpty(),
-  body('commission_rate').optional().isFloat({ min: 0, max: 100 })
-], async (req: any, res: any) => {
+  body('commission_rate').optional().isFloat({ min: 0, max: 100 }),
+  validate
+], async (req: express.Request, res: Response) => {
   try {
-    const errors = validationResult(req)
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        error: 'Données invalides',
-        details: errors.array()
-      })
-    }
-
     const { referrer_id, referred_id, commission_rate = 30.00 } = req.body
 
     // Check if referral already exists using Prisma
@@ -160,7 +161,7 @@ router.post('/create-referral', [
         referrerId: referrer_id,
         referredId: referred_id,
         commission: commission_rate,
-        status: 'PENDING'
+        status: ReferralStatus.PENDING
       }
     })
 
@@ -179,19 +180,13 @@ router.post('/create-referral', [
 
 // Update commission status (admin only)
 router.put('/update-commission', [
+  authenticateToken,
   body('referral_id').isString().notEmpty(),
   body('status').isIn(['PENDING', 'PAID', 'CANCELLED']),
-  body('commission_amount').optional().isFloat({ min: 0 })
-], authenticateToken, async (req: AuthRequest, res: any) => {
+  body('commission_amount').optional().isFloat({ min: 0 }),
+  validate
+], async (req: AuthRequest, res: Response) => {
   try {
-    const errors = validationResult(req)
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        error: 'Données invalides',
-        details: errors.array()
-      })
-    }
-
     // Check if user is admin
     if (req.user?.role !== 'ADMIN') {
       return res.status(403).json({ error: 'Accès non autorisé' })
@@ -203,7 +198,7 @@ router.put('/update-commission', [
     await prisma.referral.update({
       where: { id: referral_id },
       data: {
-        status: status as 'PENDING' | 'PAID' | 'CANCELLED',
+        status: status as ReferralStatus,
         ...(commission_amount !== undefined && { commission: commission_amount })
       }
     })
@@ -221,54 +216,49 @@ router.put('/update-commission', [
 })
 
 // Get all affiliations (admin only)
-router.get('/all', authenticateToken, async (req: AuthRequest, res: any) => {
+router.get('/all', [
+  authenticateToken,
+  query('page').optional().isInt({ min: 1 }).toInt(),
+  query('limit').optional().isInt({ min: 1, max: 100 }).toInt(),
+  validate
+], async (req: AuthRequest, res: Response) => {
   try {
     // Check if user is admin
     if (req.user?.role !== 'ADMIN') {
       return res.status(403).json({ error: 'Accès non autorisé' })
     }
 
-    const page = parseInt(req.query.page as string) || 1
-    const limit = parseInt(req.query.limit as string) || 20
-    const offset = (page - 1) * limit
+    const { page = 1, limit = 20 } = req.query as any
 
     // Get all affiliations with user details using Prisma
     const [affiliations, totalCount] = await Promise.all([
       prisma.referral.findMany({
         include: {
           referrer: {
-            select: {
-              firstName: true,
-              lastName: true,
-              email: true
-            }
+            include: { profile: true }
           },
           referred: {
-            select: {
-              firstName: true,
-              lastName: true,
-              email: true
-            }
+            include: { profile: true }
           }
         },
         orderBy: { createdAt: 'desc' },
-        skip: offset,
+        skip: (page - 1) * limit,
         take: limit
       }),
       prisma.referral.count()
     ])
 
-    const formattedAffiliations = affiliations.map((affiliation: any) => ({
+    const formattedAffiliations = affiliations.map((affiliation) => ({
       id: affiliation.id,
       commission_amount: affiliation.commission,
       commission_rate: affiliation.commission,
       status: affiliation.status,
       created_at: affiliation.createdAt,
-      referrer_first_name: affiliation.referrer.firstName,
-      referrer_last_name: affiliation.referrer.lastName,
+      referrer_first_name: affiliation.referrer.profile?.firstName,
+      referrer_last_name: affiliation.referrer.profile?.lastName,
       referrer_email: affiliation.referrer.email,
-      referred_first_name: affiliation.referred.firstName,
-      referred_last_name: affiliation.referred.lastName,
+      referred_first_name: affiliation.referred.profile?.firstName,
+      referred_last_name: affiliation.referred.profile?.lastName,
       referred_email: affiliation.referred.email
     }))
 

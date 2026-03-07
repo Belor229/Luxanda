@@ -31,7 +31,6 @@ export default function SubscriptionPage() {
     const [selectedPlan, setSelectedPlan] = useState<typeof plans[0] | null>(null)
 
     const handlePaymentSuccess = async (response: any) => {
-        console.log('Payment successful:', response)
 
         try {
             const res = await fetch('/api/subscriptions/active', { // Endpoint to activate

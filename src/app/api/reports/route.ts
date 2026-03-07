@@ -15,8 +15,8 @@ const reportSchema = z.object({
 
 export async function POST(request: NextRequest) {
     try {
-        const cookieStore = cookies()
-        const supabase = createClient(cookieStore)
+        const cookieStore = await cookies()
+        const supabase = createClient(cookieStore as any)
 
         const { data: { user }, error: authError } = await supabase.auth.getUser()
         if (authError || !user) {
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
         const { data: profile } = await supabase
             .from('profiles')
             .select('id')
-            .eq('user_id', user.id)
+            .eq('id', user.id)
             .single()
 
         if (!profile) {
@@ -74,7 +74,6 @@ export async function POST(request: NextRequest) {
                     .eq('id', validatedData.vendor_id)
 
                 // Notifier l'admin (implémenter notification)
-                console.log(`Vendeur ${validatedData.vendor_id} suspendu automatiquement - ${reportCount.length} signalements`)
             }
         }
 
@@ -88,7 +87,7 @@ export async function POST(request: NextRequest) {
         if (error instanceof z.ZodError) {
             return NextResponse.json({ 
                 error: 'Données invalides', 
-                details: error.errors 
+                details: error.issues
             }, { status: 400 })
         }
 
@@ -99,10 +98,10 @@ export async function POST(request: NextRequest) {
     }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
     try {
-        const cookieStore = cookies()
-        const supabase = createClient(cookieStore)
+        const cookieStore = await cookies()
+        const supabase = createClient(cookieStore as any)
 
         const { data: { user }, error: authError } = await supabase.auth.getUser()
         if (authError || !user) {
@@ -110,13 +109,13 @@ export async function GET(request: NextRequest) {
         }
 
         // Vérifier si l'utilisateur est admin
-        const { data: vendor } = await supabase
-            .from('vendors')
-            .select('status')
-            .eq('user_id', user.id)
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
             .single()
 
-        const isAdmin = vendor && vendor.status === 'APPROVED'
+        const isAdmin = profile && profile.role === 'ADMIN'
 
         if (!isAdmin) {
             return NextResponse.json({ error: 'Accès restreint' }, { status: 403 })
@@ -127,9 +126,9 @@ export async function GET(request: NextRequest) {
             .from('reports')
             .select(`
                 *,
-                reporter:profiles!reporter_id(full_name, email),
+                reporter:profiles!reporter_id(full_name),
                 product:products(id, name),
-                vendor:vendors(id, business_name)
+                vendor:vendors(id, store_name)
             `)
             .order('created_at', { ascending: false })
 

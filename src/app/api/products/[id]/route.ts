@@ -8,11 +8,12 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params
         const product = await prisma.product.findUnique({
-            where: { id: params.id },
+            where: { id },
             include: {
                 vendor: {
                     select: { storeName: true, userId: true }
@@ -37,11 +38,12 @@ export async function GET(
 
 export async function PATCH(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const cookieStore = cookies()
-        const supabase = createClient(cookieStore)
+        const { id } = await params
+        const cookieStore = await cookies()
+        const supabase = createClient(Promise.resolve(cookieStore) as any)
 
         const { data: { session }, error: sessionError } = await supabase.auth.getSession()
 
@@ -79,7 +81,7 @@ export async function PATCH(
             }
 
             const product = await prisma.product.findUnique({
-                where: { id: params.id },
+                where: { id },
                 include: { vendor: true }
             })
 
@@ -95,7 +97,7 @@ export async function PATCH(
 
         // Update product
         const updatedProduct = await prisma.product.update({
-            where: { id: params.id },
+            where: { id },
             data: {
                 name: body.name,
                 description: body.description,
@@ -117,11 +119,12 @@ export async function PATCH(
 
 export async function DELETE(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const cookieStore = cookies()
-        const supabase = createClient(cookieStore)
+        const { id } = await params
+        const cookieStore = await cookies()
+        const supabase = createClient(Promise.resolve(cookieStore) as any)
 
         const { data: { session }, error: sessionError } = await supabase.auth.getSession()
 
@@ -153,7 +156,7 @@ export async function DELETE(
             }
 
             const product = await prisma.product.findUnique({
-                where: { id: params.id },
+                where: { id },
                 include: { vendor: true }
             })
 
@@ -163,7 +166,7 @@ export async function DELETE(
         }
 
         await prisma.product.delete({
-            where: { id: params.id }
+            where: { id }
         })
 
         return NextResponse.json({ success: true })
