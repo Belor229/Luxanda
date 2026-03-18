@@ -105,34 +105,66 @@ CREATE TABLE public.webhook_logs (
 INSERT INTO public.users (id, email, role) VALUES ('00000000-0000-0000-0000-000000000000', 'admin@luxanda.vercel.app', 'ADMIN') ON CONFLICT DO NOTHING;
 
 -- 4. Indexes pour performance
-CREATE INDEX idx_vendors_user_id ON public.vendors(user_id);
-CREATE INDEX idx_subscriptions_vendor_id ON public.subscriptions(vendor_id);
-CREATE INDEX idx_products_vendor_id ON public.products(vendor_id);
-CREATE INDEX idx_orders_user_id ON public.orders(user_id);
-CREATE INDEX idx_webhook_logs_transaction ON public.webhook_logs(transaction_id);
+CREATE INDEX IF NOT EXISTS idx_vendors_user_id ON public.vendors(user_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_vendor_id ON public.subscriptions(vendor_id);
+CREATE INDEX IF NOT EXISTS idx_products_vendor_id ON public.products(vendor_id);
+CREATE INDEX IF NOT EXISTS idx_orders_user_id_fk ON public.orders(user_id);
+CREATE INDEX IF NOT EXISTS idx_orders_vendor_id_fk ON public.orders(vendor_id);
+CREATE INDEX IF NOT EXISTS idx_webhook_logs_transaction ON public.webhook_logs(transaction_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_admin_id ON public.audit_logs(admin_id);
+CREATE INDEX IF NOT EXISTS idx_user_profiles_user_id ON public.user_profiles(user_id);
 
 -- 5. Activation de la RLS
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.vendors ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.webhook_logs ENABLE ROW LEVEL SECURITY;
 
--- 6. Politiques RLS (Idempotentes)
+-- 6. Politiques RLS (Optimisées avec (SELECT auth.uid()))
 DO $$ BEGIN
-    DROP POLICY IF EXISTS "Users can read own profile" ON public.users;
-    CREATE POLICY "Users can read own profile" ON public.users FOR SELECT USING (auth.uid() = id);
+    DROP POLICY IF EXISTS "Users - Own Access" ON public.users;
+    CREATE POLICY "Users - Own Access" ON public.users FOR ALL USING ( (SELECT auth.uid()) = id );
     
-    DROP POLICY IF EXISTS "Public can view approved vendors" ON public.vendors;
-    CREATE POLICY "Public can view approved vendors" ON public.vendors FOR SELECT USING (status = 'APPROVED');
-    
-    DROP POLICY IF EXISTS "Vendors can view own profile" ON public.vendors;
-    CREATE POLICY "Vendors can view own profile" ON public.vendors FOR SELECT USING (user_id::uuid = auth.uid());
+    DROP POLICY IF EXISTS "Profiles - Own Access" ON public.user_profiles;
+    CREATE POLICY "Profiles - Own Access" ON public.user_profiles FOR ALL USING ( (SELECT auth.uid()) = user_id::uuid );
 
-    DROP POLICY IF EXISTS "Public can view active products" ON public.products;
-    CREATE POLICY "Public can view active products" ON public.products FOR SELECT USING (status = 'ACTIVE');
+    DROP POLICY IF EXISTS "Vendors - Public Read" ON public.vendors;
+    CREATE POLICY "Vendors - Public Read" ON public.vendors FOR SELECT USING ( status = 'APPROVED' );
     
-    DROP POLICY IF EXISTS "Admins can view everything" ON public.vendors;
-    CREATE POLICY "Admins can view everything" ON public.vendors FOR ALL USING (EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'ADMIN'));
+    DROP POLICY IF EXISTS "Vendors - Owner Access" ON public.vendors;
+    CREATE POLICY "Vendors - Owner Access" ON public.vendors FOR ALL USING ( user_id::uuid = (SELECT auth.uid()) );
+
+    DROP POLICY IF EXISTS "Products - Public Read" ON public.products;
+    CREATE POLICY "Products - Public Read" ON public.products FOR SELECT USING ( status = 'ACTIVE' );
+    
+    DROP POLICY IF EXISTS "Products - Owner Access" ON public.products FOR ALL USING (
+        vendor_id::uuid IN (SELECT id::uuid FROM public.vendors WHERE user_id::uuid = (SELECT auth.uid()))
+    );
+
+    DROP POLICY IF EXISTS "Orders - Owner Access" ON public.orders;
+    CREATE POLICY "Orders - Owner Access" ON public.orders FOR SELECT USING ( (SELECT auth.uid()) = user_id::uuid );
+    
+    DROP POLICY IF EXISTS "Orders - Vendor Access" ON public.orders;
+    CREATE POLICY "Orders - Vendor Access" ON public.orders FOR SELECT USING (
+        vendor_id::uuid IN (SELECT id::uuid FROM public.vendors WHERE user_id::uuid = (SELECT auth.uid()))
+    );
+
+    DROP POLICY IF EXISTS "Subscriptions - Owner Read" ON public.subscriptions;
+    CREATE POLICY "Subscriptions - Owner Read" ON public.subscriptions FOR SELECT USING (
+        vendor_id::uuid IN (SELECT id::uuid FROM public.vendors WHERE user_id::uuid = (SELECT auth.uid()))
+    );
+
+    DROP POLICY IF EXISTS "Admins - Global Access" ON public.webhook_logs;
+    CREATE POLICY "Admins - Global Access" ON public.webhook_logs FOR ALL USING (
+        EXISTS (SELECT 1 FROM public.users WHERE id = (SELECT auth.uid()) AND role = 'ADMIN')
+    );
 END $$;
+
+-- 7. Fonctions : Sécurité Search Path
+ALTER FUNCTION public.handle_new_user() SET search_path = public;
+ALTER FUNCTION public.handle_new_vendor_subscription() SET search_path = public;
+ALTER FUNCTION public.update_updated_at_column() SET search_path = public;
