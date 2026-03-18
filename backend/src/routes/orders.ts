@@ -2,24 +2,32 @@ import express, { Request, Response } from 'express'
 import { body, validationResult } from 'express-validator'
 import { prisma } from '../config/prisma'
 import { authenticateToken } from '../middlewares/auth'
+import { AuthRequest } from '../types'
 
 const router = express.Router()
 
 // Create new order
 router.post('/', authenticateToken, [
     body('items').isArray({ min: 1 }),
-    body('addressId').notEmpty(),
-    body('paymentMethod').notEmpty(),
+    body('addressId').notEmpty().isString(),
+    body('paymentMethod').notEmpty().isString(),
     body('total').isFloat({ min: 0 }),
-], async (req: Request, res: Response) => {
+    body('notes').optional().trim().isString().isLength({ max: 500 })
+], async (req: AuthRequest, res: Response) => {
     try {
         const errors = validationResult(req)
         if (!errors.isEmpty()) {
             return res.status(400).json({ error: 'Données invalides', details: errors.array() })
         }
 
-        const userId = (req as any).user.userId
-        const { items, addressId, paymentMethod, total, notes } = req.body
+        const userId = req.user!.userId
+        const { items, addressId, paymentMethod, total, notes } = req.body as {
+            items: Array<{ id: string; quantity: number; price: number }>;
+            addressId: string;
+            paymentMethod: string;
+            total: number;
+            notes?: string;
+        }
 
         const order = await prisma.order.create({
             data: {
@@ -32,7 +40,7 @@ router.post('/', authenticateToken, [
                 paymentStatus: 'PENDING',
                 notes,
                 items: {
-                    create: Array.isArray(items) ? items.map((item: any) => ({
+                    create: Array.isArray(items) ? items.map((item: { id: string; quantity: number; price: number }) => ({
                         productId: String(item.id),
                         quantity: Number(item.quantity) || 1,
                         price: Number(item.price) || 0,
@@ -53,9 +61,9 @@ router.post('/', authenticateToken, [
 })
 
 // Get user orders
-router.get('/my-orders', authenticateToken, async (req: Request, res: Response) => {
+router.get('/my-orders', authenticateToken, async (req: AuthRequest, res: Response) => {
     try {
-        const userId = (req as any).user.userId
+        const userId = req.user!.userId
         const orders = await prisma.order.findMany({
             where: { userId },
             include: {

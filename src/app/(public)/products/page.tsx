@@ -5,7 +5,9 @@ import { useSearchParams } from 'next/navigation'
 import ProductCard, { Product } from '@/components/ProductCard'
 import { Grid, List, Search } from 'lucide-react'
 
-export default function ProductsPage() {
+import { Suspense } from 'react'
+
+function ProductsList() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')

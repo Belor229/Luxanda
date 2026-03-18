@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
+import { prisma } from '@/lib/prisma'
+import { NotificationsService } from '@/lib/notifications'
 import { z } from 'zod'
 
 const adminActionSchema = z.object({
@@ -14,109 +16,106 @@ export async function POST(request: Request) {
         const cookieStore = cookies()
         const supabase = createClient(cookieStore)
 
-        const { data: { user }, error: authError } = await supabase.auth.getUser()
-        if (authError || !user) {
+        const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
+        if (authError || !authUser) {
             return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
         }
 
-        // Vérifier si l'utilisateur est admin (pour l'instant, simple vérification)
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('email')
-            .eq('user_id', user.id)
-            .single()
+        const admin = await prisma.user.findUnique({
+            where: { id: authUser.id },
+            select: { role: true }
+        })
 
-        const adminEmails = ['admin@luxanda.bj', 'dpo@luxanda.bj'] // Emails admin autorisés
-        if (!profile || !adminEmails.includes(profile.email)) {
-            return NextResponse.json({ error: 'Accès admin requis' }, { status: 403 })
+        if (admin?.role !== 'ADMIN') {
+            return NextResponse.json({ error: 'Accès administrateur requis' }, { status: 403 })
         }
 
         const body = await request.json()
         const { vendor_id, action, reason } = adminActionSchema.parse(body)
 
+        const vendor = await prisma.vendor.findUnique({
+            where: { id: vendor_id },
+            include: { user: { include: { profile: true } } }
+        })
+
+        if (!vendor) {
+            return NextResponse.json({ error: 'Vendeur non trouvé' }, { status: 404 })
+        }
+
         let updateData: any = {}
-        let subscriptionUpdate: any = {}
+        let subscriptionStatus: any = undefined
 
         switch (action) {
             case 'approve':
                 updateData = {
                     status: 'APPROVED',
-                    trial_start_date: new Date().toISOString(),
-                    trial_end_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // 14 jours
-                    admin_notes: reason || 'Approuvé par admin',
-                    updated_at: new Date().toISOString()
+                    trial_start_date: new Date(),
+                    trial_end_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+                    admin_notes: reason || 'Approuvé par admin'
                 }
-                subscriptionUpdate = {
-                    status: 'TRIAL',
-                    trial_start_date: new Date().toISOString(),
-                    trial_end_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-                    auto_suspend_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-                    updated_at: new Date().toISOString()
-                }
+                subscriptionStatus = 'ACTIVE'
                 break
 
             case 'reject':
                 updateData = {
                     status: 'REJECTED',
-                    rejection_reason: reason || 'Rejeté par admin',
-                    admin_notes: reason || 'Rejeté par admin',
-                    updated_at: new Date().toISOString()
+                    rejectionReason: reason || 'Information insuffisante',
+                    admin_notes: reason || 'Rejeté par admin'
                 }
-                subscriptionUpdate = {
-                    status: 'CANCELLED',
-                    updated_at: new Date().toISOString()
-                }
+                subscriptionStatus = 'CANCELLED'
                 break
 
             case 'suspend':
                 updateData = {
                     status: 'SUSPENDED',
-                    admin_notes: reason || 'Suspendu par admin',
-                    updated_at: new Date().toISOString()
+                    admin_notes: reason || 'Suspendu par admin'
                 }
-                subscriptionUpdate = {
-                    status: 'EXPIRED',
-                    updated_at: new Date().toISOString()
-                }
+                subscriptionStatus = 'EXPIRED'
                 break
         }
 
-        // Mettre à jour le vendeur
-        const { data: vendor, error: vendorError } = await supabase
-            .from('vendors')
-            .update(updateData)
-            .eq('id', vendor_id)
-            .select()
-            .single()
+        const updatedVendor = await prisma.vendor.update({
+            where: { id: vendor_id },
+            data: updateData
+        })
 
-        if (vendorError) throw vendorError
+        // Update subscriptions if any
+        await prisma.subscription.updateMany({
+            where: { vendorId: vendor_id, status: 'PENDING' },
+            data: { status: subscriptionStatus }
+        })
 
-        // Mettre à jour l'abonnement
-        const { error: subscriptionError } = await supabase
-            .from('subscriptions')
-            .update(subscriptionUpdate)
-            .eq('vendor_id', vendor_id)
+        // Audit Log
+        await prisma.auditLog.create({
+            data: {
+                adminId: authUser.id,
+                action: `VENDOR_${action.toUpperCase()}`,
+                targetId: vendor_id,
+                details: reason || `Vendor ${action} without specific reason`
+            }
+        })
 
-        if (subscriptionError) throw subscriptionError
+        // Notifications
+        if (vendor.user.profile?.phone) {
+            if (action === 'approve') {
+                await NotificationsService.sendApprovalNotif(vendor.user.profile.phone, vendor.storeName)
+            } else if (action === 'reject') {
+                await NotificationsService.sendRejectionNotif(vendor.user.profile.phone, vendor.storeName, reason || 'Dossier incomplet')
+            }
+        }
 
         return NextResponse.json({ 
             success: true, 
-            vendor,
+            vendor: updatedVendor,
             message: `Vendeur ${action} avec succès`
         })
 
     } catch (error) {
         if (error instanceof z.ZodError) {
-            return NextResponse.json({ 
-                error: 'Données invalides', 
-                details: error.issues 
-            }, { status: 400 })
+            return NextResponse.json({ error: 'Données invalides', details: error.issues }, { status: 400 })
         }
-
         console.error('Admin action error:', error)
-        return NextResponse.json({ 
-            error: 'Erreur interne du serveur' 
-        }, { status: 500 })
+        return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 })
     }
 }
 
@@ -125,42 +124,54 @@ export async function GET(request: Request) {
         const cookieStore = cookies()
         const supabase = createClient(cookieStore)
 
-        const { data: { user }, error: authError } = await supabase.auth.getUser()
-        if (authError || !user) {
+        const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
+        if (authError || !authUser) {
             return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
         }
 
-        // Vérifier si l'utilisateur est admin
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('email')
-            .eq('user_id', user.id)
-            .single()
+        const admin = await prisma.user.findUnique({
+            where: { id: authUser.id }
+        })
 
-        const adminEmails = ['admin@luxanda.bj', 'dpo@luxanda.bj']
-        if (!profile || !adminEmails.includes(profile.email)) {
-            return NextResponse.json({ error: 'Accès admin requis' }, { status: 403 })
+        if (admin?.role !== 'ADMIN') {
+            return NextResponse.json({ error: 'Accès administrateur requis' }, { status: 403 })
         }
 
-        // Récupérer tous les vendeurs en attente
-        const { data: vendors, error } = await supabase
-            .from('vendors')
-            .select(`
-                *,
-                user:auth.users(email),
-                subscription:subscriptions(status, trial_start_date, trial_end_date)
-            `)
-            .in('status', ['PENDING_VALIDATION', 'APPROVED', 'REJECTED', 'SUSPENDED', 'SUSPENDED_AUTO'])
-            .order('created_at', { ascending: false })
+        const { searchParams } = new URL(request.url)
+        const status = searchParams.get('status')
 
-        if (error) throw error
+        const vendors = await prisma.vendor.findMany({
+            where: status ? { status: status as any } : {},
+            include: {
+                user: {
+                    select: {
+                        email: true,
+                        name: true,
+                        profile: {
+                            select: { phone: true }
+                        }
+                    }
+                },
+                subscriptions: {
+                    select: {
+                        status: true,
+                        startDate: true,
+                        endDate: true
+                    },
+                    take: 1,
+                    orderBy: { createdAt: 'desc' }
+                },
+                _count: {
+                    select: { products: true }
+                }
+            },
+            orderBy: { createdAt: 'desc' }
+        })
 
-        return NextResponse.json({ vendors })
+        return NextResponse.json(vendors)
 
     } catch (error) {
         console.error('Admin vendors fetch error:', error)
-        return NextResponse.json({ 
-            error: 'Erreur interne du serveur' 
-        }, { status: 500 })
+        return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 })
     }
 }

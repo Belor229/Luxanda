@@ -2,5 +2,6 @@
   "css.customData": [
     ".vscode/tailwind-custom-data.json"
   ],
-  "snyk.advanced.autoSelectOrganization": true
+  "snyk.advanced.autoSelectOrganization": true,
+  "snyk.advanced.organization": "b5ad71ab-06f7-40c2-bd92-d8fda434aa51"
 }

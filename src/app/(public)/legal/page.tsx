@@ -17,7 +17,7 @@ export default function LegalMentionsPage() {
                         <li><strong>RCS Bénin :</strong> En cours d'immatriculation</li>
                         <li><strong>N° CC :</strong> 3201901234567</li>
                         <li><strong>Siège social :</strong> Cotonou, Quartier Haie Vive, Bénin</li>
-                        <li><strong>Email :</strong> luxanda@yahoo.com</li>
+                        <li><strong>Email :</strong> contact@luxanda.bj</li>
                         <li><strong>Téléphone :</strong> +229 01 41 75 75 59</li>
                         <li><strong>Directeur de publication :</strong> DJAGBA Belor</li>
                     </ul>
@@ -57,7 +57,7 @@ export default function LegalMentionsPage() {
                     </p>
                     <ul className="mt-2 text-sm">
                         <li><strong>Modèle économique :</strong> Abonnements vendeurs (Starter: 5.000, Pro: 15.000, Premium: 30.000 FCFA/mois)</li>
-                        <li><strong>Période d'essai :</strong> 2 mois gratuits pour nouveaux vendeurs</li>
+                        <li><strong>Période d'essai :</strong> 14 jours gratuits pour nouveaux vendeurs</li>
                         <li><strong>Paiement :</strong> Kkiapay (sécurisé)</li>
                         <li><strong>Zone géographique :</strong> Bénin</li>
                         <li><strong>Langue :</strong> Français</li>
@@ -119,10 +119,10 @@ export default function LegalMentionsPage() {
                 <section className="bg-blue-50 p-6 rounded-lg">
                     <h2 className="text-xl font-semibold mb-4">9. Contact et support</h2>
                     <ul className="text-sm">
-                        <li><strong>Email :</strong> luxanda@yahoo.com</li>
+                        <li><strong>Email :</strong> contact@luxanda.bj</li>
                         <li><strong>WhatsApp :</strong> +229 01 41 75 75 59</li>
                         <li><strong>Téléphone :</strong> +229 01 41 75 75 59</li>
-                        <li><strong>Disponibilité :</strong> 7j/7, réponse sous 24h maximum</li>
+                        <li><strong>Disponibilité :</strong> Support disponible — Réponse sous 24h</li>
                         <li><strong>Adresse :</strong> Cotonou, Bénin</li>
                     </ul>
                 </section>

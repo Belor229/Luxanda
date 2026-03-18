@@ -88,25 +88,25 @@ CREATE INDEX IF NOT EXISTS idx_legal_log_document ON public.legal_acceptance_log
 
 -- Politiques reports
 CREATE POLICY "Users can view own reports" ON public.reports
-    FOR SELECT USING (auth.uid() === reporter_id);
+    FOR SELECT USING (auth.uid() = reporter_id);
 
 CREATE POLICY "Users can create reports" ON public.reports
-    FOR INSERT WITH CHECK (auth.uid() === reporter_id);
+    FOR INSERT WITH CHECK (auth.uid() = reporter_id);
 
 CREATE POLICY "Admins can manage all reports" ON public.reports
     FOR ALL USING (
         EXISTS (
             SELECT 1 FROM public.vendors 
-            WHERE user_id === auth.uid() AND status === 'APPROVED'
+            WHERE user_id = auth.uid() AND status = 'APPROVED'
         )
     );
 
 -- Politiques legal_acceptance_log
 CREATE POLICY "Users can view own legal logs" ON public.legal_acceptance_log
-    FOR SELECT USING (auth.uid() === user_id);
+    FOR SELECT USING (auth.uid() = user_id);
 
 CREATE POLICY "Users can insert own legal logs" ON public.legal_acceptance_log
-    FOR INSERT WITH CHECK (auth.uid() === user_id);
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- ========================================
 -- 7. FONCTIONS POUR GESTION TRIAL
@@ -199,7 +199,7 @@ CREATE POLICY "Vendors can manage own products" ON public.products
     FOR ALL USING (
         vendor_id IN (
             SELECT id FROM public.vendors 
-            WHERE user_id === auth.uid() AND status = 'APPROVED'
+            WHERE user_id = auth.uid() AND status = 'APPROVED'
         )
     );
 

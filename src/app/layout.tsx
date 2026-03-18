@@ -85,7 +85,35 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr" className={`${inter.variable} ${poppins.variable}`}>
+      <head>
+        <script defer data-domain="luxanda.vercel.app" src="https://plausible.io/js/script.js"></script>
+      </head>
       <body className={`${inter.className} antialiased`}>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Organization',
+              name: 'Luxanda',
+              url: 'https://luxanda.bj',
+              logo: 'https://luxanda.vercel.app/images/logo.png',
+              description: 'La marketplace africaine qui inspire confiance. Achetez et vendez en toute sécurité au Bénin.',
+              contactPoint: {
+                '@type': 'ContactPoint',
+                telephone: '+229-XX-XX-XX-XX',
+                contactType: 'customer support',
+                availableLanguage: 'French',
+              },
+              sameAs: [],
+              address: {
+                '@type': 'PostalAddress',
+                addressCountry: 'BJ',
+                addressLocality: 'Cotonou',
+              },
+            }),
+          }}
+        />
         <Header />
         <CartSync />
         <LegalAcceptanceModal />

@@ -5,6 +5,8 @@ import { Calendar, User, ArrowRight } from 'lucide-react'
 const blogPosts: any[] = []
 
 export default function BlogSection() {
+  if (blogPosts.length === 0) return null
+
   return (
     <section className="section-padding bg-gray-50">
       <div className="container-custom">

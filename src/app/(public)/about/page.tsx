@@ -22,11 +22,42 @@ export default function AboutPage() {
           </ul>
         </section>
 
+        <section className="grid grid-cols-2 md:grid-cols-4 gap-4 py-8">
+          <div className="bg-white p-6 rounded-2xl shadow-sm text-center border border-gray-100">
+            <div className="text-3xl font-black text-primary-blue mb-1">10+</div>
+            <div className="text-sm text-gray-500 font-bold uppercase tracking-wider">Catégories</div>
+          </div>
+          <div className="bg-white p-6 rounded-2xl shadow-sm text-center border border-gray-100">
+            <div className="text-3xl font-black text-primary-blue mb-1">12+</div>
+            <div className="text-sm text-gray-500 font-bold uppercase tracking-wider">Villes</div>
+          </div>
+          <div className="bg-white p-6 rounded-2xl shadow-sm text-center border border-gray-100">
+            <div className="text-3xl font-black text-primary-blue mb-1">50+</div>
+            <div className="text-sm text-gray-500 font-bold uppercase tracking-wider">Pionniers</div>
+          </div>
+          <div className="bg-white p-6 rounded-2xl shadow-sm text-center border border-gray-100">
+            <div className="text-3xl font-black text-primary-blue mb-1">24h</div>
+            <div className="text-sm text-gray-500 font-bold uppercase tracking-wider">Support</div>
+          </div>
+        </section>
+
         <section>
-          <h2 className="text-2xl font-semibold text-gray-900 mb-4">Notre Histoire</h2>
+          <h2 className="text-2xl font-semibold text-gray-900 mb-4">Une Vision Pan-Africaine depuis Cotonou</h2>
           <p>
-            Lancée en 2026, Luxanda a commencé comme une réponse à la fragmentation du e-commerce local. Nous avons compris que le principal frein aux achats en ligne n'était pas la technologie, mais la confiance. C'est pourquoi nous avons mis l'accent sur la vérification des vendeurs et un service client irréprochable.
+            Luxanda n'est pas qu'une simple plateforme numérique ; c'est un moteur de croissance locale. En partant du <strong>Bénin</strong>, notre ambition est de redéfinir le commerce de proximité dans toute l'Afrique. Nous croyons que le futur du e-commerce africain ne ressemble pas à Amazon, mais à une marketplace hybride où le numérique renforce les relations humaines.
           </p>
+        </section>
+
+        <section className="bg-blue-50 p-8 rounded-2xl border border-blue-100">
+          <h2 className="text-2xl font-semibold text-primary-blue mb-4">Ce qui nous différencie</h2>
+          <p className="mb-4">
+            Contrairement à <strong>Facebook Marketplace</strong> ou aux <strong>groupes WhatsApp</strong> souvent informels et risqués, Luxanda impose une vérification rigoureuse (KYC) de chaque vendeur professionnel.
+          </p>
+          <ul className="list-disc pl-6 space-y-3">
+            <li><strong>Identité vérifiée :</strong> Fini l'anonymat, nous savons qui vend sur notre plateforme.</li>
+            <li><strong>Zéro commission sur les ventes :</strong> Les vendeurs gardent 100% de leur profit, ils ne paient qu'un abonnement fixe.</li>
+            <li><strong>Support Local :</strong> Une équipe basée à Cotonou pour vous assister en temps réel.</li>
+          </ul>
         </section>
 
         <section>

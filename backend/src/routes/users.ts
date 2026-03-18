@@ -1,14 +1,16 @@
 import express, { Request, Response } from 'express'
-import { body, validationResult } from 'express-validator'
+import { body, query, validationResult } from 'express-validator'
 import { prisma } from '../config/prisma'
 import { authenticateToken, requireAdmin } from '../middlewares/auth'
+import { AuthRequest } from '../types'
+import { Prisma } from '@prisma/client'
 
 const router = express.Router()
 
 // Get user profile
-router.get('/profile', authenticateToken, async (req: Request, res: Response) => {
+router.get('/profile', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
-    const userId = (req as any).user.userId
+    const userId = req.user!.userId
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -50,7 +52,7 @@ router.put('/profile', [
   body('firstName').optional().trim().isLength({ min: 2 }),
   body('lastName').optional().trim().isLength({ min: 2 }),
   body('phone').optional().isString()
-], authenticateToken, async (req: Request, res: Response) => {
+], authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
@@ -60,10 +62,10 @@ router.put('/profile', [
       })
     }
 
-    const userId = (req as any).user.userId
+    const userId = req.user!.userId
     const { firstName, lastName, phone } = req.body
 
-    const updateData: any = {}
+    const updateData: Partial<{ firstName: string; lastName: string; phone: string }> = {}
     if (firstName) updateData.firstName = firstName
     if (lastName) updateData.lastName = lastName
     if (phone) updateData.phone = phone
@@ -96,13 +98,25 @@ router.put('/profile', [
 })
 
 // Get all users (Admin only)
-router.get('/', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+router.get('/', [
+  query('search').optional().isString().trim().escape(),
+  query('role').optional().isString().trim(),
+  query('page').optional().isInt({ min: 1 }),
+  query('limit').optional().isInt({ min: 1 })
+], authenticateToken, requireAdmin, async (req: Request, res: Response) => {
   try {
-    const { role, page = '1', limit = '20', search } = req.query as any
-    const searchQuery = typeof search === 'string' ? search : undefined
-    const roleQuery = typeof role === 'string' ? role : undefined
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ error: 'Paramètres Invalides' })
+    }
+    const rawSearch = req.query.search
+    const querySearch = typeof rawSearch === 'string' ? rawSearch.trim() : undefined
+    const searchQuery = querySearch && querySearch.length > 0 ? querySearch : undefined
+    const roleQuery = typeof req.query.role === 'string' ? req.query.role : undefined
+    const pageNum = parseInt(req.query.page as string) || 1
+    const limitNum = parseInt(req.query.limit as string) || 20
 
-    const where: any = {}
+    const where: Prisma.UserWhereInput = {}
 
     if (roleQuery) {
       where.role = roleQuery.toUpperCase()
@@ -116,8 +130,8 @@ router.get('/', authenticateToken, requireAdmin, async (req: Request, res: Respo
       ]
     }
 
-    const skip = (Number(page) - 1) * Number(limit)
-    const take = Number(limit)
+    const skip = (pageNum - 1) * limitNum
+    const take = limitNum
 
     const [users, total] = await Promise.all([
       prisma.user.findMany({
@@ -143,7 +157,7 @@ router.get('/', authenticateToken, requireAdmin, async (req: Request, res: Respo
     ])
 
     res.json({
-      users: users.map((u: any) => ({
+      users: users.map((u) => ({
         id: u.id,
         email: u.email,
         role: u.role,
@@ -153,10 +167,10 @@ router.get('/', authenticateToken, requireAdmin, async (req: Request, res: Respo
         phone: u.profile?.phone
       })),
       pagination: {
-        page: Number(page),
-        limit: Number(limit),
+        page: pageNum,
+        limit: limitNum,
         total,
-        pages: Math.ceil(total / Number(limit))
+        pages: Math.ceil(total / limitNum)
       }
     })
 
@@ -217,7 +231,7 @@ router.get('/stats', authenticateToken, requireAdmin, async (req: Request, res: 
 
     res.json({
       totalUsers: total,
-      usersByRole: usersByRole.map((item: any) => ({
+      usersByRole: usersByRole.map((item) => ({
         role: item.role,
         count: item._count.role
       })),

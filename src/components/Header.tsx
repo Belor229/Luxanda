@@ -110,7 +110,7 @@ export default function Header() {
               </span>
               <span className="flex items-center space-x-2">
                 <span>📧</span>
-                <span>luxanda@yahoo.com</span>
+                <span>contact@luxanda.bj</span>
               </span>
             </div>
             <div className="flex flex-wrap items-center justify-center sm:justify-end space-x-2 sm:space-x-4">

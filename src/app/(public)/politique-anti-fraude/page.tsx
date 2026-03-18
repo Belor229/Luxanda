@@ -56,7 +56,7 @@ export default function PolitiqueAntiFraudePage() {
               </p>
               <ul className="list-disc pl-6 space-y-2 text-gray-700 mt-4">
                 <li>Le bouton "Signaler" sur les pages produit et boutique</li>
-                <li>Email à <a href="mailto:luxanda@yahoo.com" className="text-primary-orange hover:underline">luxanda@yahoo.com</a></li>
+                <li>Email à <a href="mailto:contact@luxanda.bj" className="text-primary-orange hover:underline">contact@luxanda.bj</a></li>
                 <li>Appel au <a href="tel:+2290141757559" className="text-primary-orange hover:underline">+229 01 41 75 75 59</a></li>
               </ul>
             </section>

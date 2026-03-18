@@ -49,17 +49,24 @@ router.post('/create', [
       })
     }
 
-    const planNameRaw = (req as any).body.plan
-    const planName = typeof planNameRaw === 'string' ? planNameRaw : 'starter'
-    const { paymentMethod } = (req as any).body
-    const userId = (req as any).user.userId
-
-    const planInfo = SUBSCRIPTION_PLANS[planName as keyof typeof SUBSCRIPTION_PLANS]
-    if (!planInfo) {
+    const planNameRaw = req.body.plan
+    if (typeof planNameRaw !== 'string') {
       return res.status(400).json({
         error: 'Plan d\'abonnement invalide'
       })
     }
+
+    const planName = planNameRaw.toLowerCase()
+    if (planName !== 'starter' && planName !== 'pro' && planName !== 'premium') {
+      return res.status(400).json({
+        error: 'Plan d\'abonnement invalide'
+      })
+    }
+
+    const { paymentMethod } = req.body as { paymentMethod: string }
+    const userId = req.user!.userId
+
+    const planInfo = SUBSCRIPTION_PLANS[planName]
 
     // Check if user already has an active subscription
     const existingSubs = await prisma.subscription.findFirst({
@@ -81,7 +88,7 @@ router.post('/create', [
     const subscription = await prisma.subscription.create({
       data: {
         userId: userId,
-        plan: planName.toUpperCase() as any,
+        plan: planName.toUpperCase() as "STARTER" | "PRO" | "PREMIUM",
         amount: planInfo.price,
         status: 'PENDING'
       }
@@ -125,7 +132,7 @@ router.post('/create', [
 // Get user subscriptions
 router.get('/my-subscriptions', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
-    const userId = (req as any).user.userId
+    const userId = req.user!.userId
 
     const subscriptions = await prisma.subscription.findMany({
       where: { userId: userId },
@@ -147,7 +154,7 @@ router.get('/my-subscriptions', authenticateToken, async (req: AuthRequest, res:
 // Admin: Get all subscriptions
 router.get('/all', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
-    const userRole = (req as any).user.role
+    const userRole = req.user!.role
     if (userRole !== 'ADMIN') {
       return res.status(403).json({
         error: 'Accès non autorisé'
@@ -180,7 +187,7 @@ router.patch('/:id/status', [
   body('status').isIn(['PENDING', 'ACTIVE', 'EXPIRED', 'CANCELLED'])
 ], authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
-    const userRole = (req as any).user.role
+    const userRole = req.user!.role
     if (userRole !== 'ADMIN') {
       return res.status(403).json({
         error: 'Accès non autorisé'
@@ -195,14 +202,14 @@ router.patch('/:id/status', [
       })
     }
 
-    const { id } = (req as any).params
-    const { status } = (req as any).body
+    const { id } = req.params as { id: string }
+    const { status } = req.body as { status: string }
 
     // Update subscription status
     await prisma.subscription.update({
       where: { id: id },
       data: {
-        status,
+        status: status as 'PENDING' | 'ACTIVE' | 'EXPIRED' | 'CANCELLED',
         updatedAt: new Date()
       }
     })
@@ -257,8 +264,13 @@ router.post('/confirm-payment', [
       })
     }
 
-    const { transactionId, amount, reference, paymentMethod } = (req as any).body
-    const userId = (req as any).user.userId
+    const { transactionId, amount, reference, paymentMethod } = req.body as {
+      transactionId: string;
+      amount: number;
+      reference?: string;
+      paymentMethod: string
+    }
+    const userId = req.user!.userId
 
     // Trouver l'abonnement en attente
     const subscription = await prisma.subscription.findFirst({

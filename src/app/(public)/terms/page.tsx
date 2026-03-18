@@ -198,9 +198,9 @@ export default function TermsPage() {
             Pour toute question concernant les CGU :
           </p>
           <ul className="list-disc pl-5 mt-2 space-y-1">
-            <li>Email : luxanda@yahoo.com</li>
+            <li>Email : contact@luxanda.bj</li>
             <li>WhatsApp : +229 01 41 75 75 59</li>
-            <li>Réponse sous 24h maximum</li>
+            <li>Support disponible — Réponse sous 24h</li>
           </ul>
         </section>
 

@@ -1,4 +1,4 @@
-import { Users, Shield, MessageCircle, Crown, Award, Clock, Users as UsersIcon, Star } from 'lucide-react'
+import { Users, Shield, MessageCircle, Crown, Award, Clock, Users as UsersIcon, Banknote, Truck } from 'lucide-react'
 
 const features = [
   {
@@ -26,15 +26,15 @@ const features = [
     color: 'bg-purple-100 text-purple-600'
   },
   {
-    icon: Award,
-    title: 'Programme de récompenses',
-    description: 'Gagnez des points à chaque achat et convertissez-les en réductions',
+    icon: MessageCircle,
+    title: 'Support réactif',
+    description: 'Une équipe dédiée pour vous accompagner et répondre à vos questions sous 24h.',
     color: 'bg-yellow-100 text-yellow-600'
   },
   {
     icon: Clock,
-    title: 'Support 24/7',
-    description: 'Notre équipe est disponible pour vous accompagner à tout moment',
+    title: 'Support disponible',
+    description: 'Une équipe à votre écoute avec une réponse garantie sous 24h.',
     color: 'bg-red-100 text-red-600'
   },
   {
@@ -44,9 +44,9 @@ const features = [
     color: 'bg-indigo-100 text-indigo-600'
   },
   {
-    icon: Star,
-    title: 'Qualité garantie',
-    description: 'Tous nos produits sont vérifiés pour assurer la meilleure qualité',
+    icon: Truck,
+    title: 'Paiement à la livraison',
+    description: 'Payez vos articles lors de la remise en main propre pour une sécurité totale.',
     color: 'bg-pink-100 text-pink-600'
   }
 ]

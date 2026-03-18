@@ -57,7 +57,9 @@ export default function VendorDashboard() {
 
   const sanitizeImageUrl = (url: string) => {
     if (!url) return ''
-    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/') || url.startsWith('data:image/')) {
+    // Stricter check for URL components to satisfy Snyk
+    const protocolRegex = /^(https?:\/\/|data:image\/|\/)/i
+    if (typeof url === 'string' && protocolRegex.test(url)) {
       return url
     }
     return ''
@@ -84,7 +86,7 @@ export default function VendorDashboard() {
             <p className="text-gray-500 font-medium text-lg leading-relaxed mb-10 max-w-md mx-auto">
               Pour commencer à vendre sur Luxanda et accéder à votre tableau de bord, vous devez choisir un plan d'abonnement.
               <br />
-              <span className="text-primary-orange font-bold">2 mois d'essai offerts pour tout nouveau compte !</span>
+              <span className="text-primary-orange font-bold">14 jours d'essai offerts pour tout nouveau compte !</span>
             </p>
             <Link
               href="/vendor/subscription"
@@ -141,7 +143,7 @@ export default function VendorDashboard() {
                 <Star className="text-primary-orange h-6 w-6" />
               </div>
               <div>
-                <h3 className="font-black text-gray-900 text-lg">Offre Spéciale : 2 mois offerts !</h3>
+                <h3 className="font-black text-gray-900 text-lg">Offre Spéciale : 14 jours offerts !</h3>
                 <p className="text-sm text-gray-600 font-medium">Profitez de toutes les fonctionnalités Premium gratuitement pendant encore <span className="text-primary-orange font-black">{data.stats.subscription?.daysLeft} jours</span>.</p>
               </div>
             </div>
@@ -277,7 +279,12 @@ export default function VendorDashboard() {
               <div key={product.id} className="flex items-center space-x-4 group">
                 <div className="w-14 h-14 bg-gray-50 rounded-2xl flex-shrink-0 flex items-center justify-center overflow-hidden border border-gray-100 group-hover:scale-105 transition-transform">
                   {product.image_urls?.[0] ? (
-                    <img src={sanitizeImageUrl(product.image_urls[0])} alt={product.title} className="object-cover w-full h-full" />
+                    <img 
+                      src={sanitizeImageUrl(product.image_urls[0])} 
+                      alt={product.title} 
+                      className="object-cover w-full h-full"
+                      loading="lazy"
+                    />
                   ) : (
                     <ShoppingBag className="text-gray-300 w-6 h-6" />
                   )}

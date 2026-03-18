@@ -55,10 +55,9 @@ export default function LoginPage() {
         const redirectPath = validateRedirectPath(data.redirectPath ||
           (data.user.role === 'ADMIN' || data.user.role === 'admin' ? '/admin' :
             data.user.role === 'VENDOR' || data.user.role === 'vendor' ? '/vendor/dashboard' : '/cart'))
-        // Force hard redirect to ensure session is applied and middleware re-runs correctly
-        window.location.href = redirectPath
-        // router.push(redirectPath)
-        // router.refresh()
+
+        router.push(redirectPath)
+        router.refresh()
       } else {
         setError(data.error || 'Erreur de connexion')
       }

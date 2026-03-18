@@ -34,7 +34,7 @@ const PLANS = [
     price: 30000,
     icon: Crown,
     color: 'purple',
-    features: ['Tout de Business Pro', 'Support téléphonique dédié', 'Formation personnalisée', 'Badge Premium exclusif', 'Taux de commission réduit'],
+    features: ['Tout de Business Pro', 'Support téléphonique dédié', 'Formation personnalisée', 'Badge Premium exclusif', 'Mise en avant prioritaire dans les résultats'],
     description: 'L\'expérience ultime pour dominer le marché.'
   }
 ]
@@ -57,12 +57,19 @@ export default function VendorSubscriptionPage() {
         throw new Error('Erreur lors de la création de la session de paiement')
       }
 
+      const resData = await response.json()
+      const customData = JSON.stringify({
+        user_id: resData.subscription.userId,
+        vendor_id: resData.vendorId,
+        plan: plan.id
+      })
+
       // @ts-ignore
       openKkiapayWidget({
         amount: plan.price,
         position: "center",
         callback: `/dashboard`,
-        data: plan.id,
+        data: customData,
         theme: "#FF6B00",
         sandbox: true,
         key: process.env.NEXT_PUBLIC_KKIAPAY_PUBLIC_KEY
@@ -106,8 +113,7 @@ export default function VendorSubscriptionPage() {
               <Gift className="h-6 w-6 sm:h-7 sm:w-7 text-green-600" />
             </div>
             <div>
-              <p className="font-black text-green-800 text-sm sm:text-lg">🎉 2 mois gratuits au lancement !</p>
-              <p className="text-xs sm:text-sm text-green-700 leading-snug">Tous les nouveaux vendeurs bénéficient automatiquement de <strong>60 jours d'essai Premium</strong> — sans carte bancaire, sans engagement.</p>
+              <p className="text-xs sm:text-sm text-green-700 leading-snug">Tous les nouveaux vendeurs bénéficient automatiquement de <strong>14 jours d'essai Premium</strong> — sans carte bancaire, sans engagement.</p>
             </div>
           </div>
         </div>

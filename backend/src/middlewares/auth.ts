@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken'
 
 interface AuthRequest extends Request {
   user?: {
-    userId: number
+    userId: string
     email: string
     role: string
   }
@@ -15,7 +15,7 @@ export const authenticateToken = (req: AuthRequest, res: Response, next: NextFun
 
   // If no auth header, try to get token from cookies (proxied by Next.js)
   if (!token && req.headers.cookie) {
-    const cookies = req.headers.cookie.split(';').reduce((acc: any, cookie) => {
+    const cookies = req.headers.cookie.split(';').reduce((acc: Record<string, string>, cookie) => {
       const [key, value] = cookie.trim().split('=')
       acc[key] = value
       return acc
@@ -32,14 +32,14 @@ export const authenticateToken = (req: AuthRequest, res: Response, next: NextFun
     })
   }
 
-  jwt.verify(token, process.env.JWT_SECRET!, (err: any, user: any) => {
+  jwt.verify(token, process.env.JWT_SECRET!, (err: Error | null, user: unknown) => {
     if (err) {
       return res.status(403).json({
         error: 'Token invalide ou expiré'
       })
     }
 
-    req.user = user
+    req.user = user as AuthRequest['user']
     next()
   })
 }

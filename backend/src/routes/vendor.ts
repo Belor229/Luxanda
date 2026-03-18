@@ -2,13 +2,14 @@ import express, { Request, Response } from 'express'
 import { body, validationResult } from 'express-validator'
 import { authenticateToken, requireVendor } from '../middlewares/auth'
 import { prisma } from '../config/prisma'
+import { AuthRequest } from '../types'
 
 const router = express.Router()
 
 // Get vendor dashboard stats
-router.get('/dashboard', authenticateToken, requireVendor, async (req: Request, res: Response) => {
+router.get('/dashboard', authenticateToken, requireVendor, async (req: AuthRequest, res: Response) => {
   try {
-    const userId = (req as any).user.userId
+    const userId = req.user!.userId
 
     // Find vendor record
     const vendor = await prisma.vendor.findUnique({
@@ -18,6 +19,25 @@ router.get('/dashboard', authenticateToken, requireVendor, async (req: Request, 
     if (!vendor) {
       return res.status(404).json({
         error: 'Compte vendeur non trouvé'
+      })
+    }
+
+    const now = new Date()
+    const isTrialActive = vendor.trial_end_date && vendor.trial_end_date > now
+
+    const activeSubscription = await prisma.subscription.findFirst({
+      where: {
+        userId,
+        status: 'ACTIVE',
+        endDate: { gt: now }
+      }
+    })
+
+    if (!isTrialActive && !activeSubscription && vendor.status !== 'PENDING') {
+      return res.status(403).json({
+        error: 'Votre accès a expiré',
+        code: 'SUBSCRIPTION_EXPIRED',
+        trialEnded: !!vendor.trial_end_date
       })
     }
 
@@ -79,13 +99,13 @@ router.get('/dashboard', authenticateToken, requireVendor, async (req: Request, 
 })
 
 // Get vendor products
-router.get('/products', authenticateToken, requireVendor, async (req: Request, res: Response) => {
+router.get('/products', authenticateToken, requireVendor, async (req: AuthRequest, res: Response) => {
   try {
-    const userId = (req as any).user.userId
+    const userId = req.user!.userId
 
     const products = await prisma.product.findMany({
-      where: { vendor_id: userId },
-      orderBy: { created_at: 'desc' }
+      where: { vendorId: userId },
+      orderBy: { createdAt: 'desc' }
     })
 
     res.json({
@@ -107,7 +127,7 @@ router.post('/products', [
   body('price').isNumeric().withMessage('Le prix doit être un nombre'),
   body('categoryId').notEmpty().withMessage('La catégorie est requise'),
   body('quantity').isInt({ min: 0 }).withMessage('La quantité doit être un nombre positif')
-], authenticateToken, requireVendor, async (req: Request, res: Response) => {
+], authenticateToken, requireVendor, async (req: AuthRequest, res: Response) => {
   try {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
@@ -118,7 +138,7 @@ router.post('/products', [
     }
 
     const { name, description, price, categoryId, quantity, images = [] } = req.body
-    const userId = (req as any).user.userId
+    const userId = req.user!.userId
 
     const vendor = await prisma.vendor.findUnique({
       where: { userId }
@@ -164,7 +184,7 @@ router.put('/products/:id', [
   body('price').optional().isNumeric(),
   body('categoryId').optional().notEmpty(),
   body('quantity').optional().isInt({ min: 0 })
-], authenticateToken, requireVendor, async (req: Request, res: Response) => {
+], authenticateToken, requireVendor, async (req: AuthRequest, res: Response) => {
   try {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
@@ -175,7 +195,7 @@ router.put('/products/:id', [
     }
 
     const { id } = req.params
-    const userId = (req as any).user.userId
+    const userId = req.user!.userId
 
     const vendor = await prisma.vendor.findUnique({
       where: { userId }
@@ -201,7 +221,14 @@ router.put('/products/:id', [
       })
     }
 
-    const updateData: any = {}
+    const updateData: Partial<{
+      name: string
+      description: string
+      price: number
+      categoryId: string
+      quantity: number
+      images: string[]
+    }> = {}
 
     if (req.body.name !== undefined) updateData.name = req.body.name
     if (req.body.description !== undefined) updateData.description = req.body.description
@@ -234,10 +261,10 @@ router.put('/products/:id', [
 })
 
 // Delete product
-router.delete('/products/:id', authenticateToken, requireVendor, async (req: Request, res: Response) => {
+router.delete('/products/:id', authenticateToken, requireVendor, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params
-    const userId = (req as any).user.userId
+    const userId = req.user!.userId
 
     const vendor = await prisma.vendor.findUnique({
       where: { userId }

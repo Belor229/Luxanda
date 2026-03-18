@@ -23,6 +23,13 @@ export async function POST(request: NextRequest) {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
+    // Need prisma to get vendor
+    const { prisma } = await import('@/lib/prisma')
+    const vendor = await prisma.vendor.findUnique({
+      where: { userId: session.user.id }
+    })
+
+
     // Check if user already has an active subscription
     const { data: existingSub } = await supabase
       .from('subscriptions')
@@ -40,17 +47,21 @@ export async function POST(request: NextRequest) {
       .from('subscriptions')
       .upsert({
         userId: session.user.id,
+        vendorId: vendor?.id || null,
         plan: planKey,
         amount: SUBSCRIPTION_PLANS[planKey].price,
         status: 'PENDING',
-        updated_at: new Date().toISOString()
+        updatedAt: new Date().toISOString()
       }, { onConflict: 'userId' }) // Only one subscription entry per user for now
       .select()
       .single()
 
     if (error) throw error
 
-    return NextResponse.json(subscription)
+    return NextResponse.json({
+      subscription,
+      vendorId: vendor?.id || null
+    })
   } catch (error) {
     console.error('Create Subscription Error:', error)
     return NextResponse.json(

@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express'
-import * as cors from 'cors'
+import cors from 'cors'
 import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
 import dotenv from 'dotenv'
@@ -13,6 +13,7 @@ import contactRoutes from './routes/contact'
 import vendorRoutes from './routes/vendor'
 import affiliationRoutes from './routes/affiliation'
 import orderRoutes from './routes/orders'
+import webhooksRoutes from './routes/webhooks'
 
 // Load environment variables
 dotenv.config()
@@ -34,7 +35,7 @@ const limiter = rateLimit({
 app.use(limiter)
 
 // CORS configuration
-app.use((cors as any)({
+app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true,
 }))
@@ -56,6 +57,7 @@ app.use('/api/contact', contactRoutes)
 app.use('/api/vendor', vendorRoutes)
 app.use('/api/affiliation', affiliationRoutes)
 app.use('/api/orders', orderRoutes)
+app.use('/api/webhooks', webhooksRoutes)
 
 // Health check endpoint
 app.get('/api/health', (req: Request, res: Response) => {
@@ -67,7 +69,7 @@ app.get('/api/health', (req: Request, res: Response) => {
 })
 
 // Error handling middleware
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((err: Error & { name: string; message: string }, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Error:', err)
 
   if (err.name === 'ValidationError') {

@@ -8,7 +8,6 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -34,6 +33,7 @@ model User {
   subscriptions Subscription[]
   reports       Report[]
   legalLogs     LegalAcceptanceLog[]
+  auditLogs     AuditLog[] @relation("AdminLogs")
 
   @@map("users")
 }
@@ -66,15 +66,31 @@ model Vendor {
   trial_start_date DateTime?
   trial_end_date   DateTime?
   status      VendorStatus @default(PENDING)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  rejectionReason String? @map("rejection_reason")
+  admin_notes    String? @map("admin_notes")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
 
   // Relations
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   products Product[]
   reports  Report[]
+  subscriptions Subscription[]
 
   @@map("vendors")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  adminId   String   @map("admin_id")
+  action    String
+  targetId  String?  @map("target_id")
+  details   String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  admin     User     @relation("AdminLogs", fields: [adminId], references: [id])
+
+  @@map("audit_logs")
 }
 
 model Affiliate {
@@ -328,6 +344,7 @@ model Referral {
 model Subscription {
   id           String           @id @default(uuid())
   userId       String
+  vendorId     String?
   plan         SubscriptionPlan
   amount       Float
   status       SubscriptionStatus @default(PENDING)
@@ -339,7 +356,8 @@ model Subscription {
   updatedAt    DateTime @updatedAt
 
   // Relations
-  user User @relation(fields: [userId], references: [id])
+  user   User    @relation(fields: [userId], references: [id])
+  vendor Vendor? @relation(fields: [vendorId], references: [id])
 
   @@map("subscriptions")
 }
@@ -390,9 +408,11 @@ enum Gender {
 
 enum VendorStatus {
   PENDING
+  PENDING_VALIDATION
   APPROVED
   REJECTED
   SUSPENDED
+  SUSPENDED_AUTO
 }
 
 enum AffiliateStatus {

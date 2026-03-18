@@ -12,8 +12,8 @@ const vendorFaqs = [
     a: "Luxanda propose 3 formules d'abonnement (Starter, Business Pro, Luxe Premium) pour les vendeurs. Chaque plan vous donne accès à des fonctionnalités adaptées à la taille de votre activité. L'abonnement est mensuel et payable via Kkiapay (Mobile Money ou carte bancaire)."
   },
   {
-    q: "Qu'inclut l'offre de 2 mois gratuits au lancement ?",
-    a: "Pour célébrer le lancement de Luxanda, chaque nouveau vendeur bénéficie automatiquement de 2 mois d'essai gratuit avec toutes les fonctionnalités Premium (produits illimités, analytics avancés, support prioritaire). Aucune carte bancaire n'est requise. Vous ne serez facturé qu'à la fin de la période d'essai si vous souhaitez continuer."
+    q: "Qu'inclut l'offre de 14 jours gratuits ?",
+    a: "Chaque nouveau vendeur bénéficie automatiquement de 14 jours d'essai gratuit avec toutes les fonctionnalités Premium (produits illimités, analytics avancés, support prioritaire). Aucune carte bancaire n'est requise. Vous ne serez facturé qu'à la fin de la période d'essai si vous souhaitez continuer."
   },
   {
     q: "Luxanda gère-t-elle la livraison de mes produits ?",
@@ -110,8 +110,8 @@ export default function FAQPage() {
           <div className="mb-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200/50 rounded-2xl flex items-center gap-3">
             <span className="text-2xl">🎉</span>
             <div>
-              <p className="font-black text-green-800 text-sm sm:text-base">2 mois gratuits au lancement !</p>
-              <p className="text-xs sm:text-sm text-green-700">Tous les nouveaux vendeurs bénéficient de 60 jours d'essai Premium — sans engagement.</p>
+              <p className="font-black text-green-800 text-sm sm:text-base">14 jours gratuits pour essayer !</p>
+              <p className="text-xs sm:text-sm text-green-700">Tous les nouveaux vendeurs bénéficient de 14 jours d'essai Premium — sans engagement.</p>
             </div>
           </div>
 

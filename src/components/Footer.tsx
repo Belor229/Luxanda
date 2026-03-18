@@ -66,8 +66,13 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/vendor-subscription" className="text-gray-300 hover:text-white transition-colors text-sm sm:text-base py-1 block">
+                <Link href="/register" className="text-gray-300 hover:text-white transition-colors text-sm sm:text-base py-1 block">
                   Devenir Vendeur
+                </Link>
+              </li>
+              <li>
+                <Link href="/vendor-subscription" className="text-gray-300 hover:text-white transition-colors text-sm sm:text-base py-1 block">
+                  Voir les abonnements
                 </Link>
               </li>
             </ul>
@@ -87,7 +92,7 @@ export default function Footer() {
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="h-4 sm:h-5 w-4 sm:w-5 text-primary-orange" />
-                <span className="text-gray-300 text-sm sm:text-base">luxanda@yahoo.com</span>
+                <span className="text-gray-300 text-sm sm:text-base">contact@luxanda.bj</span>
               </div>
               <div className="flex items-center space-x-3">
                 <MapPin className="h-4 sm:h-5 w-4 sm:w-5 text-primary-orange" />
@@ -108,7 +113,7 @@ export default function Footer() {
         <div className="border-t border-gray-800 mt-8 sm:mt-12 pt-6 sm:pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-3 sm:space-y-4 md:space-y-0">
             <p className="text-gray-400 text-xs sm:text-sm">
-              © 2026 Luxanda.bj - Tous droits réservés
+              © 2026 Luxanda.bj - Fait avec ❤️ au Bénin
             </p>
             <div className="flex flex-wrap justify-center md:justify-end gap-x-4 sm:gap-x-6 gap-y-1 text-xs sm:text-sm">
               <Link href="/about" className="text-gray-400 hover:text-white transition-colors py-1">

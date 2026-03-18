@@ -77,8 +77,8 @@ export default function CharteVendeurPage() {
               <h2 className="text-2xl font-semibold text-gray-900 mt-8 mb-4">6. Contact</h2>
               <p className="text-gray-700 leading-relaxed">
                 Pour toute question concernant cette charte, contactez-nous à{' '}
-                <a href="mailto:luxanda@yahoo.com" className="text-primary-orange hover:underline">
-                  luxanda@yahoo.com
+                <a href="mailto:contact@luxanda.bj" className="text-primary-orange hover:underline">
+                  contact@luxanda.bj
                 </a>
                 {' '}ou au{' '}
                 <a href="tel:+2290141757559" className="text-primary-orange hover:underline">

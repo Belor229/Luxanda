@@ -2,7 +2,7 @@ import { Request, Response } from 'express'
 
 export interface AuthRequest extends Request {
   user?: {
-    userId: number
+    userId: string
     email: string
     role: string
   }

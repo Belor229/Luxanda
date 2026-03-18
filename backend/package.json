@@ -8,10 +8,10 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "test": "jest",
-    "postinstall": "prisma generate"
+    "postinstall": "npm install @prisma/client && prisma generate --schema=../prisma/schema.prisma"
   },
   "dependencies": {
-    "@prisma/client": "^6.19.0",
+    "@prisma/client": "6.19.2",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
@@ -20,11 +20,12 @@
     "express-validator": "^7.0.1",
     "helmet": "^7.1.0",
     "joi": "^17.11.0",
-    "jsonwebtoken": "^9.0.2",
+    "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2",
     "nodemailer": "^7.0.11"
   },
   "devDependencies": {
+    "prisma": "^7.4.2",
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.19",
     "@types/express": "^4.17.21",

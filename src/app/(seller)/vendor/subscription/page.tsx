@@ -9,19 +9,19 @@ const plans = [
     {
         name: 'Starter',
         price: 5000,
-        features: ['Jusqu\'à 10 produits', 'Commission standard', 'Support email'],
+        features: ['Jusqu\'à 50 produits', 'Support email', 'Statistiques de base', 'Badge vendeur vérifié'],
         recommended: false
     },
     {
         name: 'Pro',
         price: 15000,
-        features: ['Jusqu\'à 50 produits', 'Commission réduite', 'Support prioritaire', 'Badge vendeur vérifié'],
+        features: ['Produits illimités', 'Niveau de priorité élevé', 'Analytics avancés', 'Mise en avant mensuelle', 'Support 7j/7'],
         recommended: true
     },
     {
         name: 'Premium',
         price: 30000,
-        features: ['Produits illimités', 'Commission minimale', 'Support dédié 24/7', 'Mise en avant produits'],
+        features: ['Tout de Business Pro', 'Support téléphonique dédié', 'Formation personnalisée', 'Badge Premium exclusif', 'Mise en avant prioritaire dans les résultats'],
         recommended: false
     }
 ]
@@ -70,9 +70,9 @@ export default function SubscriptionPage() {
                     <div className="flex items-center justify-center mb-3">
                         <span className="bg-white/20 px-3 py-1 rounded-full text-sm font-bold">OFFRE SPÉCIALE</span>
                     </div>
-                    <h3 className="text-2xl font-bold mb-2">2 MOIS GRATUITS</h3>
+                    <h3 className="text-2xl font-bold mb-2">14 JOURS GRATUITS</h3>
                     <p className="text-white/90">
-                        Pour tout nouveau vendeur, profitez de 2 mois d'abonnement Premium gratuit 
+                        Pour tout nouveau vendeur, profitez de 14 jours d'abonnement Premium gratuit 
                         pour tester la plateforme sans engagement.
                     </p>
                     <div className="mt-4 text-sm text-white/80">

@@ -77,7 +77,7 @@ export async function middleware(request: NextRequest) {
     // CGU Acceptance check (simplified for now - checking legal_acceptance table)
     if (isSellerRoute && pathname !== '/vendor/subscription') {
       const { data: acceptance } = await supabase
-        .from('legal_acceptance')
+        .from('legal_acceptance_logs')
         .select('id')
         .eq('userId', session.user.id)
         .limit(1)

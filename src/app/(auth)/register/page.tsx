@@ -5,10 +5,12 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight, CheckCircle, Store, MapPin, FileText, Gift } from 'lucide-react'
 
+import { Suspense } from 'react'
+
 const CITIES = ['Cotonou', 'Porto-Novo', 'Parakou', 'Abomey-Calavi', 'Djougou', 'Bohicon', 'Natitingou', 'Lokossa', 'Ouidah', 'Kandi', 'Autre']
 const CATEGORIES = ['Mode & Vêtements', 'Électronique', 'Alimentaire', 'Beauté & Cosmétiques', 'Maison & Décoration', 'Sport & Loisirs', 'Automobile', 'Services', 'Autre']
 
-export default function RegisterPage() {
+function RegisterForm() {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -170,7 +172,8 @@ export default function RegisterPage() {
           const redirectPath = validateRedirectPath(data.redirectPath ||
             (data.user.role === 'ADMIN' || data.user.role === 'admin' ? '/admin' :
               data.user.role === 'VENDOR' || data.user.role === 'vendor' ? '/vendor/dashboard' : '/'))
-          window.location.href = redirectPath
+          router.push(redirectPath)
+          router.refresh()
         }, 2000)
       } else {
         setError(data.error || 'Erreur lors de la création du compte')
@@ -579,5 +582,17 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-primary-blue to-primary-orange flex items-center justify-center">
+        <div className="loading-spinner-large"></div>
+      </div>
+    }>
+      <RegisterForm />
+    </Suspense>
   )
 }

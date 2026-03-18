@@ -12,7 +12,7 @@ export default function LegalAcceptanceModal() {
 
     const [loading, setLoading] = useState(true)
     const [submitting, setSubmitting] = useState(false)
-
+    
     useEffect(() => {
         async function checkAcceptance() {
             try {

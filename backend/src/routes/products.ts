@@ -1,18 +1,48 @@
 import express, { Request, Response } from 'express'
-import { body, validationResult } from 'express-validator'
+import { body, query, validationResult } from 'express-validator'
 import { prisma } from '../config/prisma'
 import { authenticateToken, requireVendor } from '../middlewares/auth'
+import { AuthRequest } from '../types'
+import { Prisma } from '@prisma/client'
 
 const router = express.Router()
 
 // Get all products
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', [
+  query('search').optional().isString().trim().escape()
+], async (req: Request, res: Response) => {
   try {
-    const { category, featured, search, page = '1', limit = '20' } = req.query as any
-    const searchQuery = typeof search === 'string' ? search : undefined
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ error: 'Paramètres Invalides' })
+    }
+    const rawSearch = req.query.search
+    const querySearch = typeof rawSearch === 'string' ? rawSearch.trim() : undefined
+    const category = req.query.category as string | undefined
+    const featured = req.query.featured as string | undefined
+    const searchQuery = querySearch && querySearch.length > 0 ? querySearch : undefined
+    const pageNum = parseInt(req.query.page as string) || 1
+    const limitNum = parseInt(req.query.limit as string) || 20
 
-    const where: any = {
-      status: 'ACTIVE'
+    const now = new Date()
+    const where: Prisma.ProductWhereInput = {
+      status: 'ACTIVE',
+      vendor: {
+        status: 'APPROVED',
+        OR: [
+          { trial_end_date: { gt: now } },
+          {
+            user: {
+              subscriptions: {
+                some: {
+                  status: 'ACTIVE',
+                  endDate: { gt: now }
+                }
+              }
+            }
+          }
+        ]
+      }
     }
 
     if (category) {
@@ -32,8 +62,8 @@ router.get('/', async (req: Request, res: Response) => {
       ]
     }
 
-    const skip = (Number(page) - 1) * Number(limit)
-    const take = Number(limit)
+    const skip = (pageNum - 1) * limitNum
+    const take = limitNum
 
     const [products, total] = await Promise.all([
       prisma.product.findMany({
@@ -58,16 +88,16 @@ router.get('/', async (req: Request, res: Response) => {
     ])
 
     res.json({
-      products: products.map((p: any) => ({
+      products: products.map((p) => ({
         ...p,
         vendorName: p.vendor?.user?.profile ? `${p.vendor.user.profile.firstName} ${p.vendor.user.profile.lastName}` : p.vendor?.storeName,
         categoryName: p.category?.name
       })),
       pagination: {
-        page: Number(page),
-        limit: Number(limit),
+        page: pageNum,
+        limit: limitNum,
         total,
-        pages: Math.ceil(total / Number(limit))
+        pages: Math.ceil(total / limitNum)
       }
     })
 
@@ -136,7 +166,7 @@ router.post('/', [
   body('price').isNumeric().isFloat({ min: 0 }),
   body('categoryId').notEmpty().withMessage('La catégorie est requise'),
   body('quantity').isInt({ min: 0 })
-], authenticateToken, requireVendor, async (req: Request, res: Response) => {
+], authenticateToken, requireVendor, async (req: AuthRequest, res: Response) => {
   try {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
@@ -147,7 +177,7 @@ router.post('/', [
     }
 
     const { name, description, price, categoryId, quantity, images = [], featured = false } = req.body
-    const userId = (req as any).user.userId
+    const userId = req.user!.userId
 
     // Find vendor by userId
     const vendor = await prisma.vendor.findUnique({
@@ -211,7 +241,7 @@ router.put('/:id', [
   body('price').optional().isNumeric().isFloat({ min: 0 }),
   body('categoryId').optional().notEmpty(),
   body('quantity').optional().isInt({ min: 0 })
-], authenticateToken, requireVendor, async (req: Request, res: Response) => {
+], authenticateToken, requireVendor, async (req: AuthRequest, res: Response) => {
   try {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
@@ -222,7 +252,7 @@ router.put('/:id', [
     }
 
     const { id } = req.params
-    const userId = (req as any).user.userId
+    const userId = req.user!.userId
 
     // Find vendor by userId
     const vendor = await prisma.vendor.findUnique({
@@ -249,7 +279,16 @@ router.put('/:id', [
       })
     }
 
-    const updateData: any = {}
+    const updateData: Partial<{
+      name: string
+      description: string
+      price: number
+      categoryId: string
+      quantity: number
+      images: string[]
+      featured: boolean
+      status: string
+    }> = {}
 
     if (req.body.name !== undefined) updateData.name = req.body.name
     if (req.body.description !== undefined) updateData.description = req.body.description
@@ -284,10 +323,10 @@ router.put('/:id', [
 })
 
 // Delete product (Vendor only)
-router.delete('/:id', authenticateToken, requireVendor, async (req: Request, res: Response) => {
+router.delete('/:id', authenticateToken, requireVendor, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params
-    const userId = (req as any).user.userId
+    const userId = req.user!.userId
 
     const vendor = await prisma.vendor.findUnique({
       where: { userId }

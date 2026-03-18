@@ -29,7 +29,7 @@ export default function PrivacyPage() {
             <li>Gérer votre compte et abonnement vendeur</li>
             <li>Faciliter la mise en relation avec les vendeurs</li>
             <li>Traiter les paiements via Kkiapay</li>
-            <li>Assurer le support client (24h maximum)</li>
+            <li>Assurer le support client (Réponse sous 24h)</li>
             <li>Respecter nos obligations légales et fiscales</li>
             <li>Améliorer la plateforme et prévenir la fraude</li>
           </ul>
@@ -100,7 +100,7 @@ export default function PrivacyPage() {
           </ul>
           <p className="mt-3">
             <strong>Pour exercer ces droits :</strong><br />
-            Email : luxanda@yahoo.com<br />
+            Email : contact@luxanda.bj<br />
             WhatsApp : +229 01 41 75 75 59<br />
             Réponse sous 30 jours maximum
           </p>

@@ -1,8 +1,46 @@
 import express, { Request, Response } from 'express'
 import { prisma } from '../config/prisma'
 import { authenticateToken, requireAdmin } from '../middlewares/auth'
+import { Prisma } from '@prisma/client'
 
 const router = express.Router()
+
+interface UserWithProfile {
+  profile: {
+    firstName: string | null
+    lastName: string | null
+  } | null
+  email: string
+  role: string
+  createdAt: Date
+}
+
+interface ProductWithVendor {
+  name: string
+  price: number
+  vendor: {
+    user: {
+      profile: {
+        firstName: string | null
+        lastName: string | null
+      } | null
+    }
+  } | null
+  createdAt: Date
+}
+
+interface SubscriptionWithUser {
+  plan: string
+  amount: number
+  status: string
+  user: {
+    profile: {
+      firstName: string | null
+      lastName: string | null
+    } | null
+  }
+  createdAt: Date
+}
 
 // Admin dashboard stats
 router.get('/dashboard', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
@@ -131,21 +169,21 @@ router.get('/dashboard', authenticateToken, requireAdmin, async (req: Request, r
         }
       },
       recentActivities: {
-        users: recentUsers.map((user: any) => ({
+        users: recentUsers.map((user: UserWithProfile) => ({
           firstName: user.profile?.firstName,
           lastName: user.profile?.lastName,
           email: user.email,
           role: user.role,
           createdAt: user.createdAt
         })),
-        products: recentProducts.map((product: any) => ({
+        products: recentProducts.map((product: ProductWithVendor) => ({
           name: product.name,
           price: product.price,
           firstName: product.vendor?.user?.profile?.firstName,
           lastName: product.vendor?.user?.profile?.lastName,
           createdAt: product.createdAt
         })),
-        subscriptions: recentSubscriptions.map((sub: any) => ({
+        subscriptions: recentSubscriptions.map((sub: SubscriptionWithUser) => ({
           plan: sub.plan,
           amount: sub.amount,
           status: sub.status,
@@ -169,7 +207,7 @@ router.get('/contact-messages', authenticateToken, requireAdmin, async (req: Req
   try {
     const { status, page = 1, limit = 20 } = req.query
 
-    const whereClause: any = {}
+    const whereClause: Prisma.ContactMessageWhereInput = {}
     if (status) {
       // Map string status to enum value
       const statusMap: Record<string, 'NEW' | 'READ' | 'REPLIED'> = {
@@ -215,13 +253,24 @@ router.get('/contact-messages', authenticateToken, requireAdmin, async (req: Req
   }
 })
 
+interface UpdateMessageStatusRequest {
+  id: string
+}
+interface UpdateMessageStatusBody {
+  status: string
+}
+
 // Update message status
 router.patch('/contact-messages/:id/status', [
   requireAdmin
 ], authenticateToken, async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
-    const { status } = req.body
+    const { id } = req.params as unknown as UpdateMessageStatusRequest
+    const { status } = req.body as UpdateMessageStatusBody
+
+    if (!id || typeof id !== 'string') {
+      return res.status(400).json({ error: 'ID message invalide' })
+    }
 
     // Map string status to enum value
     const statusMap: Record<string, 'NEW' | 'READ' | 'REPLIED'> = {
@@ -261,8 +310,13 @@ router.patch('/contact-messages/:id/status', [
 router.get('/users', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
   try {
     const { role, page = 1, limit = 50 } = req.query
-    const where: any = {}
-    if (role) where.role = role
+    const where: Prisma.UserWhereInput = {}
+    if (role) {
+      const roleString = String(role).toUpperCase()
+      if (['USER', 'VENDOR', 'ADMIN'].includes(roleString)) {
+        where.role = roleString as 'USER' | 'VENDOR' | 'ADMIN'
+      }
+    }
 
     const users = await prisma.user.findMany({
       where,
@@ -283,24 +337,118 @@ router.get('/users', authenticateToken, requireAdmin, async (req: Request, res: 
   }
 })
 
+interface UpdateUserRoleRequest {
+  id: string
+}
+interface UpdateUserRoleBody {
+  role: string
+}
+
 // Update user role
 router.patch('/users/:id/role', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
-    const { role } = req.body
+    const { id } = req.params as unknown as UpdateUserRoleRequest
+    const { role } = req.body as UpdateUserRoleBody
 
-    if (!['USER', 'VENDOR', 'ADMIN'].includes(role)) {
-      return res.status(400).json({ error: 'Rôle invalide' })
+    if (!id || typeof id !== 'string') {
+      return res.status(400).json({ error: 'ID utilisateur invalide' })
+    }
+
+    if (!role || !['USER', 'VENDOR', 'ADMIN'].includes(role)) {
+      return res.status(400).json({ error: 'Rôle invalide. Valeurs acceptées: USER, VENDOR, ADMIN' })
     }
 
     const user = await prisma.user.update({
       where: { id },
-      data: { role }
+      data: { role: role as 'USER' | 'VENDOR' | 'ADMIN' }
     })
 
     res.json({ message: 'Rôle mis à jour', user })
   } catch (error) {
+    console.error('Update user role error:', error)
     res.status(500).json({ error: 'Erreur lors de la mise à jour du rôle' })
+  }
+})
+
+interface VendorStatus {
+  PENDING_VALIDATION: string
+  APPROVED: string
+  REJECTED: string
+  SUSPENDED: string
+  SUSPENDED_AUTO: string
+}
+
+const VENDOR_STATUS: VendorStatus = {
+  PENDING_VALIDATION: 'PENDING_VALIDATION',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  SUSPENDED: 'SUSPENDED',
+  SUSPENDED_AUTO: 'SUSPENDED_AUTO'
+}
+
+interface VendorWhereInput {
+  status?: keyof VendorStatus
+}
+
+// Get all vendors
+router.get('/vendors', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { status, page = 1, limit = 50 } = req.query
+    const where: VendorWhereInput = {}
+    if (status && Object.values(VENDOR_STATUS).includes(String(status))) {
+      where.status = String(status) as keyof VendorStatus
+    }
+
+    const vendors = await prisma.vendor.findMany({
+      where,
+      include: { user: { include: { profile: true } } },
+      orderBy: { createdAt: 'desc' },
+      skip: (Number(page) - 1) * Number(limit),
+      take: Number(limit)
+    })
+
+    const total = await prisma.vendor.count({ where })
+
+    res.json({
+      vendors,
+      pagination: { total, page: Number(page), limit: Number(limit), pages: Math.ceil(total / Number(limit)) }
+    })
+  } catch (error) {
+    console.error('Get vendors error:', error)
+    res.status(500).json({ error: 'Erreur lors de la récupération des vendeurs' })
+  }
+})
+
+interface ActivateTrialRequest {
+  id: string
+}
+
+// Activate vendor trial (14 days)
+router.patch('/vendors/:id/activate-trial', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params as unknown as ActivateTrialRequest
+
+    if (!id || typeof id !== 'string') {
+      return res.status(400).json({ error: 'ID vendeur invalide' })
+    }
+
+    const trialStartDate = new Date()
+    const trialEndDate = new Date()
+    trialEndDate.setDate(trialStartDate.getDate() + 14)
+
+    const vendor = await prisma.vendor.update({
+      where: { id },
+      data: {
+        status: VENDOR_STATUS.APPROVED,
+        trial_start_date: trialStartDate,
+        trial_end_date: trialEndDate
+      }
+    })
+
+    res.json({ message: 'Période d\'essai activée (14 jours)', vendor })
+  } catch (error) {
+    console.error('Activate trial error:', error)
+    res.status(500).json({ error: 'Erreur lors de l\'activation de la période d\'essai' })
   }
 })
 
@@ -308,8 +456,13 @@ router.patch('/users/:id/role', authenticateToken, requireAdmin, async (req: Req
 router.get('/products', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
   try {
     const { status, page = 1, limit = 50 } = req.query
-    const where: any = {}
-    if (status) where.status = status
+    const where: Prisma.ProductWhereInput = {}
+    if (status) {
+      const statusString = String(status).toUpperCase()
+      if (['ACTIVE', 'DRAFT', 'ARCHIVED'].includes(statusString)) {
+        where.status = statusString as 'ACTIVE' | 'DRAFT' | 'ARCHIVED'
+      }
+    }
 
     const products = await prisma.product.findMany({
       where,
@@ -333,19 +486,35 @@ router.get('/products', authenticateToken, requireAdmin, async (req: Request, re
   }
 })
 
+interface UpdateStatusRequest {
+  id: string
+}
+interface UpdateStatusBody {
+  status: string
+}
+
 // Update product status
 router.patch('/products/:id/status', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
-    const { status } = req.body
+    const { id } = req.params as unknown as UpdateStatusRequest
+    const { status } = req.body as UpdateStatusBody
+
+    if (!id || typeof id !== 'string') {
+      return res.status(400).json({ error: 'ID produit invalide' })
+    }
+
+    if (!status || !['ACTIVE', 'DRAFT', 'ARCHIVED'].includes(status)) {
+      return res.status(400).json({ error: 'Statut invalide. Valeurs acceptées: ACTIVE, DRAFT, ARCHIVED' })
+    }
 
     const product = await prisma.product.update({
       where: { id },
-      data: { status }
+      data: { status: status as 'ACTIVE' | 'DRAFT' | 'ARCHIVED' }
     })
 
     res.json({ message: 'Statut du produit mis à jour', product })
   } catch (error) {
+    console.error('Update product status error:', error)
     res.status(500).json({ error: 'Erreur lors de la mise à jour du produit' })
   }
 })
