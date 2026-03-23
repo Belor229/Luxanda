@@ -303,11 +303,11 @@ model Report {
 
 model LegalAcceptanceLog {
   id              String   @id @default(uuid())
-  userId          String
+  userId          String   @map("user_id")
   date            DateTime @default(now())
   ip              String?
-  documentVersion String
-  userAgent       String?
+  documentVersion String   @map("document_version")
+  userAgent       String?  @map("user_agent")
 
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -316,7 +316,7 @@ model LegalAcceptanceLog {
 
 model Rewards {
   id          String   @id @default(uuid())
-  userId      String   @unique
+  userId      String   @unique @map("user_id")
   points      Int      @default(0)
   totalEarned Int      @default(0)
   totalSpent  Int      @default(0)
