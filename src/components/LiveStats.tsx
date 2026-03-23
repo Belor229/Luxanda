@@ -2,13 +2,20 @@ import { prisma } from '@/lib/prisma'
 import { Users, ShoppingBag } from 'lucide-react'
 
 export default async function LiveStats() {
-  const vendorCount = await prisma.vendor.count({
-    where: { status: 'APPROVED' }
-  })
-  
-  const productCount = await prisma.product.count({
-    where: { status: 'ACTIVE' }
-  })
+  let vendorCount = 0
+  let productCount = 0
+
+  try {
+    vendorCount = await prisma.vendor.count({
+      where: { status: 'APPROVED' }
+    })
+    
+    productCount = await prisma.product.count({
+      where: { status: 'ACTIVE' }
+    })
+  } catch (error) {
+    console.error('Prisma stats error (database likely not synced):', error)
+  }
 
   return (
     <div className="flex flex-wrap items-center gap-6 sm:gap-10 mt-8 py-6 border-y border-gray-100/50">

@@ -56,35 +56,48 @@ export async function middleware(request: NextRequest) {
 
   // Role verification from database
   if (session) {
-    const { data: profile } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', session.user.id)
-      .single()
-
-    const role = profile?.role?.toUpperCase()
-
-    // Admin access control
-    if (isAdminRoute && role !== 'ADMIN') {
-      return NextResponse.redirect(new URL('/', request.url))
-    }
-
-    // Seller access control
-    if (isSellerRoute && role !== 'VENDOR' && role !== 'ADMIN') {
-      return NextResponse.redirect(new URL('/', request.url))
-    }
-
-    // CGU Acceptance check (simplified for now - checking legal_acceptance table)
-    if (isSellerRoute && pathname !== '/vendor/subscription') {
-      const { data: acceptance } = await supabase
-        .from('legal_acceptance_logs')
-        .select('id')
-        .eq('userId', session.user.id)
-        .limit(1)
+    try {
+      const { data: profile, error } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', session.user.id)
         .single()
 
-      // If not accepted CGU, redirect to a page where they must (or just keep the modal)
-      // For now, we rely on the LegalAcceptanceModal in the layout, but this could be a redirect.
+      if (error || !profile) {
+        console.error('Middleware: Error fetching profile or profile not found:', error)
+        // If we can't verify the role, deny access to sensitive routes
+        if (isAdminRoute || isSellerRoute) {
+          return NextResponse.redirect(new URL('/', request.url))
+        }
+      } else {
+        const role = profile.role?.toUpperCase()
+
+        // Admin access control
+        if (isAdminRoute && role !== 'ADMIN') {
+          return NextResponse.redirect(new URL('/', request.url))
+        }
+
+        // Seller access control
+        if (isSellerRoute && role !== 'VENDOR' && role !== 'ADMIN') {
+          return NextResponse.redirect(new URL('/', request.url))
+        }
+
+        // CGU Acceptance check
+        if (isSellerRoute && pathname !== '/vendor/subscription') {
+          const { data: acceptance } = await supabase
+            .from('legal_acceptance_logs')
+            .select('id')
+            .eq('userId', session.user.id)
+            .limit(1)
+            .single()
+          // ... rest of CGU logic if needed
+        }
+      }
+    } catch (e) {
+      console.error('Middleware: Unexpected error:', e)
+      if (isAdminRoute || isSellerRoute) {
+        return NextResponse.redirect(new URL('/', request.url))
+      }
     }
   }
 
