@@ -13,8 +13,8 @@ datasource db {
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
-  name      String?
-  password  String
+  name      String?  @map("full_name")
+  password  String?
   role      Role     @default(USER)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -61,6 +61,9 @@ model Vendor {
   userId      String       @unique @map("user_id")
   storeName   String @map("store_name")
   description String?
+  whatsapp    String?
+  city        String?
+  category    String?
   id_card_url    String?
   selfie_url     String?
   trial_start_date DateTime?
@@ -100,12 +103,12 @@ model AuditLog {
 
 model Affiliate {
   id         String          @id @default(uuid())
-  userId     String          @unique
+  userId     String          @unique @map("user_id")
   code       String          @unique
   commission Float           @default(0.1)
   status     AffiliateStatus @default(PENDING)
-  createdAt  DateTime        @default(now())
-  updatedAt  DateTime        @updatedAt
+  createdAt  DateTime        @default(now()) @map("created_at")
+  updatedAt  DateTime        @updatedAt @map("updated_at")
 
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -115,11 +118,11 @@ model Affiliate {
 
 model Product {
   id           String        @id @default(uuid())
-  vendorId     String
+  vendorId     String @map("vendor_id")
   name         String
   description  String?
   price        Float
-  comparePrice Float?
+  comparePrice Float? @map("compare_price")
   cost         Float?
   sku          String?       @unique
   barcode      String?
@@ -129,13 +132,13 @@ model Product {
   featured     Boolean       @default(false)
   tags         String[]
   images       String[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
 
   // Relations
   vendor     Vendor           @relation(fields: [vendorId], references: [id], onDelete: Cascade)
   category   Category         @relation(fields: [categoryId], references: [id])
-  categoryId String
+  categoryId String @map("category_id")
   variants   ProductVariant[]
   reviews    Review[]
   orderItems OrderItem[]
@@ -147,7 +150,7 @@ model Product {
 
 model ProductVariant {
   id        String  @id @default(uuid())
-  productId String
+  productId String @map("product_id")
   name      String
   value     String
   price     Float?
@@ -165,9 +168,9 @@ model Category {
   name        String   @unique
   description String?
   image       String?
-  parentId    String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  parentId    String? @map("parent_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Relations
   products Product[]
@@ -179,32 +182,32 @@ model Category {
 
 model Order {
   id            String        @id @default(uuid())
-  userId        String
+  userId        String @map("user_id")
   status        OrderStatus   @default(PENDING)
   total         Float
   subtotal      Float
   tax           Float         @default(0)
   shipping      Float         @default(0)
   discount      Float         @default(0)
-  paymentMethod String?
-  paymentStatus PaymentStatus @default(PENDING)
+  paymentMethod String? @map("payment_method")
+  paymentStatus PaymentStatus @default(PENDING) @map("payment_status")
   notes         String?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
 
   // Relations
   user      User        @relation(fields: [userId], references: [id])
   items     OrderItem[]
   address   Address     @relation(fields: [addressId], references: [id])
-  addressId String
+  addressId String @map("address_id")
 
   @@map("orders")
 }
 
 model OrderItem {
   id        String @id @default(uuid())
-  orderId   String
-  productId String
+  orderId   String @map("order_id")
+  productId String @map("product_id")
   quantity  Int
   price     Float
   total     Float
@@ -218,7 +221,7 @@ model OrderItem {
 
 model Cart {
   id     String @id @default(uuid())
-  userId String @unique
+  userId String @unique @map("user_id")
 
   // Relations
   user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -229,8 +232,8 @@ model Cart {
 
 model CartItem {
   id        String @id @default(uuid())
-  cartId    String
-  productId String
+  cartId    String @map("cart_id")
+  productId String @map("product_id")
   quantity  Int    @default(1)
 
   // Relations
@@ -242,10 +245,10 @@ model CartItem {
 
 model Address {
   id        String      @id @default(uuid())
-  userId    String
+  userId    String @map("user_id")
   type      AddressType @default(SHIPPING)
-  firstName String
-  lastName  String
+  firstName String @map("first_name")
+  lastName  String @map("last_name")
   company   String?
   address1  String
   address2  String?
@@ -254,9 +257,9 @@ model Address {
   country   String
   zip       String
   phone     String?
-  isDefault Boolean     @default(false)
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  isDefault Boolean     @default(false) @map("is_default")
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
 
   // Relations
   user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -267,14 +270,14 @@ model Address {
 
 model Review {
   id        String   @id @default(uuid())
-  userId    String
-  productId String
+  userId    String @map("user_id")
+  productId String @map("product_id")
   rating    Int
   title     String?
   comment   String?
   verified  Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
   user    User    @relation(fields: [userId], references: [id])
@@ -285,13 +288,13 @@ model Review {
 
 model Report {
   id          String   @id @default(uuid())
-  productId   String?
-  vendorId    String?
-  userId      String?
+  productId   String? @map("product_id")
+  vendorId    String? @map("vendor_id")
+  userId      String? @map("user_id")
   motif       String
   description String?
   status      ReportStatus @default(PENDING)
-  createdAt   DateTime @default(now())
+  createdAt   DateTime @default(now()) @map("created_at")
 
   // Relations
   product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
@@ -320,8 +323,8 @@ model Rewards {
   points      Int      @default(0)
   totalEarned Int      @default(0)
   totalSpent  Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -331,12 +334,12 @@ model Rewards {
 
 model Referral {
   id          String   @id @default(uuid())
-  referrerId  String
-  referredId  String
+  referrerId  String @map("referrer_id")
+  referredId  String @map("referred_id")
   commission  Float    @default(0)
   status      ReferralStatus @default(PENDING)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Relations
   referrer User @relation("UserReferralsReferrer", fields: [referrerId], references: [id], onDelete: Cascade)
@@ -348,17 +351,17 @@ model Referral {
 
 model Subscription {
   id           String           @id @default(uuid())
-  userId       String
-  vendorId     String?
+  userId       String @map("user_id")
+  vendorId     String? @map("vendor_id")
   plan         SubscriptionPlan
   amount       Float
   status       SubscriptionStatus @default(PENDING)
-  paymentRef   String?
-  startDate    DateTime?
-  endDate      DateTime?
-  trialEndDate DateTime?         // Date de fin de la période d'essai (2 mois gratuits au lancement)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  paymentRef   String? @map("payment_ref")
+  startDate    DateTime? @map("start_date")
+  endDate      DateTime? @map("end_date")
+  trialEndDate DateTime? @map("trial_end_date")         // Date de fin de la période d'essai (2 mois gratuits au lancement)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
   // Relations
   user   User    @relation(fields: [userId], references: [id])

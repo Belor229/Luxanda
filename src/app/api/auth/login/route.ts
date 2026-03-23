@@ -53,16 +53,17 @@ export async function POST(request: NextRequest) {
       // Even if profile fetch fails, we have the auth user, but we need the role
     }
 
-    const role = profile?.role || 'client'
+    const role = profile?.role || 'USER'
 
     // Determine redirect path based on role
     let redirectPath = '/' // Default for client
-    if (role === 'admin') {
+    const normalizedRole = String(role).toUpperCase()
+    if (normalizedRole === 'ADMIN') {
       redirectPath = '/admin'
-    } else if (role === 'vendeur') {
-      redirectPath = '/dashboard'
+    } else if (normalizedRole === 'VENDOR') {
+      redirectPath = '/vendor/dashboard'
     } else {
-      redirectPath = '/' // Buyers go to cart or home
+      redirectPath = '/' // Buyers go to home
     }
 
     return NextResponse.json({
