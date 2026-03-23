@@ -1,5 +1,8 @@
 'use client'
 
+export const dynamic = 'force-dynamic';
+
+
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Trash2, Search, Filter, Eye, Check, ShieldCheck } from 'lucide-react'

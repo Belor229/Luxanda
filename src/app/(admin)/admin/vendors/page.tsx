@@ -1,5 +1,8 @@
 'use client'
 
+export const dynamic = 'force-dynamic';
+
+
 import React, { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Check, X, AlertTriangle, MoreVertical, Search, Filter, ShieldCheck, Mail, Phone, Calendar, ShoppingBag, Eye, FileText, User as UserIcon } from 'lucide-react'
