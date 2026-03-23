@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     const { data: vendor, error: vendorError } = await supabase
       .from('vendors')
       .select('*')
-      .eq('userId', session.user.id)
+      .eq('user_id', session.user.id)
       .single()
 
     if (vendorError || !vendor) {

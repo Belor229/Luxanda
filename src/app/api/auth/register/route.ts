@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
 
         // Create vendor row
         const { error: vendorError } = await supabase.from('vendors').insert({
-          userId: userId,
+          user_id: userId,
           store_name: storeName.trim(), // Correct snake_case column name in DB
           description: description.trim(),
           whatsapp: whatsapp.trim(),
@@ -168,7 +168,7 @@ export async function POST(request: NextRequest) {
       try {
         const ip = request.headers.get('x-forwarded-for') || '0.0.0.0'
         await supabase.from('legal_acceptance_logs').insert({
-          userId: authData.user.id,
+          user_id: authData.user.id,
           ip: ip.split(',')[0],
           document_version: 'v1.0',
           user_agent: request.headers.get('user-agent')
