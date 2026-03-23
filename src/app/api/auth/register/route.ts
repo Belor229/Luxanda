@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
         // Create vendor row
         const { error: vendorError } = await supabase.from('vendors').insert({
           userId: userId,
-          storeName: storeName.trim(), // Correct camelCase column name
+          store_name: storeName.trim(), // Correct snake_case column name in DB
           description: description.trim(),
           whatsapp: whatsapp.trim(),
           city: city.trim(),

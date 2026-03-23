@@ -90,7 +90,16 @@ export default function VendorDashboard() {
     )
   }
 
-  if (!data || data.vendor.status === 'PENDING' || data.vendor.status === 'APPROVED_REGISTRATION' || data.vendor.status === 'PENDING_ACTIVATION') {
+  if (!data) {
+    return (
+      <div className="flex flex-col justify-center items-center h-full min-h-[500px] gap-4">
+        <div className="animate-spin h-10 w-10 border-4 border-primary-orange border-t-transparent rounded-full"></div>
+        <p className="text-gray-500 font-bold">Initialisation de votre espace vendeur...</p>
+      </div>
+    )
+  }
+
+  if (data.vendor.status === 'PENDING' || data.vendor.status === 'APPROVED_REGISTRATION' || data.vendor.status === 'PENDING_ACTIVATION') {
     return (
       <div className="min-h-[80vh] flex items-center justify-center p-6">
         <div className="bg-white rounded-[40px] shadow-2xl shadow-gray-200/50 border border-gray-100 p-12 max-w-2xl w-full text-center relative overflow-hidden">
@@ -154,6 +163,35 @@ export default function VendorDashboard() {
                 </>
             )}
             
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // If approved but no active subscription, show subscription plans
+  if (!data.stats.subscription || data.stats.subscription.status !== 'ACTIVE') {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center p-6">
+        <div className="bg-white rounded-[40px] shadow-2xl shadow-gray-200/50 border border-gray-100 p-12 max-w-2xl w-full text-center relative overflow-hidden">
+          <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary-orange/5 rounded-full blur-3xl"></div>
+          <div className="relative z-10 font-sans">
+            <div className="bg-orange-50 w-24 h-24 rounded-3xl flex items-center justify-center mx-auto mb-8">
+              <ShieldCheck className="h-12 w-12 text-primary-orange" />
+            </div>
+            <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">Activez votre compte vendeur</h2>
+            <p className="text-gray-500 font-medium text-lg leading-relaxed mb-10 max-w-md mx-auto">
+              Bonne nouvelle ! Votre compte est approuvé. Pour commencer à vendre sur Luxanda et accéder à votre tableau de bord, vous devez maintenant choisir un plan d'abonnement.
+              <br />
+              <span className="text-primary-orange font-bold text-sm mt-4 inline-block">14 jours d'essai offerts pour tout nouveau compte !</span>
+            </p>
+            <Link
+              href="/vendor/subscription"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-primary-orange text-white px-10 py-5 rounded-2xl font-black text-lg transition-all hover:bg-orange-600 shadow-xl shadow-orange-500/20 active:scale-95"
+            >
+              Voir les abonnements
+              <ArrowRight className="h-6 w-6" />
+            </Link>
             <div className="mt-12 flex items-center justify-center gap-6 grayscale opacity-30">
               <img src="/images/kkiapay-logo.png" alt="Kkiapay" className="h-6" />
               <img src="/images/mtn-momo.png" alt="MTN" className="h-6" />

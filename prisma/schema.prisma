@@ -59,7 +59,7 @@ model UserProfile {
 model Vendor {
   id          String       @id @default(uuid())
   userId      String       @unique
-  storeName   String
+  storeName   String @map("store_name")
   description String?
   id_card_url    String?
   selfie_url     String?
