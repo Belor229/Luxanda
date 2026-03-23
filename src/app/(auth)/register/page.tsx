@@ -28,6 +28,8 @@ function RegisterForm() {
     description: '',
     idCard: null as File | null,
     selfie: null as File | null,
+    ifu: null as File | null,
+    rccm: null as File | null,
     acceptTerms: false
   })
   const [showPassword, setShowPassword] = useState(false)
@@ -137,6 +139,8 @@ function RegisterForm() {
         form.append('description', formData.description)
         if (formData.idCard) form.append('idCard', formData.idCard)
         if (formData.selfie) form.append('selfie', formData.selfie)
+        if (formData.ifu) form.append('ifu', formData.ifu)
+        if (formData.rccm) form.append('rccm', formData.rccm)
       }
 
       const response = await fetch('/api/auth/register', {
@@ -482,6 +486,45 @@ function RegisterForm() {
                         className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-orange file:text-white hover:file:bg-orange-600"
                         required
                       />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                          IFU (Facultatif)
+                        </label>
+                        <input
+                          type="file"
+                          accept="image/*,application/pdf"
+                          capture="environment"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const compressed = file.type.startsWith('image/') ? await compressImage(file) : file;
+                              setFormData({ ...formData, ifu: compressed });
+                            }
+                          }}
+                          className="w-full text-xs text-gray-500 file:mr-2 file:py-2 file:px-3 file:rounded-full file:border-0 file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                          RCCM (Facultatif)
+                        </label>
+                        <input
+                          type="file"
+                          accept="image/*,application/pdf"
+                          capture="environment"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const compressed = file.type.startsWith('image/') ? await compressImage(file) : file;
+                              setFormData({ ...formData, rccm: compressed });
+                            }
+                          }}
+                          className="w-full text-xs text-gray-500 file:mr-2 file:py-2 file:px-3 file:rounded-full file:border-0 file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>

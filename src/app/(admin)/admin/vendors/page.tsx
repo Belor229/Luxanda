@@ -7,7 +7,7 @@ import { Check, X, AlertTriangle, MoreVertical, Search, Filter, ShieldCheck, Mai
 interface Vendor {
     id: string
     storeName: string
-    status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED'
+    status: 'PENDING' | 'APPROVED_REGISTRATION' | 'PENDING_ACTIVATION' | 'APPROVED' | 'REJECTED' | 'SUSPENDED'
     verified: boolean
     id_card_url: string | null
     selfie_url: string | null
@@ -60,7 +60,7 @@ function AdminVendorsContent() {
         }
     }
 
-    const updateVendorStatus = async (vendorId: string, action: 'approve' | 'reject' | 'suspend', reason?: string) => {
+    const updateVendorStatus = async (vendorId: string, action: 'approve' | 'reject' | 'suspend' | 'approve_registration' | 'approve_activation', reason?: string) => {
         if (action === 'reject' && !reason) {
             alert('Veuillez saisir un motif de rejet.')
             return
@@ -106,7 +106,11 @@ function AdminVendorsContent() {
         }
         switch (status) {
             case 'PENDING':
-                return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800 border border-yellow-200">En attente</span>
+                return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800 border border-yellow-200">Nouv. Inscription</span>
+            case 'APPROVED_REGISTRATION':
+                return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 border border-blue-200">Dossier Validé</span>
+            case 'PENDING_ACTIVATION':
+                return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-800 border border-purple-200">À Activer (Admin)</span>
             case 'REJECTED':
                 return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800 border border-red-200">Rejeté</span>
             case 'SUSPENDED':
@@ -136,8 +140,10 @@ function AdminVendorsContent() {
                             className="pl-10 pr-10 py-2.5 bg-white border border-gray-200 focus:ring-2 focus:ring-primary-orange focus:border-transparent rounded-xl text-sm font-bold text-gray-700 shadow-sm transition-all"
                         >
                             <option value="">Tous les statuts</option>
-                            <option value="PENDING">En attente</option>
-                            <option value="APPROVED">Vérifiés</option>
+                            <option value="PENDING">Nouvelles Inscriptions</option>
+                            <option value="APPROVED_REGISTRATION">Dossiers Validés</option>
+                            <option value="PENDING_ACTIVATION">En attente d'Activation</option>
+                            <option value="APPROVED">Boutiques Actives</option>
                             <option value="REJECTED">Rejetés</option>
                             <option value="SUSPENDED">Suspendus</option>
                         </select>
@@ -209,9 +215,9 @@ function AdminVendorsContent() {
                                                 {vendor.status === 'PENDING' && (
                                                     <>
                                                         <button
-                                                            onClick={() => updateVendorStatus(vendor.id, 'approve')}
-                                                            className="flex items-center justify-center h-10 w-10 bg-green-500 text-white rounded-xl hover:bg-green-600 shadow-lg shadow-green-500/20 transition-all font-bold"
-                                                            title="Valider la boutique"
+                                                            onClick={() => updateVendorStatus(vendor.id, 'approve_registration')}
+                                                            className="flex items-center justify-center h-10 w-10 bg-blue-500 text-white rounded-xl hover:bg-blue-600 shadow-lg shadow-blue-500/20 transition-all font-bold"
+                                                            title="Valider le dossier d'inscription"
                                                         >
                                                             <Check className="h-5 w-5" />
                                                         </button>
@@ -221,11 +227,20 @@ function AdminVendorsContent() {
                                                                 setShowDocModal(true)
                                                             }}
                                                             className="flex items-center justify-center h-10 w-10 bg-red-500 text-white rounded-xl hover:bg-red-600 shadow-lg shadow-red-500/20 transition-all font-bold"
-                                                            title="Rejeter (avec motif)"
+                                                            title="Rejeter le dossier"
                                                         >
                                                             <X className="h-5 w-5" />
                                                         </button>
                                                     </>
+                                                )}
+                                                {vendor.status === 'PENDING_ACTIVATION' && (
+                                                    <button
+                                                        onClick={() => updateVendorStatus(vendor.id, 'approve_activation')}
+                                                        className="flex items-center justify-center h-10 w-10 bg-purple-500 text-white rounded-xl hover:bg-purple-600 shadow-lg shadow-purple-500/20 transition-all font-bold"
+                                                        title="Confirmer l'activation finale"
+                                                    >
+                                                        <ShieldCheck className="h-5 w-5" />
+                                                    </button>
                                                 )}
                                                 {vendor.status === 'APPROVED' && (
                                                     <button
@@ -320,6 +335,36 @@ function AdminVendorsContent() {
                                     )}
                                 </div>
                             </div>
+
+                            {/* IFU */}
+                            <div className="space-y-4">
+                                <h3 className="flex items-center text-sm font-black text-gray-400 uppercase tracking-widest">
+                                    <FileText className="w-4 h-4 mr-2" />
+                                    IFU (Optionnel)
+                                </h3>
+                                <div className="aspect-[3/2] bg-gray-100 rounded-3xl overflow-hidden border-2 border-dashed border-gray-200 flex items-center justify-center">
+                                    {selectedVendor.ifu_url ? (
+                                        <img src={selectedVendor.ifu_url} alt="IFU" className="w-full h-full object-contain" />
+                                    ) : (
+                                        <p className="text-sm font-bold text-gray-300 italic">Non fourni</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* RCCM */}
+                            <div className="space-y-4">
+                                <h3 className="flex items-center text-sm font-black text-gray-400 uppercase tracking-widest">
+                                    <FileText className="w-4 h-4 mr-2" />
+                                    RCCM (Optionnel)
+                                </h3>
+                                <div className="aspect-[3/2] bg-gray-100 rounded-3xl overflow-hidden border-2 border-dashed border-gray-200 flex items-center justify-center">
+                                    {selectedVendor.rccm_url ? (
+                                        <img src={selectedVendor.rccm_url} alt="RCCM" className="w-full h-full object-contain" />
+                                    ) : (
+                                        <p className="text-sm font-bold text-gray-300 italic">Non fourni</p>
+                                    )}
+                                </div>
+                            </div>
                         </div>
 
                         <div className="p-8 bg-gray-50/50 border-t border-gray-100 space-y-4">
@@ -341,16 +386,34 @@ function AdminVendorsContent() {
                                             disabled={isSubmitting || !rejectionReason.trim()}
                                             className="px-8 py-4 bg-red-50 text-red-600 rounded-2xl font-black hover:bg-red-100 transition-colors disabled:opacity-50"
                                         >
-                                            {isSubmitting ? 'Traitement...' : 'Rejeter le dossier'}
+                                            {isSubmitting ? 'Traitement...' : 'Rejeter l\'inscription'}
                                         </button>
                                         <button
-                                            onClick={() => updateVendorStatus(selectedVendor.id, 'approve')}
+                                            onClick={() => updateVendorStatus(selectedVendor.id, 'approve_registration')}
                                             disabled={isSubmitting}
-                                            className="px-8 py-4 bg-green-500 text-white rounded-2xl font-black hover:bg-green-600 shadow-xl shadow-green-500/20 transition-all disabled:opacity-50"
+                                            className="px-8 py-4 bg-blue-500 text-white rounded-2xl font-black hover:bg-blue-600 shadow-xl shadow-blue-500/20 transition-all disabled:opacity-50"
                                         >
-                                            {isSubmitting ? 'Traitement...' : 'Valider le vendeur'}
+                                            {isSubmitting ? 'Traitement...' : 'Valider l\'inscription'}
                                         </button>
                                     </div>
+                                </div>
+                            )}
+                            {selectedVendor.status === 'PENDING_ACTIVATION' && (
+                                <div className="flex justify-end gap-3">
+                                    <button
+                                        onClick={() => updateVendorStatus(selectedVendor.id, 'reject', 'Activation refusée')}
+                                        disabled={isSubmitting}
+                                        className="px-8 py-4 bg-red-50 text-red-600 rounded-2xl font-black hover:bg-red-100 transition-colors disabled:opacity-50"
+                                    >
+                                        {isSubmitting ? 'Traitement...' : 'Refuser l\'activation'}
+                                    </button>
+                                    <button
+                                        onClick={() => updateVendorStatus(selectedVendor.id, 'approve_activation')}
+                                        disabled={isSubmitting}
+                                        className="px-8 py-4 bg-purple-500 text-white rounded-2xl font-black hover:bg-purple-600 shadow-xl shadow-purple-500/20 transition-all disabled:opacity-50"
+                                    >
+                                        {isSubmitting ? 'Traitement...' : 'Activer définitivement'}
+                                    </button>
                                 </div>
                             )}
                             {selectedVendor.status !== 'PENDING' && (

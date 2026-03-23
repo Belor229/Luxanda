@@ -7,7 +7,7 @@ import { z } from 'zod'
 
 const adminActionSchema = z.object({
     vendor_id: z.string().uuid(),
-    action: z.enum(['approve', 'reject', 'suspend']),
+    action: z.enum(['approve', 'reject', 'suspend', 'approve_registration', 'approve_activation']),
     reason: z.string().optional()
 })
 
@@ -46,9 +46,31 @@ export async function POST(request: Request) {
         let subscriptionStatus: any = undefined
 
         switch (action) {
-            case 'approve':
+            case 'approve_registration':
+                updateData = {
+                    status: 'APPROVED_REGISTRATION',
+                    registrationConfirmedAt: new Date(),
+                    admin_notes: reason || 'Inscription approuvée par admin - En attente d\'activation par le vendeur'
+                }
+                break
+
+            case 'approve_activation':
                 updateData = {
                     status: 'APPROVED',
+                    activationConfirmedAt: new Date(),
+                    trial_start_date: new Date(),
+                    trial_end_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+                    admin_notes: reason || 'Boutique activée et approuvée par admin'
+                }
+                subscriptionStatus = 'ACTIVE'
+                break
+
+            case 'approve':
+                // Legacy or direct full approval
+                updateData = {
+                    status: 'APPROVED',
+                    registrationConfirmedAt: new Date(),
+                    activationConfirmedAt: new Date(),
                     trial_start_date: new Date(),
                     trial_end_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
                     admin_notes: reason || 'Approuvé par admin'

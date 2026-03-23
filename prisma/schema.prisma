@@ -68,6 +68,11 @@ model Vendor {
   status      VendorStatus @default(PENDING)
   rejectionReason String? @map("rejection_reason")
   admin_notes    String? @map("admin_notes")
+  ifu_url        String?
+  rccm_url       String?
+  registrationConfirmedAt DateTime? @map("registration_confirmed_at")
+  activationRequestedAt   DateTime? @map("activation_requested_at")
+  activationConfirmedAt   DateTime? @map("activation_confirmed_at")
   createdAt   DateTime     @default(now()) @map("created_at")
   updatedAt   DateTime     @updatedAt @map("updated_at")
 
@@ -408,7 +413,8 @@ enum Gender {
 
 enum VendorStatus {
   PENDING
-  PENDING_VALIDATION
+  APPROVED_REGISTRATION
+  PENDING_ACTIVATION
   APPROVED
   REJECTED
   SUSPENDED

@@ -47,6 +47,23 @@ export default function VendorDashboard() {
     }
   }
 
+  const handleActivate = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/vendor/activate', { method: 'POST' })
+      if (response.ok) {
+        await fetchVendorData()
+      } else {
+        const err = await response.json()
+        alert(err.error || 'Erreur lors de l\'activation')
+      }
+    } catch (error) {
+      console.error('Error activating vendor account:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
@@ -73,29 +90,71 @@ export default function VendorDashboard() {
     )
   }
 
-  if (!data || (!data.stats.subscription || data.stats.subscription.status !== 'ACTIVE')) {
+  if (!data || data.vendor.status === 'PENDING' || data.vendor.status === 'APPROVED_REGISTRATION' || data.vendor.status === 'PENDING_ACTIVATION') {
     return (
       <div className="min-h-[80vh] flex items-center justify-center p-6">
         <div className="bg-white rounded-[40px] shadow-2xl shadow-gray-200/50 border border-gray-100 p-12 max-w-2xl w-full text-center relative overflow-hidden">
           <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary-orange/5 rounded-full blur-3xl"></div>
           <div className="relative z-10 font-sans">
-            <div className="bg-orange-50 w-24 h-24 rounded-3xl flex items-center justify-center mx-auto mb-8 animate-bounce transition-all duration-1000">
+            <div className="bg-orange-50 w-24 h-24 rounded-3xl flex items-center justify-center mx-auto mb-8">
               <ShieldCheck className="h-12 w-12 text-primary-orange" />
             </div>
-            <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">Activez votre compte vendeur</h2>
-            <p className="text-gray-500 font-medium text-lg leading-relaxed mb-10 max-w-md mx-auto">
-              Pour commencer à vendre sur Luxanda et accéder à votre tableau de bord, vous devez choisir un plan d'abonnement.
-              <br />
-              <span className="text-primary-orange font-bold">14 jours d'essai offerts pour tout nouveau compte !</span>
-            </p>
-            <Link
-              href="/vendor/subscription"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-primary-orange text-white px-10 py-5 rounded-2xl font-black text-lg transition-all hover:bg-orange-600 shadow-xl shadow-orange-500/20 active:scale-95"
-            >
-              Voir les abonnements
-              <ArrowRight className="h-6 w-6" />
-            </Link>
-            <div className="mt-12 flex items-center justify-center gap-6 grayscale opacity-50">
+
+            {data?.vendor.status === 'PENDING' ? (
+              <>
+                <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">Inscription en cours</h2>
+                <p className="text-gray-500 font-medium text-lg leading-relaxed mb-6 max-w-md mx-auto">
+                  Votre dossier est en cours de révision par l'équipe Luxanda. Nous vérifions vos documents pour assurer la sécurité de la marketplace.
+                </p>
+                <div className="animate-pulse flex items-center justify-center gap-2 text-primary-orange font-bold uppercase tracking-widest text-xs">
+                  <Package className="w-4 h-4" /> Analyse documents en cours...
+                </div>
+              </>
+            ) : data?.vendor.status === 'APPROVED_REGISTRATION' ? (
+              <>
+                <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">Inscription confirmée ! 🎉</h2>
+                <p className="text-gray-500 font-medium text-lg leading-relaxed mb-10 max-w-md mx-auto">
+                  Bonne nouvelle ! Votre dossier a été validé par l'administrateur. 
+                  <br />
+                  <span className="text-gray-900 font-black">Activez maintenant votre boutique pour commencer à vendre.</span>
+                </p>
+                <button
+                  onClick={handleActivate}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-purple-600 text-white px-10 py-5 rounded-2xl font-black text-lg transition-all hover:bg-purple-700 shadow-xl shadow-purple-500/20 active:scale-95"
+                >
+                  Activer ma boutique
+                  <ArrowRight className="h-6 w-6" />
+                </button>
+              </>
+            ) : data?.vendor.status === 'PENDING_ACTIVATION' ? (
+              <>
+                <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">Activation en attente...</h2>
+                <p className="text-gray-500 font-medium text-lg leading-relaxed mb-10 max-w-md mx-auto">
+                  Vous avez demandé l'activation de votre boutique. Un administrateur effectue la validation finale.
+                </p>
+                <div className="bg-purple-50 text-purple-700 p-4 rounded-2xl font-bold text-sm">
+                  L'activation est généralement confirmée sous 24h.
+                </div>
+              </>
+            ) : (
+                <>
+                    <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">Activez votre compte vendeur</h2>
+                    <p className="text-gray-500 font-medium text-lg leading-relaxed mb-10 max-w-md mx-auto">
+                    Pour commencer à vendre sur Luxanda et accéder à votre tableau de bord, vous devez choisir un plan d'abonnement.
+                    <br />
+                    <span className="text-primary-orange font-bold">14 jours d'essai offerts pour tout nouveau compte !</span>
+                    </p>
+                    <Link
+                    href="/vendor/subscription"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-primary-orange text-white px-10 py-5 rounded-2xl font-black text-lg transition-all hover:bg-orange-600 shadow-xl shadow-orange-500/20 active:scale-95"
+                    >
+                    Voir les abonnements
+                    <ArrowRight className="h-6 w-6" />
+                    </Link>
+                </>
+            )}
+            
+            <div className="mt-12 flex items-center justify-center gap-6 grayscale opacity-30">
               <img src="/images/kkiapay-logo.png" alt="Kkiapay" className="h-6" />
               <img src="/images/mtn-momo.png" alt="MTN" className="h-6" />
               <img src="/images/moov.png" alt="Moov" className="h-6" />

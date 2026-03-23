@@ -31,6 +31,8 @@ export async function POST(request: NextRequest) {
     const description = formData.get('description') as string
     const idCard = formData.get('idCard') as File | null
     const selfie = formData.get('selfie') as File | null
+    const ifu = formData.get('ifu') as File | null
+    const rccm = formData.get('rccm') as File | null
 
     if (!email || !password) {
       return NextResponse.json({ error: 'Email et mot de passe requis' }, { status: 400 })
@@ -56,8 +58,11 @@ export async function POST(request: NextRequest) {
       if (!selfie) return NextResponse.json({ error: 'Le selfie est obligatoire' }, { status: 400 })
 
       // Image size limit: 10MB
-      if (idCard.size > 10 * 1024 * 1024 || selfie.size > 10 * 1024 * 1024) {
-        return NextResponse.json({ error: 'Les images ne doivent pas dépasser 10 Mo' }, { status: 400 })
+      const filesToValidate = [idCard, selfie, ifu, rccm].filter(Boolean) as File[]
+      for (const file of filesToValidate) {
+        if (file.size > 10 * 1024 * 1024) {
+          return NextResponse.json({ error: `Le fichier ${file.name} est trop volumineux (max 10 Mo)` }, { status: 400 })
+        }
       }
     }
 
@@ -113,16 +118,38 @@ export async function POST(request: NextRequest) {
           selfiePath = sData.path
         }
 
+        let ifuPath = null
+        if (ifu) {
+          const ifuFileName = `${userId}/ifu_${Date.now()}.jpg`
+          const { data: ifuData, error: ifuError } = await supabase.storage
+            .from('identity-documents')
+            .upload(ifuFileName, ifu, { contentType: ifu.type, upsert: true })
+          if (ifuError) throw ifuError
+          ifuPath = ifuData.path
+        }
+
+        let rccmPath = null
+        if (rccm) {
+          const rccmFileName = `${userId}/rccm_${Date.now()}.jpg`
+          const { data: rccmData, error: rccmError } = await supabase.storage
+            .from('identity-documents')
+            .upload(rccmFileName, rccm, { contentType: rccm.type, upsert: true })
+          if (rccmError) throw rccmError
+          rccmPath = rccmData.path
+        }
+
         // Create vendor row
         const { error: vendorError } = await supabase.from('vendors').insert({
           userId: userId,
-          store_name: storeName.trim(),
+          storeName: storeName.trim(), // Correct camelCase column name
           description: description.trim(),
           whatsapp: whatsapp.trim(),
           city: city.trim(),
           category: category.trim(),
           id_card_url: idCardPath,
           selfie_url: selfiePath,
+          ifu_url: ifuPath,
+          rccm_url: rccmPath,
           status: 'PENDING',
         })
 
