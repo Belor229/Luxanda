@@ -22,7 +22,7 @@ export async function GET(request: Request) {
             .eq('id', session.user.id)
             .single()
 
-        if (!profile || profile.role !== 'ADMIN') {
+        if (!profile || String(profile.role).toUpperCase() !== 'ADMIN') {
             return NextResponse.json({ error: 'Accès administrateur requis.' }, { status: 403 })
         }
 

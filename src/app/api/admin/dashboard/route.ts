@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
             .eq('id', session.user.id)
             .single() as any
 
-        if (profile?.role !== 'ADMIN') {
+        if (String(profile?.role || '').toUpperCase() !== 'ADMIN') {
             return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
         }
 

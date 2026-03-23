@@ -63,14 +63,13 @@ export async function middleware(request: NextRequest) {
         .eq('id', session.user.id)
         .single()
 
+      const roleFromProfile = profile?.role?.toUpperCase?.()
+      const roleFromMetadata = String(session.user.user_metadata?.role || '').toUpperCase()
+      const role = roleFromProfile || roleFromMetadata || 'USER'
+
       if (error || !profile) {
-        console.error('Middleware: Error fetching profile or profile not found:', error)
-        // If we can't verify the role, deny access to sensitive routes
-        if (isAdminRoute || isSellerRoute) {
-          return NextResponse.redirect(new URL('/', request.url))
-        }
-      } else {
-        const role = profile.role?.toUpperCase()
+        console.error('Middleware: Profile fallback to metadata role:', error)
+      }
 
         // Admin access control
         if (isAdminRoute && role !== 'ADMIN') {
@@ -82,16 +81,14 @@ export async function middleware(request: NextRequest) {
           return NextResponse.redirect(new URL('/', request.url))
         }
 
-        // CGU Acceptance check
-        if (isSellerRoute && pathname !== '/vendor/subscription') {
-          const { data: acceptance } = await supabase
-            .from('legal_acceptance_logs')
-            .select('id')
-            .eq('userId', session.user.id)
-            .limit(1)
-            .single()
-          // ... rest of CGU logic if needed
-        }
+      // CGU Acceptance check
+      if (isSellerRoute && pathname !== '/vendor/subscription') {
+        await supabase
+          .from('legal_acceptance_logs')
+          .select('id')
+          .eq('user_id', session.user.id)
+          .limit(1)
+          .single()
       }
     } catch (e) {
       console.error('Middleware: Unexpected error:', e)

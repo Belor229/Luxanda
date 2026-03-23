@@ -53,7 +53,8 @@ export async function POST(request: NextRequest) {
       // Even if profile fetch fails, we have the auth user, but we need the role
     }
 
-    const role = profile?.role || 'USER'
+    const metadataRole = (authData.user.user_metadata?.role as string | undefined) || 'USER'
+    const role = profile?.role || metadataRole || 'USER'
 
     // Determine redirect path based on role
     let redirectPath = '/' // Default for client
@@ -71,7 +72,7 @@ export async function POST(request: NextRequest) {
       user: {
         id: authData.user.id,
         email: authData.user.email,
-        name: profile?.full_name || authData.user.email?.split('@')[0] || 'User',
+        name: profile?.name || authData.user.user_metadata?.full_name || authData.user.email?.split('@')[0] || 'User',
         role: role,
       },
       redirectPath,

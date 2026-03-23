@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react'
 
 export default function LoginPage() {
@@ -15,6 +15,7 @@ export default function LoginPage() {
   const [error, setError] = useState('')
 
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   const validateRedirectPath = (path: string) => {
     if (!path || typeof path !== 'string') return '/'
@@ -50,11 +51,12 @@ export default function LoginPage() {
       const data = await response.json()
 
       if (response.ok) {
+        const requestedPath = validateRedirectPath(searchParams.get('redirect') || '')
         // Redirection based on user role or redirectPath
         // The cookie is handled by the server-side route
-        const redirectPath = validateRedirectPath(data.redirectPath ||
+        const redirectPath = requestedPath !== '/' ? requestedPath : validateRedirectPath(data.redirectPath ||
           (data.user.role === 'ADMIN' || data.user.role === 'admin' ? '/admin' :
-            data.user.role === 'VENDOR' || data.user.role === 'vendor' ? '/vendor/dashboard' : '/products'))
+            data.user.role === 'VENDOR' || data.user.role === 'vendor' ? '/vendor/dashboard' : '/'))
 
         router.push(redirectPath)
         router.refresh()

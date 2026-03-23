@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { ShoppingBag, Star, TrendingUp, AlertCircle, Package, Calendar, ArrowRight, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 interface VendorData {
   vendor: {
@@ -28,6 +29,8 @@ interface VendorData {
 export default function VendorDashboard() {
   const [data, setData] = useState<VendorData | null>(null)
   const [loading, setLoading] = useState(true)
+  const router = useRouter()
+  const searchParams = useSearchParams()
 
   useEffect(() => {
     fetchVendorData()
@@ -53,6 +56,7 @@ export default function VendorDashboard() {
       const response = await fetch('/api/vendor/activate', { method: 'POST' })
       if (response.ok) {
         await fetchVendorData()
+        router.replace('/vendor/dashboard?activation=requested')
       } else {
         const err = await response.json()
         alert(err.error || 'Erreur lors de l\'activation')
@@ -99,6 +103,9 @@ export default function VendorDashboard() {
     )
   }
 
+  const showSubmissionSuccess = searchParams.get('submission') === 'success'
+  const showActivationSuccess = searchParams.get('activation') === 'requested'
+
   if (data.vendor.status === 'PENDING' || data.vendor.status === 'APPROVED_REGISTRATION' || data.vendor.status === 'PENDING_ACTIVATION') {
     return (
       <div className="min-h-[80vh] flex items-center justify-center p-6">
@@ -108,6 +115,16 @@ export default function VendorDashboard() {
             <div className="bg-orange-50 w-24 h-24 rounded-3xl flex items-center justify-center mx-auto mb-8">
               <ShieldCheck className="h-12 w-12 text-primary-orange" />
             </div>
+            {showSubmissionSuccess && (
+              <div className="mb-6 bg-green-50 text-green-700 p-4 rounded-2xl font-bold text-sm">
+                Votre dossier vendeur a bien ete envoye a l'administration.
+              </div>
+            )}
+            {showActivationSuccess && (
+              <div className="mb-6 bg-purple-50 text-purple-700 p-4 rounded-2xl font-bold text-sm">
+                Votre demande d'activation a bien ete transmise a l'administration.
+              </div>
+            )}
 
             {data?.vendor.status === 'PENDING' ? (
               <>

@@ -26,7 +26,7 @@ export async function POST(request: Request) {
             select: { role: true }
         })
 
-        if (admin?.role !== 'ADMIN') {
+        if (String(admin?.role || '').toUpperCase() !== 'ADMIN') {
             return NextResponse.json({ error: 'Accès administrateur requis' }, { status: 403 })
         }
 
@@ -155,7 +155,7 @@ export async function GET(request: Request) {
             where: { id: authUser.id }
         })
 
-        if (admin?.role !== 'ADMIN') {
+        if (String(admin?.role || '').toUpperCase() !== 'ADMIN') {
             return NextResponse.json({ error: 'Accès administrateur requis' }, { status: 403 })
         }
 
@@ -189,8 +189,30 @@ export async function GET(request: Request) {
             },
             orderBy: { createdAt: 'desc' }
         })
+        const vendorsWithDocUrls = vendors.map((vendor) => {
+            const idCardUrl = vendor.id_card_url
+                ? supabase.storage.from('identity-documents').getPublicUrl(vendor.id_card_url).data.publicUrl
+                : null
+            const selfieUrl = vendor.selfie_url
+                ? supabase.storage.from('identity-documents').getPublicUrl(vendor.selfie_url).data.publicUrl
+                : null
+            const ifuUrl = vendor.ifu_url
+                ? supabase.storage.from('identity-documents').getPublicUrl(vendor.ifu_url).data.publicUrl
+                : null
+            const rccmUrl = vendor.rccm_url
+                ? supabase.storage.from('identity-documents').getPublicUrl(vendor.rccm_url).data.publicUrl
+                : null
 
-        return NextResponse.json(vendors)
+            return {
+                ...vendor,
+                id_card_url: idCardUrl,
+                selfie_url: selfieUrl,
+                ifu_url: ifuUrl,
+                rccm_url: rccmUrl,
+            }
+        })
+
+        return NextResponse.json(vendorsWithDocUrls)
 
     } catch (error) {
         console.error('Admin vendors fetch error:', error)

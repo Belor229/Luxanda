@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
+import { prisma } from '@/lib/prisma'
 
 import { rateLimit } from '@/lib/rate-limit'
 
@@ -139,27 +140,63 @@ export async function POST(request: NextRequest) {
         }
 
         // Create vendor row
-        const { error: vendorError } = await supabase.from('vendors').insert({
-          user_id: userId,
-          store_name: storeName.trim(), // Correct snake_case column name in DB
-          description: description.trim(),
-          whatsapp: whatsapp.trim(),
-          city: city.trim(),
-          category: category.trim(),
-          id_card_url: idCardPath,
-          selfie_url: selfiePath,
-          ifu_url: ifuPath,
-          rccm_url: rccmPath,
-          status: 'PENDING',
+        const vendor = await prisma.vendor.upsert({
+          where: { userId },
+          update: {
+            storeName: storeName.trim(),
+            description: description.trim(),
+            whatsapp: whatsapp.trim(),
+            city: city.trim(),
+            category: category.trim(),
+            id_card_url: idCardPath,
+            selfie_url: selfiePath,
+            ifu_url: ifuPath,
+            rccm_url: rccmPath,
+            status: 'PENDING',
+            admin_notes: 'Dossier vendeur soumis en attente de validation admin',
+          },
+          create: {
+            userId,
+            storeName: storeName.trim(),
+            description: description.trim(),
+            whatsapp: whatsapp.trim(),
+            city: city.trim(),
+            category: category.trim(),
+            id_card_url: idCardPath,
+            selfie_url: selfiePath,
+            ifu_url: ifuPath,
+            rccm_url: rccmPath,
+            status: 'PENDING',
+            admin_notes: 'Dossier vendeur soumis en attente de validation admin',
+          },
         })
 
-        if (vendorError) {
-          console.error('Vendor creation error:', vendorError)
+        const existingPendingSubscription = await prisma.subscription.findFirst({
+          where: {
+            userId,
+            vendorId: vendor.id,
+            status: 'PENDING',
+          },
+          select: { id: true },
+        })
+
+        if (!existingPendingSubscription) {
+          await prisma.subscription.create({
+            data: {
+              userId,
+              vendorId: vendor.id,
+              plan: 'PREMIUM',
+              amount: 0,
+              status: 'PENDING',
+            },
+          })
         }
       } catch (uploadError: any) {
         console.error('File upload/Vendor creation error:', uploadError)
-        // We don't fail the whole registration, but log it. 
-        // Admin might need to manually handle or user might need to re-upload.
+        return NextResponse.json(
+          { error: `Inscription vendeur incomplète: ${uploadError?.message || 'vérifiez vos documents et réessayez.'}` },
+          { status: 500 },
+        )
       }
     }
 
@@ -178,7 +215,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const redirectPath = isVendor ? '/vendor/dashboard' : '/'
+    const redirectPath = authData.session
+      ? (isVendor ? '/vendor/dashboard?submission=success' : '/')
+      : '/login?registered=1'
 
     return NextResponse.json({
       token: authData.session?.access_token,
