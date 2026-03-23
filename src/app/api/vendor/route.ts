@@ -40,10 +40,10 @@ export async function POST(request: Request) {
             }
         })
 
-        // Create automatic 2-month trial subscription for new vendors
+        // Create automatic 14-day trial subscription for new vendors
         const trialStartDate = new Date()
         const trialEndDate = new Date()
-        trialEndDate.setMonth(trialEndDate.getMonth() + 2) // 2 months free trial
+        trialEndDate.setDate(trialEndDate.getDate() + 14) // 14 days free trial
 
         await prisma.subscription.create({
             data: {
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
                 status: 'ACTIVE',
                 startDate: trialStartDate,
                 trialEndDate: trialEndDate,
-                endDate: trialEndDate // Trial ends after 2 months
+                endDate: trialEndDate // Trial ends after 14 days
             }
         })
 

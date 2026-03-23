@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { MessageCircle, ShoppingCart, ArrowLeft, ShieldCheck, Truck, AlertTriangle } from 'lucide-react'
-import { useCartStore } from '@/store/useCartStore'
+import { MessageCircle, ArrowLeft, ShieldCheck, Truck, AlertTriangle } from 'lucide-react'
 
 interface Product {
     id: string
@@ -24,7 +23,6 @@ export default function ProductDetail({ id }: { id: string }) {
     const [showReportModal, setShowReportModal] = useState(false)
     const [reportForm, setReportForm] = useState({ motif: '', description: '' })
     const [submittingReport, setSubmittingReport] = useState(false)
-    const addItem = useCartStore((state: any) => state.addItem)
 
     useEffect(() => {
         async function fetchProduct() {
@@ -150,14 +148,7 @@ export default function ProductDetail({ id }: { id: string }) {
                             </div>
 
                             {/* Actions */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
-                                <button
-                                    onClick={() => addItem(product)}
-                                    className="btn btn-primary flex items-center justify-center space-x-3 py-4 shadow-lg shadow-primary-orange/20"
-                                >
-                                    <ShoppingCart className="h-5 w-5" />
-                                    <span className="text-lg">Ajouter au panier</span>
-                                </button>
+                            <div className="grid grid-cols-1 gap-4 mb-10">
                                 <Link
                                     href={`https://wa.me/2290141757559?text=${encodeURIComponent(`Bonjour, j'aimerais acheter ${product.name}`)}`}
                                     target="_blank"

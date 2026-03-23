@@ -1,60 +1,31 @@
-'use client'
-
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Check } from 'lucide-react'
-import KkiapayButton from '@/components/KkiapayButton'
 
 const plans = [
     {
         name: 'Starter',
         price: 5000,
         features: ['Jusqu\'à 50 produits', 'Support email', 'Statistiques de base', 'Badge vendeur vérifié'],
-        recommended: false
+        recommended: false,
+        kkiapayLink: 'https://direct.kkiapay.me/37365/luxanda-plan-starter-Lga521FgK'
     },
     {
         name: 'Pro',
         price: 15000,
         features: ['Produits illimités', 'Niveau de priorité élevé', 'Analytics avancés', 'Mise en avant mensuelle', 'Support 7j/7'],
-        recommended: true
+        recommended: true,
+        kkiapayLink: 'https://direct.kkiapay.me/37365/luxanda-plan-pro-ga-wXBWyv'
     },
     {
         name: 'Premium',
         price: 30000,
         features: ['Tout de Business Pro', 'Support téléphonique dédié', 'Formation personnalisée', 'Badge Premium exclusif', 'Mise en avant prioritaire dans les résultats'],
-        recommended: false
+        recommended: false,
+        kkiapayLink: 'https://direct.kkiapay.me/37365/luxanda-plan-premium-aUJiQWZGd'
     }
 ]
 
 export default function SubscriptionPage() {
-    const router = useRouter()
-    const [selectedPlan, setSelectedPlan] = useState<typeof plans[0] | null>(null)
-
-    const handlePaymentSuccess = async (response: any) => {
-        console.log('Payment successful:', response)
-
-        try {
-            const res = await fetch('/api/subscriptions/active', { // Endpoint to activate
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    planPrefix: selectedPlan?.name.toUpperCase(), // STARTER, PRO, PREMIUM
-                    transactionId: response.transactionId
-                })
-            })
-
-            if (res.ok) {
-                alert('Abonnement activé avec succès !')
-                router.push('/vendor/dashboard')
-            } else {
-                alert('Erreur lors de l\'activation de l\'abonnement. Contactez le support.')
-            }
-        } catch (error) {
-            console.error('Activation error:', error)
-            alert('Erreur lors de l\'activation')
-        }
-    }
-
     return (
         <div className="space-y-8 max-w-5xl mx-auto">
             <div className="text-center">
@@ -118,29 +89,12 @@ export default function SubscriptionPage() {
                         </div>
 
                         <div className="p-4 sm:p-6 sm:p-8 bg-gray-50 rounded-b-2xl">
-                            {selectedPlan?.name === plan.name ? (
-                                <div className="space-y-2">
-                                    <p className="text-xs sm:text-sm text-center text-gray-600 mb-2">Paiement via Kkiapay</p>
-                                    <KkiapayButton
-                                        amount={plan.price}
-                                        callback={handlePaymentSuccess}
-                                        data={{ plan: plan.name }}
-                                    />
-                                    <button
-                                        onClick={() => setSelectedPlan(null)}
-                                        className="w-full btn btn-outline text-xs sm:text-sm mt-2"
-                                    >
-                                        Annuler
-                                    </button>
-                                </div>
-                            ) : (
-                                <button
-                                    onClick={() => setSelectedPlan(plan)}
-                                    className={`w-full btn ${plan.recommended ? 'btn-primary' : 'btn-primary bg-gray-800 hover:bg-gray-900'} py-2 sm:py-3 text-sm sm:text-lg font-semibold`}
+                                <a
+                                    href={plan.kkiapayLink}
+                                    className={`w-full block text-center btn ${plan.recommended ? 'btn-primary' : 'btn-primary bg-gray-800 hover:bg-gray-900'} py-2 sm:py-3 text-sm sm:text-lg font-semibold`}
                                 >
                                     Choisir {plan.name}
-                                </button>
-                            )}
+                                </a>
                         </div>
                     </div>
                 ))}

@@ -80,9 +80,6 @@ export default function UserProfilePage() {
                             <Link href="/users/profile" className="px-4 py-3 bg-orange-50 text-primary-orange font-medium border-l-4 border-primary-orange">
                                 Mon Profil
                             </Link>
-                            <Link href="/users/orders" className="px-4 py-3 text-gray-600 hover:bg-gray-50 hover:text-gray-900">
-                                Mes Commandes
-                            </Link>
                             <Link href="/users/addresses" className="px-4 py-3 text-gray-600 hover:bg-gray-50 hover:text-gray-900">
                                 Adresses
                             </Link>

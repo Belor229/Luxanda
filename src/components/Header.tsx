@@ -106,7 +106,7 @@ export default function Header() {
             <div className="flex flex-col sm:flex-row items-center space-y-1 sm:space-y-0 sm:space-x-6">
               <span className="flex items-center space-x-2">
                 <span>📞</span>
-                <span>+229 01 41 75 75 59</span>
+                <span>+229 01 93 38 95 63</span>
               </span>
               <span className="flex items-center space-x-2">
                 <span>📧</span>

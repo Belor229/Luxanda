@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     } else if (role === 'vendeur') {
       redirectPath = '/dashboard'
     } else {
-      redirectPath = '/cart' // Buyers go to cart or home
+      redirectPath = '/' // Buyers go to cart or home
     }
 
     return NextResponse.json({

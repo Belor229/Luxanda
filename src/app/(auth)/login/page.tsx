@@ -54,7 +54,7 @@ export default function LoginPage() {
         // The cookie is handled by the server-side route
         const redirectPath = validateRedirectPath(data.redirectPath ||
           (data.user.role === 'ADMIN' || data.user.role === 'admin' ? '/admin' :
-            data.user.role === 'VENDOR' || data.user.role === 'vendor' ? '/vendor/dashboard' : '/cart'))
+            data.user.role === 'VENDOR' || data.user.role === 'vendor' ? '/vendor/dashboard' : '/products'))
 
         router.push(redirectPath)
         router.refresh()

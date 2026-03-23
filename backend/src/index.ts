@@ -11,8 +11,8 @@ import subscriptionRoutes from './routes/subscriptions'
 import adminRoutes from './routes/admin'
 import contactRoutes from './routes/contact'
 import vendorRoutes from './routes/vendor'
-import affiliationRoutes from './routes/affiliation'
-import orderRoutes from './routes/orders'
+// import affiliationRoutes from './routes/affiliation'
+// import orderRoutes from './routes/orders'
 import webhooksRoutes from './routes/webhooks'
 
 // Load environment variables
@@ -55,8 +55,8 @@ app.use('/api/subscriptions', subscriptionRoutes)
 app.use('/api/admin', adminRoutes)
 app.use('/api/contact', contactRoutes)
 app.use('/api/vendor', vendorRoutes)
-app.use('/api/affiliation', affiliationRoutes)
-app.use('/api/orders', orderRoutes)
+// app.use('/api/affiliation', affiliationRoutes)
+// app.use('/api/orders', orderRoutes)
 app.use('/api/webhooks', webhooksRoutes)
 
 // Health check endpoint

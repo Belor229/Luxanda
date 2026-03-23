@@ -35,7 +35,7 @@ export default function ProductCard({ product, viewMode }: ProductCardProps) {
     const message = encodeURIComponent(
       `Bonjour, je suis intéressé par ${product.name} sur Luxanda. Pouvez-vous m'en dire plus ?`
     )
-    const whatsappUrl = `https://wa.me/2290141757559?text=${message}`
+    const whatsappUrl = `https://wa.me/2290193389563?text=${message}`
     window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
   }
 

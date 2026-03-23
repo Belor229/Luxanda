@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { Mail, Phone, MapPin, Send, MessageCircle, Clock } from 'lucide-react'
 
-const WHATSAPP_LINK = 'https://wa.me/2290141757559'
+const WHATSAPP_LINK = 'https://wa.me/2290193389563'
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -79,7 +79,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900">Téléphone</h3>
-                  <p className="text-gray-600">+229 01 41 75 75 59</p>
+                  <p className="text-gray-600">+229 01 93 38 95 63</p>
                   <p className="text-sm text-gray-500">Lun-Ven: 8h-18h</p>
                 </div>
               </div>

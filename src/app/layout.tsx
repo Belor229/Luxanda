@@ -4,7 +4,6 @@ import './globals.css'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import WhatsAppFloat from '@/components/WhatsAppFloat'
-import CartSync from '@/components/CartSync'
 import LegalAcceptanceModal from '@/components/LegalAcceptanceModal'
 
 
@@ -39,9 +38,11 @@ export const metadata: Metadata = {
     canonical: '/',
   },
   icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon.ico',
-    apple: '/favicon.ico',
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' }
+    ],
+    shortcut: '/favicon.svg',
+    apple: '/favicon.svg',
   },
   openGraph: {
     title: 'Luxanda - Le marché en ligne qui inspire confiance',
@@ -115,7 +116,6 @@ export default function RootLayout({
           }}
         />
         <Header />
-        <CartSync />
         <LegalAcceptanceModal />
         {children}
         <Footer />

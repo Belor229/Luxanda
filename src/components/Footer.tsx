@@ -2,7 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Mail, Phone, MapPin, MessageCircle, Clock } from 'lucide-react'
 
-const WHATSAPP_LINK = 'https://wa.me/2290141757559'
+const WHATSAPP_LINK = 'https://wa.me/2290193389563'
 
 export default function Footer() {
   return (
@@ -88,7 +88,7 @@ export default function Footer() {
               </a>
               <div className="flex items-center space-x-3">
                 <Phone className="h-4 sm:h-5 w-4 sm:w-5 text-primary-orange" />
-                <span className="text-gray-300 text-sm sm:text-base">+229 01 41 75 75 59</span>
+                <span className="text-gray-300 text-sm sm:text-base">+229 01 93 38 95 63</span>
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="h-4 sm:h-5 w-4 sm:w-5 text-primary-orange" />
