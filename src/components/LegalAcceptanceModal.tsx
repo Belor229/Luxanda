@@ -3,10 +3,12 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ShieldCheck, ArrowRight, ExternalLink } from 'lucide-react'
+import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/client'
 
 export default function LegalAcceptanceModal() {
+    const pathname = usePathname()
     const supabase = createClient()
     const [isOpen, setIsOpen] = useState(false)
 
@@ -88,7 +90,10 @@ export default function LegalAcceptanceModal() {
         window.location.href = 'https://www.google.com'
     }
 
-    if (loading || !isOpen) return null
+    // Ne pas afficher sur les pages légales elles-mêmes pour pouvoir les lire
+    const isLegalPage = pathname === '/terms' || pathname === '/privacy'
+
+    if (loading || !isOpen || isLegalPage) return null
 
     return (
         <AnimatePresence>
