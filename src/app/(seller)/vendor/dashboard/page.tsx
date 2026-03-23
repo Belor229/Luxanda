@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { ShoppingBag, Star, TrendingUp, AlertCircle, Package, Calendar, ArrowRight, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -26,7 +26,7 @@ interface VendorData {
   orders: any[]
 }
 
-export default function VendorDashboard() {
+function VendorDashboardContent() {
   const [data, setData] = useState<VendorData | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
@@ -117,12 +117,12 @@ export default function VendorDashboard() {
             </div>
             {showSubmissionSuccess && (
               <div className="mb-6 bg-green-50 text-green-700 p-4 rounded-2xl font-bold text-sm">
-                Votre dossier vendeur a bien ete envoye a l'administration.
+                Votre dossier vendeur a bien été envoyé à l&apos;administration.
               </div>
             )}
             {showActivationSuccess && (
               <div className="mb-6 bg-purple-50 text-purple-700 p-4 rounded-2xl font-bold text-sm">
-                Votre demande d'activation a bien ete transmise a l'administration.
+                Votre demande d&apos;activation a bien été transmise à l&apos;administration.
               </div>
             )}
 
@@ -427,5 +427,19 @@ export default function VendorDashboard() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function VendorDashboard() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex justify-center items-center h-full min-h-[500px]">
+          <div className="animate-spin h-10 w-10 border-4 border-primary-orange border-t-transparent rounded-full" />
+        </div>
+      }
+    >
+      <VendorDashboardContent />
+    </Suspense>
   )
 }
