@@ -1,9 +1,6 @@
 'use client'
 
-export const dynamic = 'force-dynamic';
-
-
-import { useState, useEffect } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Trash2, Search, Filter, Eye, Check, ShieldCheck } from 'lucide-react'
 import Image from 'next/image'
@@ -21,7 +18,7 @@ interface Product {
     createdAt: string
 }
 
-export default function AdminProductsPage() {
+function AdminProductsContent() {
     const [products, setProducts] = useState<Product[]>([])
     const [loading, setLoading] = useState(true)
     const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, pages: 0 })
@@ -245,5 +242,13 @@ export default function AdminProductsPage() {
                 </div>
             )}
         </div>
+    )
+}
+
+export default function AdminProductsPage() {
+    return (
+        <Suspense fallback={<div className="p-8 text-center">Chargement...</div>}>
+            <AdminProductsContent />
+        </Suspense>
     )
 }

@@ -1,8 +1,5 @@
 'use client'
 
-export const dynamic = 'force-dynamic';
-
-
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import ProductCard, { Product } from '@/components/ProductCard'
@@ -198,4 +195,12 @@ function ProductsList() {
       </div>
     </div>
   )
+}
+
+export default function ProductsPage() {
+    return (
+        <Suspense fallback={<div className="p-8 text-center">Chargement des produits...</div>}>
+            <ProductsList />
+        </Suspense>
+    )
 }

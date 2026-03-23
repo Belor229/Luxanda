@@ -1,9 +1,6 @@
 'use client'
 
-export const dynamic = 'force-dynamic';
-
-
-import React, { useState, useEffect } from 'react'
+import React, { Suspense, useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Check, X, AlertTriangle, MoreVertical, Search, Filter, ShieldCheck, Mail, Phone, Calendar, ShoppingBag, Eye, FileText, User as UserIcon } from 'lucide-react'
 
@@ -30,7 +27,7 @@ interface Vendor {
     }
 }
 
-export default function AdminVendorsPage() {
+function AdminVendorsContent() {
     const [vendors, setVendors] = useState<Vendor[]>([])
     const [loading, setLoading] = useState(true)
     const [statusFilter, setStatusFilter] = useState<string>('')
@@ -369,5 +366,13 @@ export default function AdminVendorsPage() {
                 </div>
             )}
         </div>
+    )
+}
+
+export default function AdminVendorsPage() {
+    return (
+        <Suspense fallback={<div className="p-8 text-center">Chargement...</div>}>
+            <AdminVendorsContent />
+        </Suspense>
     )
 }

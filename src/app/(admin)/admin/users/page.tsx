@@ -1,9 +1,6 @@
 'use client'
 
-export const dynamic = 'force-dynamic';
-
-
-import { useState, useEffect } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 interface User {
@@ -17,7 +14,7 @@ interface User {
     }
 }
 
-export default function AdminUsersPage() {
+function AdminUsersContent() {
     const [users, setUsers] = useState<User[]>([])
     const [loading, setLoading] = useState(true)
     const searchParams = useSearchParams()
@@ -103,5 +100,13 @@ export default function AdminUsersPage() {
                 </div>
             </div>
         </div>
+    )
+}
+
+export default function AdminUsersPage() {
+    return (
+        <Suspense fallback={<div className="p-8 text-center">Chargement...</div>}>
+            <AdminUsersContent />
+        </Suspense>
     )
 }
