@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight, CheckCircle, Store, MapPin, FileText, Gift } from 'lucide-react'
+import { compressImage } from '@/utils/image-compression'
 
 import { Suspense } from 'react'
 
@@ -450,7 +451,14 @@ function RegisterForm() {
                       <input
                         type="file"
                         accept="image/*"
-                        onChange={(e) => setFormData({ ...formData, idCard: e.target.files?.[0] || null })}
+                        capture="environment"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const compressed = await compressImage(file);
+                            setFormData({ ...formData, idCard: compressed });
+                          }
+                        }}
                         className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-orange file:text-white hover:file:bg-orange-600"
                         required
                       />
@@ -463,7 +471,14 @@ function RegisterForm() {
                       <input
                         type="file"
                         accept="image/*"
-                        onChange={(e) => setFormData({ ...formData, selfie: e.target.files?.[0] || null })}
+                        capture="user"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const compressed = await compressImage(file);
+                            setFormData({ ...formData, selfie: compressed });
+                          }
+                        }}
                         className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-orange file:text-white hover:file:bg-orange-600"
                         required
                       />

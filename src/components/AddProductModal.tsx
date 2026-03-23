@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { X, Upload, Plus, Minus } from 'lucide-react'
+import { compressImage } from '@/utils/image-compression'
 
 interface AddProductModalProps {
   isOpen: boolean
@@ -40,14 +41,25 @@ export default function AddProductModal({ isOpen, onClose, onProductAdded }: Add
     })
   }
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (files) {
-      const newImages = Array.from(files).map(file => URL.createObjectURL(file))
-      setFormData({
-        ...formData,
-        images: [...formData.images, ...newImages]
-      })
+      setLoading(true)
+      try {
+        const compressedImages: string[] = []
+        for (const file of Array.from(files)) {
+          const compressedFile = await compressImage(file)
+          compressedImages.push(URL.createObjectURL(compressedFile))
+        }
+        setFormData({
+          ...formData,
+          images: [...formData.images, ...compressedImages]
+        })
+      } catch (err) {
+        console.error('Image compression failed', err)
+      } finally {
+        setLoading(false)
+      }
     }
   }
 
@@ -223,6 +235,7 @@ export default function AddProductModal({ isOpen, onClose, onProductAdded }: Add
                 id="images"
                 multiple
                 accept="image/*"
+                capture="environment"
                 onChange={handleImageUpload}
                 className="hidden"
               />
