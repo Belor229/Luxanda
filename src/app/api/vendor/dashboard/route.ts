@@ -25,25 +25,25 @@ export async function GET(request: NextRequest) {
 
     // 2. Get Statistics (Using correct field names and capitalized status)
     const [{ count: totalProducts }, { count: activeProducts }, { count: pendingOrders }, { data: totalSalesData }] = await Promise.all([
-      supabase.from('products').select('*', { count: 'exact', head: true }).eq('vendorId', vendor.id),
-      supabase.from('products').select('*', { count: 'exact', head: true }).eq('vendorId', vendor.id).eq('status', 'ACTIVE'),
-      supabase.from('orders').select('*', { count: 'exact', head: true }).eq('vendorId', vendor.id).eq('status', 'PENDING'),
-      supabase.from('orders').select('total_amount').eq('vendorId', vendor.id).eq('status', 'DELIVERED')
+      supabase.from('products').select('*', { count: 'exact', head: true }).eq('vendor_id', vendor.id),
+      supabase.from('products').select('*', { count: 'exact', head: true }).eq('vendor_id', vendor.id).eq('status', 'ACTIVE'),
+      supabase.from('orders').select('*', { count: 'exact', head: true }).eq('vendor_id', vendor.id).eq('status', 'PENDING'),
+      supabase.from('orders').select('total_amount').eq('vendor_id', vendor.id).eq('status', 'DELIVERED')
     ])
 
     const totalRevenue = totalSalesData?.reduce((acc, curr) => acc + Number(curr.total_amount), 0) || 0
 
     // 3. Get Recent Data
     const [{ data: recentProducts }, { data: recentOrders }] = await Promise.all([
-      supabase.from('products').select('*').eq('vendorId', vendor.id).order('created_at', { ascending: false }).limit(5),
-      supabase.from('orders').select('*, profile:users(full_name)').eq('vendorId', vendor.id).order('created_at', { ascending: false }).limit(5)
+      supabase.from('products').select('*').eq('vendor_id', vendor.id).order('created_at', { ascending: false }).limit(5),
+      supabase.from('orders').select('*, profile:users(full_name)').eq('vendor_id', vendor.id).order('created_at', { ascending: false }).limit(5)
     ])
 
     // 4. Get Subscription info (Linked via userId as per schema)
     const { data: subscription } = await supabase
       .from('subscriptions')
       .select('*')
-      .eq('userId', session.user.id)
+      .eq('user_id', session.user.id)
       .order('created_at', { ascending: false })
       .limit(1)
       .single()

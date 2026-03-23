@@ -177,4 +177,28 @@ CREATE POLICY "Admins have full access to users" ON public.users FOR ALL USING (
 DROP POLICY IF EXISTS "Admins have full access to vendors" ON public.vendors;
 CREATE POLICY "Admins have full access to vendors" ON public.vendors FOR ALL USING (public.check_is_admin());
 
+-- 6. LEGAL ACCEPTANCE LOGS RLS
+ALTER TABLE public.legal_acceptance_logs ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can insert own logs" ON public.legal_acceptance_logs;
+CREATE POLICY "Users can insert own logs" ON public.legal_acceptance_logs 
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can view own logs" ON public.legal_acceptance_logs;
+CREATE POLICY "Users can view own logs" ON public.legal_acceptance_logs 
+  FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Admins can view all logs" ON public.legal_acceptance_logs;
+CREATE POLICY "Admins can view all logs" ON public.legal_acceptance_logs 
+  FOR ALL USING (public.check_is_admin());
+
+-- 7. VENDORS RLS - Allow vendors to see their own row
+DROP POLICY IF EXISTS "Vendors can view own record" ON public.vendors;
+CREATE POLICY "Vendors can view own record" ON public.vendors 
+  FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Vendors can insert own record" ON public.vendors;
+CREATE POLICY "Vendors can insert own record" ON public.vendors 
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
 -- DONE!

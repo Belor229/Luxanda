@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     const { data: vendor, error: vendorError } = await supabase
       .from('vendors')
       .select('id, status')
-      .eq('userId', session.user.id)
+      .eq('user_id', session.user.id)
       .single()
 
     if (vendorError || !vendor) {

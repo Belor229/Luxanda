@@ -33,10 +33,10 @@ DROP POLICY IF EXISTS "Utilisateurs peuvent voir leurs propres logs" ON public.l
 DROP POLICY IF EXISTS "Admins peuvent tout voir sur les logs" ON public.legal_acceptance_logs;
 
 CREATE POLICY "Users can insert own logs" ON public.legal_acceptance_logs 
-  FOR INSERT WITH CHECK (auth.uid() = "userId");
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Users can view own logs" ON public.legal_acceptance_logs 
-  FOR SELECT USING (auth.uid() = "userId");
+  FOR SELECT USING (auth.uid() = user_id);
 
 CREATE POLICY "Admins can view all logs" ON public.legal_acceptance_logs 
   FOR ALL USING (public.check_is_admin());

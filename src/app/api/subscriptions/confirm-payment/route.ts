@@ -18,8 +18,8 @@ export async function POST(request: NextRequest) {
     if (!kkiapayData || kkiapayData.status !== 'SUCCESS') {
       // Log failed transaction attempt
       await supabase.from('payment_logs').insert({
-        userId: session.user.id,
-        transactionId,
+        user_id: session.user.id,
+        transaction_id: transactionId,
         status: 'FAILED',
         amount: kkiapayData?.amount || 0,
         plan,
@@ -35,8 +35,8 @@ export async function POST(request: NextRequest) {
     
     if (!expectedAmount || kkiapayData.amount !== expectedAmount) {
       await supabase.from('payment_logs').insert({
-        userId: session.user.id,
-        transactionId,
+        user_id: session.user.id,
+        transaction_id: transactionId,
         status: 'FAILED',
         amount: kkiapayData.amount,
         expectedAmount,
@@ -65,12 +65,12 @@ export async function POST(request: NextRequest) {
 
     // Log successful transaction
     await supabase.from('payment_logs').insert({
-      userId: session.user.id,
-      transactionId,
+      user_id: session.user.id,
+      transaction_id: transactionId,
       status: 'SUCCESS',
       amount: kkiapayData.amount,
       plan,
-      clientPhone: kkiapayData.client_phone
+      client_phone: kkiapayData.client_phone
     })
 
     const { data: subscription, error: subError } = await supabase
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
         end_date: endDate.toISOString(),
         updated_at: new Date().toISOString()
       })
-      .eq('userId', session.user.id)
+      .eq('user_id', session.user.id)
       .eq('status', 'PENDING')
       .select()
       .single()
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
     if (subError) {
       // If no PENDING sub found, we create a new one (safety)
       await supabase.from('subscriptions').insert({
-        userId: session.user.id,
+        user_id: session.user.id,
         plan: plan.toUpperCase(),
         amount: kkiapayData.amount,
         status: 'ACTIVE',
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
     await supabase
       .from('vendors')
       .update({ status: 'APPROVED' })
-      .eq('userId', session.user.id)
+      .eq('user_id', session.user.id)
 
     return NextResponse.json({ success: true, message: 'Paiement confirmé' })
   } catch (error) {

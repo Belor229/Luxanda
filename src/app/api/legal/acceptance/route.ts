@@ -21,11 +21,11 @@ export async function POST(request: Request) {
         const { error } = await supabase
             .from('legal_acceptance_logs')
             .insert({
-                userId: user.id,
-                documentVersion: version,
+                user_id: user.id,
+                document_version: version,
                 date: new Date().toISOString(),
                 ip: request.headers.get('x-forwarded-for') || '0.0.0.0',
-                userAgent: request.headers.get('user-agent') || 'unknown'
+                user_agent: request.headers.get('user-agent') || 'unknown'
             })
 
         if (error) throw error
@@ -50,8 +50,8 @@ export async function GET(request: Request) {
 
         const { data, error } = await supabase
             .from('legal_acceptance_logs')
-            .select('documentVersion, date')
-            .eq('userId', user.id)
+            .select('document_version, date')
+            .eq('user_id', user.id)
             .order('date', { ascending: false })
             .limit(1)
             .single()
@@ -59,7 +59,7 @@ export async function GET(request: Request) {
         if (error && error.code !== 'PGRST116') throw error // PGRST116 is "no rows returned"
 
         return NextResponse.json({
-            cgu_version: data?.documentVersion || null,
+            cgu_version: data?.document_version || null,
             accepted_at: data?.date || null
         })
     } catch (error) {
