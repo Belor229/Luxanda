@@ -25,7 +25,7 @@ export default function LegalAcceptanceModal() {
                     return
                 }
 
-                const res = await fetch('/api/legal/acceptance')
+                const res = await fetch('/api/legal/acceptance', { credentials: 'include' })
                 if (res.status === 401) {
                     setLoading(false)
                     return
@@ -56,8 +56,9 @@ export default function LegalAcceptanceModal() {
         try {
             const res = await fetch('/api/legal/acceptance', {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ version: '1.0' })
+                body: JSON.stringify({ version: '1.0' }),
             })
             
             console.log('Acceptance response status:', res.status)
@@ -69,13 +70,15 @@ export default function LegalAcceptanceModal() {
                 // Force recheck after successful acceptance
                 setTimeout(() => {
                     console.log('Reloading page...')
-                    window.location.href = window.location.href // Force complete reload
+                    window.location.reload()
                 }, 500)
             } else {
                 const errorData = await res.json().catch(() => ({}))
                 console.error('Acceptance failed:', res.status, res.statusText, errorData)
                 // Show error to user
-                alert(`Erreur ${res.status}: ${errorData.error || 'Veuillez réessayer.'}`)
+                alert(
+                    `Erreur ${res.status}: ${errorData.details || errorData.error || 'Veuillez réessayer.'}`,
+                )
             }
         } catch (err) {
             console.error('Acceptance failed', err)
