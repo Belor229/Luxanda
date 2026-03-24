@@ -30,6 +30,7 @@ interface Vendor {
 function AdminVendorsContent() {
     const [vendors, setVendors] = useState<Vendor[]>([])
     const [loading, setLoading] = useState(true)
+    const [fetchError, setFetchError] = useState<string | null>(null)
     const [statusFilter, setStatusFilter] = useState<string>('')
     const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null)
     const [showDocModal, setShowDocModal] = useState(false)
@@ -47,14 +48,20 @@ function AdminVendorsContent() {
     const fetchVendors = async (status: string) => {
         try {
             setLoading(true)
-            const query = status ? `?status=${status}` : ''
-            const response = await fetch(`/api/admin/vendors${query}`)
+            setFetchError(null)
+            const query = status ? `?status=${encodeURIComponent(status)}` : ''
+            const response = await fetch(`/api/admin/vendors${query}`, { credentials: 'include' })
             const data = await response.json()
             if (response.ok) {
                 setVendors(Array.isArray(data) ? data : [])
+            } else {
+                setVendors([])
+                setFetchError(data?.error || `Erreur ${response.status} — impossible de charger les vendeurs.`)
             }
         } catch (error) {
             console.error('Error fetching vendors:', error)
+            setFetchError('Erreur réseau lors du chargement des vendeurs.')
+            setVendors([])
         } finally {
             setLoading(false)
         }
@@ -72,6 +79,7 @@ function AdminVendorsContent() {
             setIsSubmitting(true)
             const response = await fetch(`/api/admin/vendors`, {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     vendor_id: vendorId, 
@@ -121,16 +129,21 @@ function AdminVendorsContent() {
     }
 
     return (
-        <div className="p-6 space-y-8 bg-gray-50/50 min-h-screen">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="p-6 space-y-8 bg-gray-50/50 min-h-screen relative isolate">
+            {fetchError && (
+                <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-800 shadow-sm">
+                    {fetchError}
+                </div>
+            )}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 relative z-10">
                 <div>
                     <h1 className="text-3xl font-black text-gray-900 tracking-tight">Gestion des Vendeurs</h1>
                     <p className="text-gray-500 mt-1">Supervisez et modérez les boutiques de la marketplace</p>
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <div className="relative">
-                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <div className="relative z-10 min-w-[200px]">
+                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none z-10" />
                         <select
                             value={statusFilter}
                             onChange={(e) => {

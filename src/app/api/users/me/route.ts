@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
+import { prisma } from '@/lib/prisma'
 
 export async function GET() {
     try {
@@ -40,7 +41,25 @@ export async function GET() {
             profile = newProfile
         }
 
-        return NextResponse.json(profile)
+        // Si une boutique existe en attente / active, exposer le rôle VENDOR (CDC : droits vendeur)
+        const vendor = await prisma.vendor
+            .findUnique({
+                where: { userId: session.user.id },
+                select: { id: true, status: true },
+            })
+            .catch(() => null)
+
+        const roleUpper = String(profile.role || 'USER').toUpperCase()
+        const payload =
+            vendor && roleUpper !== 'ADMIN'
+                ? {
+                      ...profile,
+                      role: 'VENDOR',
+                      vendor_status: vendor.status,
+                  }
+                : { ...profile, vendor_status: vendor?.status }
+
+        return NextResponse.json(payload)
     } catch (error) {
         console.error('Fetch me error:', error)
         return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 })

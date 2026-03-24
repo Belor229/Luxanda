@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
+import { prisma } from '@/lib/prisma'
 import AdminLayoutClient from './AdminLayoutClient'
 
 export default async function AdminLayout({
@@ -19,15 +20,26 @@ export default async function AdminLayout({
         redirect('/login')
     }
 
-    // Role verification from database
+    // Rôle admin : Supabase public.users puis Prisma (même base)
     const { data: profile, error } = await supabase
         .from('users')
         .select('role')
         .eq('id', session.user.id)
-        .single()
+        .maybeSingle()
 
-    if (error || !profile || profile.role?.toUpperCase() !== 'ADMIN') {
-        console.error('Admin Layout: Unauthorized access attempt or error:', error)
+    let isAdmin = profile?.role?.toUpperCase() === 'ADMIN'
+    if (!isAdmin) {
+        const pu = await prisma.user
+            .findUnique({
+                where: { id: session.user.id },
+                select: { role: true },
+            })
+            .catch(() => null)
+        isAdmin = pu?.role?.toUpperCase() === 'ADMIN'
+    }
+
+    if (!isAdmin) {
+        console.error('Admin Layout: accès refusé', error)
         redirect('/')
     }
 

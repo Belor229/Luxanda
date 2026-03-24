@@ -3,7 +3,10 @@ import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
 import { prisma } from '@/lib/prisma'
 import { NotificationsService } from '@/lib/notifications'
+import { assertAdmin } from '@/lib/admin-auth'
 import { z } from 'zod'
+
+export const dynamic = 'force-dynamic'
 
 const adminActionSchema = z.object({
     vendor_id: z.string().uuid(),
@@ -21,13 +24,9 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
         }
 
-        const admin = await prisma.user.findUnique({
-            where: { id: authUser.id },
-            select: { role: true }
-        })
-
-        if (String(admin?.role || '').toUpperCase() !== 'ADMIN') {
-            return NextResponse.json({ error: 'Accès administrateur requis' }, { status: 403 })
+        const gate = await assertAdmin(authUser, supabase)
+        if (!gate.ok) {
+            return NextResponse.json({ error: gate.message }, { status: gate.status })
         }
 
         const body = await request.json()
@@ -101,11 +100,13 @@ export async function POST(request: Request) {
             data: updateData
         })
 
-        // Update subscriptions if any
-        await prisma.subscription.updateMany({
-            where: { vendorId: vendor_id, status: 'PENDING' },
-            data: { status: subscriptionStatus }
-        })
+        // Update subscriptions if any (évite data: { status: undefined })
+        if (subscriptionStatus !== undefined) {
+            await prisma.subscription.updateMany({
+                where: { vendorId: vendor_id, status: 'PENDING' },
+                data: { status: subscriptionStatus },
+            })
+        }
 
         // Audit Log
         await prisma.auditLog.create({
@@ -151,12 +152,9 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
         }
 
-        const admin = await prisma.user.findUnique({
-            where: { id: authUser.id }
-        })
-
-        if (String(admin?.role || '').toUpperCase() !== 'ADMIN') {
-            return NextResponse.json({ error: 'Accès administrateur requis' }, { status: 403 })
+        const gate = await assertAdmin(authUser, supabase)
+        if (!gate.ok) {
+            return NextResponse.json({ error: gate.message }, { status: gate.status })
         }
 
         const { searchParams } = new URL(request.url)

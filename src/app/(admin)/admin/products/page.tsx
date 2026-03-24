@@ -13,14 +13,16 @@ interface Product {
     status: string
     quantity: number
     images: string[]
-    category: { name: string }
-    vendor: { storeName: string }
+    featured?: boolean
+    category: { name: string } | null
+    vendor: { storeName: string } | null
     createdAt: string
 }
 
 function AdminProductsContent() {
     const [products, setProducts] = useState<Product[]>([])
     const [loading, setLoading] = useState(true)
+    const [listError, setListError] = useState<string | null>(null)
     const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, pages: 0 })
     const searchParams = useSearchParams()
     const router = useRouter()
@@ -35,21 +37,45 @@ function AdminProductsContent() {
     const fetchProducts = async () => {
         try {
             setLoading(true)
+            setListError(null)
             const params = new URLSearchParams({
                 page: page.toString(),
                 limit: '20',
                 ...(search && { search })
             })
-            const response = await fetch(`/api/products?${params}`)
+            const response = await fetch(`/api/admin/products?${params}`, { credentials: 'include' })
             const data = await response.json()
             if (response.ok) {
-                setProducts(data.products)
-                setPagination(data.pagination)
+                setProducts(data.products || [])
+                setPagination(data.pagination || { page: 1, limit: 20, total: 0, pages: 0 })
+            } else {
+                setProducts([])
+                setListError(data?.error || `Erreur ${response.status}`)
             }
         } catch (error) {
             console.error('Error fetching products:', error)
+            setListError('Erreur réseau')
         } finally {
             setLoading(false)
+        }
+    }
+
+    const toggleFeatured = async (id: string, current: boolean) => {
+        try {
+            const response = await fetch(`/api/admin/products/${id}/featured`, {
+                method: 'PATCH',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ featured: !current }),
+            })
+            if (response.ok) {
+                fetchProducts()
+            } else {
+                const err = await response.json()
+                alert(err.error || 'Erreur')
+            }
+        } catch (e) {
+            console.error(e)
         }
     }
 
@@ -57,6 +83,7 @@ function AdminProductsContent() {
         try {
             const response = await fetch(`/api/products/${id}`, {
                 method: 'PATCH',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: newStatus })
             })
@@ -76,7 +103,8 @@ function AdminProductsContent() {
 
         try {
             const response = await fetch(`/api/products/${id}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                credentials: 'include',
             })
 
             if (response.ok) {
@@ -105,11 +133,16 @@ function AdminProductsContent() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 relative isolate">
+            {listError && (
+                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-800">
+                    {listError}
+                </div>
+            )}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Gestion des Produits</h1>
-                    <p className="text-sm text-gray-500">Gérez le catalogue global de la plateforme</p>
+                    <p className="text-sm text-gray-500">Modération, statuts et mise en vedette (CDC MVP)</p>
                 </div>
 
                 <form onSubmit={handleSearch} className="flex gap-2">
@@ -149,6 +182,9 @@ function AdminProductsContent() {
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Statut
                                 </th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Vedette
+                                </th>
                                 <th scope="col" className="relative px-6 py-3">
                                     <span className="sr-only">Actions</span>
                                 </th>
@@ -157,11 +193,11 @@ function AdminProductsContent() {
                         <tbody className="bg-white divide-y divide-gray-200">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-4 text-center">Chargement...</td>
+                                    <td colSpan={7} className="px-6 py-4 text-center">Chargement...</td>
                                 </tr>
                             ) : products.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-4 text-center text-gray-500">Aucun produit trouvé</td>
+                                    <td colSpan={7} className="px-6 py-4 text-center text-gray-500">Aucun produit trouvé</td>
                                 </tr>
                             ) : (
                                 products.map((product) => (
@@ -198,6 +234,16 @@ function AdminProductsContent() {
                                                 }`}>
                                                 {product.status}
                                             </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <button
+                                                type="button"
+                                                onClick={() => toggleFeatured(product.id, !!product.featured)}
+                                                className={`text-xs font-bold px-3 py-1 rounded-full border ${product.featured ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-gray-50 text-gray-600 border-gray-200'}`}
+                                                title="Mettre en vedette sur l'accueil / catalogue"
+                                            >
+                                                {product.featured ? '★ En vedette' : 'Mettre en vedette'}
+                                            </button>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <div className="flex gap-2 justify-end">

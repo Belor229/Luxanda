@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
 import { prisma } from '@/lib/prisma'
+import { Role } from '@prisma/client'
 
 import { rateLimit } from '@/lib/rate-limit'
 
@@ -88,6 +89,45 @@ export async function POST(request: NextRequest) {
     if (authError || !authData.user) {
       console.error('Supabase Register Error:', authError)
       return NextResponse.json({ error: authError?.message || 'Erreur lors de la création du compte' }, { status: 400 })
+    }
+
+    const fullName = `${firstName || ''} ${lastName || ''}`.trim()
+
+    // Sync public.users + profil dans la même base que Prisma (rôle VENDOR/USER, téléphone)
+    // Obligatoire pour middleware, /api/users/me et panneau admin
+    try {
+      await prisma.user.upsert({
+        where: { id: authData.user.id },
+        create: {
+          id: authData.user.id,
+          email,
+          name: fullName || email,
+          password: 'PROTECTED_BY_SUPABASE_AUTH',
+          role: isVendor ? Role.VENDOR : Role.USER,
+        },
+        update: {
+          role: isVendor ? Role.VENDOR : Role.USER,
+          name: fullName || undefined,
+        },
+      })
+
+      await prisma.userProfile.upsert({
+        where: { userId: authData.user.id },
+        create: {
+          userId: authData.user.id,
+          firstName: firstName || null,
+          lastName: lastName || null,
+          phone: phone || null,
+        },
+        update: {
+          firstName: firstName || null,
+          lastName: lastName || null,
+          phone: phone || null,
+        },
+      })
+    } catch (syncErr) {
+      console.error('Register: sync user/profile Prisma error:', syncErr)
+      // On continue : le trigger Supabase peut avoir créé l'utilisateur ; le bloc vendeur peut encore échouer si FK
     }
 
     // If vendor, handle file uploads and create row
