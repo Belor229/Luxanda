@@ -132,6 +132,11 @@ function VendorDashboardContent() {
                 <p className="text-gray-500 font-medium text-lg leading-relaxed mb-6 max-w-md mx-auto">
                   Votre dossier est en cours de révision par l'équipe Luxanda. Nous vérifions vos documents pour assurer la sécurité de la marketplace.
                 </p>
+                <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-2xl mb-6">
+                  <p className="text-sm text-yellow-800 font-bold text-center">
+                    ⏰ Délai de validation : 24-48 heures
+                  </p>
+                </div>
                 <div className="animate-pulse flex items-center justify-center gap-2 text-primary-orange font-bold uppercase tracking-widest text-xs">
                   <Package className="w-4 h-4" /> Analyse documents en cours...
                 </div>

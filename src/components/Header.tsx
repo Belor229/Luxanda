@@ -130,17 +130,41 @@ export default function Header() {
                   )}
 
 
-                  <Link href="/profile" className="flex items-center gap-2 hover:text-primary-orange transition-colors py-1 px-2 rounded">
-                    <UserIcon className="h-4 w-4" />
-                    <span className="hidden sm:inline">{user.email?.split('@')[0]}</span>
-                  </Link>
-
-                  <button
-                    onClick={handleLogout}
-                    className="hover:text-red-400 transition-colors py-1 px-2 rounded"
-                  >
-                    Déconnexion
-                  </button>
+                  <div className="relative group">
+                    <button className="flex items-center gap-2 hover:text-primary-orange transition-colors py-1 px-2 rounded">
+                      <div className="h-8 w-8 bg-gradient-to-br from-primary-blue to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-lg shadow-blue-500/20">
+                        {user.email?.charAt(0).toUpperCase()}
+                      </div>
+                      <span className="hidden sm:inline">{user.email?.split('@')[0]}</span>
+                    </button>
+                    
+                    {/* Dropdown Menu */}
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                      <div className="py-2">
+                        <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary-orange transition-colors">
+                          <div className="flex items-center gap-2">
+                            <UserIcon className="h-4 w-4" />
+                            Informations Personnelles
+                          </div>
+                        </Link>
+                        {userRole && userRole !== 'USER' && (
+                          <Link href={getDashboardLink()} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary-orange transition-colors">
+                            <div className="flex items-center gap-2">
+                              <LayoutDashboard className="h-4 w-4" />
+                              {userRole === 'ADMIN' ? 'Admin' : 'Tableau de Bord'}
+                            </div>
+                          </Link>
+                        )}
+                        <hr className="my-2 border-gray-100" />
+                        <button
+                          onClick={handleLogout}
+                          className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          Déconnexion
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <Link href="/login" className="hover:text-primary-orange transition-colors py-1 px-2 rounded">

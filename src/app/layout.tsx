@@ -23,8 +23,8 @@ const poppins = Poppins({
 
 export const metadata: Metadata = {
   title: 'Luxanda - Le marché en ligne qui inspire confiance',
-  description: 'Luxanda, la marketplace africaine qui inspire confiance. Produits mis en avant, espace vendeurs, programme de récompenses, blog et newsletter.',
-  keywords: 'marketplace, afrique, bénin, e-commerce, vendeurs, acheteurs, confiance',
+  description: 'Luxanda - Marketplace au Bénin. Achetez et vendez en toute confiance. Vendeurs vérifiés, produits locaux, paiement sécurisé Kkiapay. Livraison en cours de lancement.',
+  keywords: 'marketplace Bénin, e-commerce Bénin, Cotonou, Porto-Novo, Parakou, achats en ligne, vendre au Bénin, Kkiapay, Mobile Money, marketplace africaine, confiance, sécurité',
   authors: [{ name: 'Luxanda Team' }],
   creator: 'Luxanda',
   publisher: 'Luxanda',
@@ -33,28 +33,36 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL('https://luxanda.bj'),
+  metadataBase: new URL('https://luxanda.vercel.app'),
   alternates: {
     canonical: '/',
   },
   icons: {
     icon: [
-      { url: '/favicon.svg', type: 'image/svg+xml' }
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-96x96.png', sizes: '96x96', type: 'image/png' },
+      { url: '/favicon-196x196.png', sizes: '196x196', type: 'image/png' },
     ],
-    shortcut: '/favicon.svg',
-    apple: '/favicon.svg',
+    shortcut: '/favicon.ico',
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }
+    ],
   },
+  manifest: '/manifest.json',
+  themeColor: '#FF6B35',
   openGraph: {
     title: 'Luxanda - Le marché en ligne qui inspire confiance',
-    description: 'Luxanda, la marketplace africaine qui inspire confiance. Produits mis en avant, espace vendeurs, programme de récompenses.',
-    url: 'https://luxanda.bj',
+    description: 'Marketplace au Bénin. Achetez et vendez en toute confiance avec des vendeurs vérifiés et paiement Kkiapay sécurisé.',
+    url: 'https://luxanda.vercel.app',
     siteName: 'Luxanda',
     images: [
       {
         url: '/images/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'Luxanda - Marketplace Africaine',
+        alt: 'Luxanda - Marketplace Bénin',
       },
     ],
     locale: 'fr_BJ',
@@ -63,7 +71,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Luxanda - Le marché en ligne qui inspire confiance',
-    description: 'Luxanda, la marketplace africaine qui inspire confiance.',
+    description: 'Marketplace au Bénin. Vendeurs vérifiés, produits locaux, paiement Kkiapay sécurisé.',
     images: ['/images/og-image.jpg'],
   },
   robots: {
@@ -76,6 +84,19 @@ export const metadata: Metadata = {
       'max-image-preview': 'large',
       'max-snippet': -1,
     },
+  },
+  other: {
+    'geo.region': 'BJ',
+    'geo.placename': 'Bénin, Cotonou',
+    'geo.position': '6.4965;2.6293',
+    'ICBM': '6.4965,2.6293',
+    'language': 'fr',
+    'author': 'Luxanda',
+    'application-name': 'Luxanda',
+    'apple-mobile-web-app-title': 'Luxanda',
+    'apple-mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-status-bar-style': 'default',
+    'msapplication-TileColor': '#FF6B35',
   },
 }
 
