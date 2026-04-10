@@ -7,8 +7,6 @@ export const dynamic = 'force-dynamic'
 import { assertAdmin } from '@/lib/admin-auth'
 import { logAdminAction } from '@/lib/admin-logger'
 
-export const dynamic = 'force-dynamic'
-
 export async function GET(request: NextRequest) {
     try {
         const cookieStore = cookies()
