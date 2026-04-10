@@ -17,6 +17,8 @@ interface DashboardStats {
   totalVendors: number
   totalProducts: number
   pendingVendors: number
+  activeSubscriptions: number
+  totalReports: number
 }
 
 export default function AdminDashboard() {
@@ -45,7 +47,7 @@ export default function AdminDashboard() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-full">
-        <div className="loading-spinner"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-orange"></div>
       </div>
     )
   }
@@ -60,123 +62,88 @@ export default function AdminDashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {/* Users Card */}
-        <div className="bg-white overflow-hidden shadow rounded-lg">
+        <div className="bg-white overflow-hidden shadow rounded-lg border-t-4 border-blue-500">
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <Users className="h-6 w-6 text-gray-400" />
+                <Users className="h-6 w-6 text-blue-500" />
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Utilisateurs Total
-                  </dt>
-                  <dd>
-                    <div className="text-lg font-medium text-gray-900">
-                      {stats?.totalUsers || 0}
-                    </div>
-                  </dd>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Utilisateurs</dt>
+                  <dd className="text-lg font-bold text-gray-900">{stats?.totalUsers || 0}</dd>
                 </dl>
               </div>
-            </div>
-          </div>
-          <div className="bg-gray-50 px-5 py-3">
-            <div className="text-sm">
-              <Link href="/admin/users" className="font-medium text-primary-orange hover:text-orange-600">
-                Voir tout
-              </Link>
             </div>
           </div>
         </div>
 
         {/* Vendors Card */}
-        <div className="bg-white overflow-hidden shadow rounded-lg">
+        <div className="bg-white overflow-hidden shadow rounded-lg border-t-4 border-orange-500">
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <Store className="h-6 w-6 text-gray-400" />
+                <Store className="h-6 w-6 text-orange-500" />
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Vendeurs
-                  </dt>
-                  <dd>
-                    <div className="text-lg font-medium text-gray-900">
-                      {stats?.totalVendors || 0}
-                    </div>
-                  </dd>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Vendeurs</dt>
+                  <dd className="text-lg font-bold text-gray-900">{stats?.totalVendors || 0}</dd>
                 </dl>
               </div>
-            </div>
-          </div>
-          <div className="bg-gray-50 px-5 py-3">
-            <div className="text-sm">
-              <Link href="/admin/vendors" className="font-medium text-primary-orange hover:text-orange-600">
-                Voir tout
-              </Link>
             </div>
           </div>
         </div>
 
         {/* Products Card */}
-        <div className="bg-white overflow-hidden shadow rounded-lg">
+        <div className="bg-white overflow-hidden shadow rounded-lg border-t-4 border-green-500">
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <ShoppingBag className="h-6 w-6 text-gray-400" />
+                <ShoppingBag className="h-6 w-6 text-green-500" />
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Produits
-                  </dt>
-                  <dd>
-                    <div className="text-lg font-medium text-gray-900">
-                      {stats?.totalProducts || 0}
-                    </div>
-                  </dd>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Produits</dt>
+                  <dd className="text-lg font-bold text-gray-900">{stats?.totalProducts || 0}</dd>
                 </dl>
               </div>
-            </div>
-          </div>
-          <div className="bg-gray-50 px-5 py-3">
-            <div className="text-sm">
-              <Link href="/admin/products" className="font-medium text-primary-orange hover:text-orange-600">
-                Voir tout
-              </Link>
             </div>
           </div>
         </div>
 
-        {/* Pending Vendors Card */}
-        <div className="bg-white overflow-hidden shadow rounded-lg border-l-4 border-yellow-400">
+        {/* Subscriptions Card */}
+        <div className="bg-white overflow-hidden shadow rounded-lg border-t-4 border-purple-500">
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <AlertCircle className="h-6 w-6 text-yellow-400" />
+                <TrendingUp className="h-6 w-6 text-purple-500" />
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Vendeurs en attente
-                  </dt>
-                  <dd>
-                    <div className="text-lg font-medium text-gray-900">
-                      {stats?.pendingVendors || 0}
-                    </div>
-                  </dd>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Abonnements</dt>
+                  <dd className="text-lg font-bold text-gray-900">{stats?.activeSubscriptions || 0}</dd>
                 </dl>
               </div>
             </div>
           </div>
-          <div className="bg-gray-50 px-5 py-3">
-            <div className="text-sm">
-              <Link href="/admin/vendors?status=PENDING" className="font-medium text-primary-orange hover:text-orange-600 flex items-center">
-                Review requests <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
+        </div>
+
+        {/* Reports Card */}
+        <div className="bg-white overflow-hidden shadow rounded-lg border-t-4 border-red-500">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <AlertCircle className="h-6 w-6 text-red-500" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Signalements</dt>
+                  <dd className="text-lg font-bold text-gray-900">{stats?.totalReports || 0}</dd>
+                </dl>
+              </div>
             </div>
           </div>
         </div>

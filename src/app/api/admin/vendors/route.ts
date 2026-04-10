@@ -5,12 +5,13 @@ import { prisma } from '@/lib/prisma'
 import { NotificationsService } from '@/lib/notifications'
 import { assertAdmin } from '@/lib/admin-auth'
 import { z } from 'zod'
+import { logAdminAction } from '@/lib/admin-logger'
 
 export const dynamic = 'force-dynamic'
 
 const adminActionSchema = z.object({
     vendor_id: z.string().uuid(),
-    action: z.enum(['approve', 'reject', 'suspend', 'approve_registration', 'approve_activation']),
+    action: z.enum(['approve', 'reject', 'suspend', 'approve_activation']),
     reason: z.string().optional()
 })
 
@@ -45,33 +46,11 @@ export async function POST(request: Request) {
         let subscriptionStatus: any = undefined
 
         switch (action) {
-            case 'approve_registration':
-                updateData = {
-                    status: 'APPROVED_REGISTRATION',
-                    registrationConfirmedAt: new Date(),
-                    admin_notes: reason || 'Inscription approuvée par admin - En attente d\'activation par le vendeur'
-                }
-                break
-
-            case 'approve_activation':
-                updateData = {
-                    status: 'APPROVED',
-                    activationConfirmedAt: new Date(),
-                    trial_start_date: new Date(),
-                    trial_end_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-                    admin_notes: reason || 'Boutique activée et approuvée par admin'
-                }
-                subscriptionStatus = 'ACTIVE'
-                break
-
             case 'approve':
-                // Legacy or direct full approval
                 updateData = {
                     status: 'APPROVED',
                     registrationConfirmedAt: new Date(),
                     activationConfirmedAt: new Date(),
-                    trial_start_date: new Date(),
-                    trial_end_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
                     admin_notes: reason || 'Approuvé par admin'
                 }
                 subscriptionStatus = 'ACTIVE'
@@ -93,6 +72,17 @@ export async function POST(request: Request) {
                 }
                 subscriptionStatus = 'EXPIRED'
                 break
+
+            case 'approve_activation':
+                updateData = {
+                    status: 'APPROVED',
+                    activationConfirmedAt: new Date(),
+                    trial_start_date: new Date(),
+                    trial_end_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days
+                    admin_notes: reason || 'Essai 14 jours activé par admin'
+                }
+                subscriptionStatus = 'ACTIVE'
+                break
         }
 
         const updatedVendor = await prisma.vendor.update({
@@ -100,7 +90,6 @@ export async function POST(request: Request) {
             data: updateData
         })
 
-        // Update subscriptions if any (évite data: { status: undefined })
         if (subscriptionStatus !== undefined) {
             await prisma.subscription.updateMany({
                 where: { vendorId: vendor_id, status: 'PENDING' },
@@ -108,15 +97,13 @@ export async function POST(request: Request) {
             })
         }
 
-        // Audit Log
-        await prisma.auditLog.create({
-            data: {
-                adminId: authUser.id,
-                action: `VENDOR_${action.toUpperCase()}`,
-                targetId: vendor_id,
-                details: reason || `Vendor ${action} without specific reason`
-            }
-        })
+        // Centralized Log
+        await logAdminAction(
+            authUser.id,
+            `VENDOR_${action.toUpperCase()}`,
+            vendor_id,
+            { reason, storeName: vendor.storeName }
+        )
 
         // Notifications
         if (vendor.user.profile?.phone) {
@@ -187,6 +174,7 @@ export async function GET(request: Request) {
             },
             orderBy: { createdAt: 'desc' }
         })
+
         const vendorsWithDocUrls = vendors.map((vendor) => {
             const idCardUrl = vendor.id_card_url
                 ? supabase.storage.from('identity-documents').getPublicUrl(vendor.id_card_url).data.publicUrl

@@ -21,11 +21,15 @@ export async function GET(request: Request) {
     const cookieStore = cookies()
     const supabase = createClient(cookieStore)
 
+    const minPrice = searchParams.get('minPrice')
+    const maxPrice = searchParams.get('maxPrice')
+    const city = searchParams.get('city')
+
     let query = supabase
       .from('products')
       .select(`
         *,
-        vendor:vendors(store_name, userId),
+        vendor:vendors!inner(store_name, user_id, city),
         category:categories(name)
       `, { count: 'exact' })
       .eq('status', 'ACTIVE')
@@ -40,6 +44,18 @@ export async function GET(request: Request) {
 
     if (featured) {
       query = query.eq('featured', true)
+    }
+
+    if (minPrice) {
+      query = query.gte('price', minPrice)
+    }
+
+    if (maxPrice) {
+      query = query.lte('price', maxPrice)
+    }
+
+    if (city) {
+      query = query.eq('vendor.city', city)
     }
 
     const { data: products, count, error } = await query
@@ -86,7 +102,7 @@ export async function POST(request: Request) {
     const { data: vendor } = await supabase
       .from('vendors')
       .select('id, status, trial_end_date')
-      .eq('userId', session.user.id)
+      .eq('user_id', session.user.id)
       .single()
 
     if (!vendor) {
@@ -112,8 +128,8 @@ export async function POST(request: Request) {
         name: validatedData.name,
         description: validatedData.description,
         price: validatedData.price,
-        vendorId: vendor.id,
-        categoryId: validatedData.category_id,
+        vendor_id: vendor.id,
+        category_id: validatedData.category_id,
         image_urls: validatedData.image_urls,
         quantity: validatedData.stock,
         status: 'ACTIVE',

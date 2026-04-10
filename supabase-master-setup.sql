@@ -52,33 +52,36 @@ CREATE TYPE public."ReportStatus" AS ENUM ('PENDING', 'REVIEWED', 'VALIDATED');
 CREATE TABLE public.users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email TEXT UNIQUE NOT NULL,
-    name TEXT,
-    password TEXT NOT NULL,
+    full_name TEXT,
+    password TEXT,
     role public."Role" DEFAULT 'USER' NOT NULL,
-    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
-    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
 
 -- User Profiles
 CREATE TABLE public.user_profiles (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    "userId" UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE UNIQUE,
-    "firstName" TEXT,
-    "lastName" TEXT,
+    user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE UNIQUE,
+    first_name TEXT,
+    last_name TEXT,
     phone TEXT,
     avatar TEXT,
-    "dateOfBirth" TIMESTAMP WITH TIME ZONE,
+    date_of_birth TIMESTAMP WITH TIME ZONE,
     gender public."Gender",
-    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
-    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
 
 -- Vendors
 CREATE TABLE public.vendors (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    "userId" UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE UNIQUE,
-    "storeName" TEXT NOT NULL,
+    user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE UNIQUE,
+    store_name TEXT NOT NULL,
     description TEXT,
+    whatsapp TEXT,
+    city TEXT,
+    category TEXT,
     id_card_url TEXT,
     selfie_url TEXT,
     trial_start_date TIMESTAMP WITH TIME ZONE,
@@ -86,6 +89,11 @@ CREATE TABLE public.vendors (
     status public."VendorStatus" DEFAULT 'PENDING' NOT NULL,
     rejection_reason TEXT,
     admin_notes TEXT,
+    ifu_url TEXT,
+    rccm_url TEXT,
+    registration_confirmed_at TIMESTAMP WITH TIME ZONE,
+    activation_requested_at TIMESTAMP WITH TIME ZONE,
+    activation_confirmed_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
@@ -96,20 +104,20 @@ CREATE TABLE public.categories (
     name TEXT UNIQUE NOT NULL,
     description TEXT,
     image TEXT,
-    "parentId" UUID REFERENCES public.categories(id) ON DELETE SET NULL,
-    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
-    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
+    parent_id UUID REFERENCES public.categories(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
 
 -- Products
 CREATE TABLE public.products (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    "vendorId" UUID NOT NULL REFERENCES public.vendors(id) ON DELETE CASCADE,
-    "categoryId" UUID NOT NULL REFERENCES public.categories(id),
+    vendor_id UUID NOT NULL REFERENCES public.vendors(id) ON DELETE CASCADE,
+    category_id UUID NOT NULL REFERENCES public.categories(id),
     name TEXT NOT NULL,
     description TEXT,
     price DOUBLE PRECISION NOT NULL,
-    "comparePrice" DOUBLE PRECISION,
+    compare_price DOUBLE PRECISION,
     cost DOUBLE PRECISION,
     sku TEXT UNIQUE,
     barcode TEXT,
@@ -119,51 +127,52 @@ CREATE TABLE public.products (
     featured BOOLEAN DEFAULT false NOT NULL,
     tags TEXT[] DEFAULT '{}',
     images TEXT[] DEFAULT '{}',
-    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
-    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
 
 -- Subscriptions
 CREATE TABLE public.subscriptions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    "userId" UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-    "vendorId" UUID REFERENCES public.vendors(id) ON DELETE SET NULL,
+    user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    vendor_id UUID REFERENCES public.vendors(id) ON DELETE SET NULL,
     plan public."SubscriptionPlan" NOT NULL,
     amount DOUBLE PRECISION NOT NULL,
     status public."SubscriptionStatus" DEFAULT 'PENDING' NOT NULL,
-    "paymentRef" TEXT,
-    "startDate" TIMESTAMP WITH TIME ZONE,
-    "endDate" TIMESTAMP WITH TIME ZONE,
-    "trialEndDate" TIMESTAMP WITH TIME ZONE,
-    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
-    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
+    payment_ref TEXT,
+    start_date TIMESTAMP WITH TIME ZONE,
+    end_date TIMESTAMP WITH TIME ZONE,
+    trial_end_date TIMESTAMP WITH TIME ZONE,
+    transaction_id UUID,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
 
 -- Orders
 CREATE TABLE public.orders (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    "userId" UUID NOT NULL REFERENCES public.users(id),
+    user_id UUID NOT NULL REFERENCES public.users(id),
     status public."OrderStatus" DEFAULT 'PENDING' NOT NULL,
     total DOUBLE PRECISION NOT NULL,
     subtotal DOUBLE PRECISION NOT NULL,
     tax DOUBLE PRECISION DEFAULT 0 NOT NULL,
     shipping DOUBLE PRECISION DEFAULT 0 NOT NULL,
     discount DOUBLE PRECISION DEFAULT 0 NOT NULL,
-    "paymentMethod" TEXT,
-    "paymentStatus" public."PaymentStatus" DEFAULT 'PENDING' NOT NULL,
+    payment_method TEXT,
+    payment_status public."PaymentStatus" DEFAULT 'PENDING' NOT NULL,
     notes TEXT,
-    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
-    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
-    "addressId" UUID NOT NULL -- Will be linked after Address table creation
+    address_id UUID NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
 
 -- Addresses
 CREATE TABLE public.addresses (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    "userId" UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
     type public."AddressType" DEFAULT 'SHIPPING' NOT NULL,
-    "firstName" TEXT NOT NULL,
-    "lastName" TEXT NOT NULL,
+    first_name TEXT NOT NULL,
+    last_name TEXT NOT NULL,
     company TEXT,
     address1 TEXT NOT NULL,
     address2 TEXT,
@@ -172,26 +181,41 @@ CREATE TABLE public.addresses (
     country TEXT NOT NULL,
     zip TEXT NOT NULL,
     phone TEXT,
-    "isDefault" BOOLEAN DEFAULT false NOT NULL,
-    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
-    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
+    is_default BOOLEAN DEFAULT false NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
 
 -- Link Order to Address
-ALTER TABLE public.orders ADD CONSTRAINT orders_addressId_fkey FOREIGN KEY ("addressId") REFERENCES public.addresses(id);
+ALTER TABLE public.orders ADD CONSTRAINT orders_addressId_fkey FOREIGN KEY (address_id) REFERENCES public.addresses(id);
 
 -- Order Items
 CREATE TABLE public.order_items (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    "orderId" UUID NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
-    "productId" UUID NOT NULL REFERENCES public.products(id),
+    order_id UUID NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
+    product_id UUID NOT NULL REFERENCES public.products(id),
     quantity INTEGER NOT NULL,
     price DOUBLE PRECISION NOT NULL,
     total DOUBLE PRECISION NOT NULL
 );
 
+-- Finance Transactions
+CREATE TABLE public.finance_transactions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    amount DOUBLE PRECISION NOT NULL,
+    status TEXT NOT NULL,
+    provider TEXT DEFAULT 'genius_pay' NOT NULL,
+    reference TEXT UNIQUE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
+);
+
+-- Add missing relation to Subscriptions
+ALTER TABLE public.subscriptions ADD CONSTRAINT subscriptions_transaction_id_fkey FOREIGN KEY (transaction_id) REFERENCES public.finance_transactions(id);
+
 -- Audit Logs
-CREATE TABLE public.audit_logs (
+CREATE TABLE public.admin_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     admin_id UUID NOT NULL REFERENCES public.users(id),
     action TEXT NOT NULL,
@@ -214,23 +238,36 @@ CREATE TABLE public.contact_messages (
 -- Reports
 CREATE TABLE public.reports (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    "productId" UUID REFERENCES public.products(id) ON DELETE SET NULL,
-    "vendorId" UUID REFERENCES public.vendors(id) ON DELETE SET NULL,
-    "userId" UUID REFERENCES public.users(id) ON DELETE SET NULL,
+    product_id UUID REFERENCES public.products(id) ON DELETE SET NULL,
+    vendor_id UUID REFERENCES public.vendors(id) ON DELETE SET NULL,
+    user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
     motif TEXT NOT NULL,
     description TEXT,
     status public."ReportStatus" DEFAULT 'PENDING' NOT NULL,
-    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
+);
+
+-- Identity Documents
+CREATE TYPE public."DocStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
+CREATE TABLE public.identity_docs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    vendor_id UUID NOT NULL REFERENCES public.vendors(id) ON DELETE CASCADE,
+    type TEXT NOT NULL, -- 'ID_CARD', 'SELFIE', 'IFU', 'RCCM'
+    url TEXT NOT NULL,
+    status public."DocStatus" DEFAULT 'PENDING' NOT NULL,
+    rejection_reason TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
 
 -- Legal Acceptance Logs
 CREATE TABLE public.legal_acceptance_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    "userId" UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
     date TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
     ip TEXT,
-    "documentVersion" TEXT NOT NULL,
-    "userAgent" TEXT
+    document_version TEXT NOT NULL,
+    user_agent TEXT
 );
 
 -- 4. FONCTIONS ET TRIGGERS
@@ -239,7 +276,7 @@ CREATE TABLE public.legal_acceptance_logs (
 CREATE OR REPLACE FUNCTION public.handle_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
-    NEW."updatedAt" = now();
+    NEW.updated_at = now();
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -250,13 +287,15 @@ CREATE TRIGGER set_updated_at_profiles BEFORE UPDATE ON public.user_profiles FOR
 CREATE TRIGGER set_updated_at_vendors BEFORE UPDATE ON public.vendors FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 CREATE TRIGGER set_updated_at_products BEFORE UPDATE ON public.products FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 CREATE TRIGGER set_updated_at_categories BEFORE UPDATE ON public.categories FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+CREATE TRIGGER set_updated_at_finance_transactions BEFORE UPDATE ON public.finance_transactions FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+CREATE TRIGGER set_updated_at_identity_docs BEFORE UPDATE ON public.identity_docs FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
 -- Synchronisation Auth -> Public
 -- Note: Cette fonction suppose que la table public.users stocke le même ID que auth.users
 CREATE OR REPLACE FUNCTION public.handle_new_auth_user()
 RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO public.users (id, email, password, name, role)
+    INSERT INTO public.users (id, email, password, full_name, role)
     VALUES (
         NEW.id,
         NEW.email,
@@ -265,7 +304,7 @@ BEGIN
         COALESCE((NEW.raw_user_meta_data->>'role')::public."Role", 'USER')
     );
 
-    INSERT INTO public.user_profiles ("userId")
+    INSERT INTO public.user_profiles (user_id)
     VALUES (NEW.id);
 
     RETURN NEW;
@@ -285,35 +324,36 @@ ALTER TABLE public.vendors ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.finance_transactions ENABLE ROW LEVEL SECURITY;
 
 -- Politiques Users / Profiles
 CREATE POLICY "Utilisateurs peuvent voir leur propre profil" ON public.users FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "Admins peuvent tout voir sur Users" ON public.users FOR ALL USING (EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'ADMIN'));
 
-CREATE POLICY "Utilisateurs peuvent voir leur UserProfile" ON public.user_profiles FOR SELECT USING (auth.uid() = "userId");
-CREATE POLICY "Utilisateurs peuvent modifier leur UserProfile" ON public.user_profiles FOR UPDATE USING (auth.uid() = "userId");
+CREATE POLICY "Utilisateurs peuvent voir leur UserProfile" ON public.user_profiles FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Utilisateurs peuvent modifier leur UserProfile" ON public.user_profiles FOR UPDATE USING (auth.uid() = user_id);
 
 -- Politiques Vendors
 CREATE POLICY "Tout le monde peut voir les vendeurs approuvés" ON public.vendors FOR SELECT USING (status = 'APPROVED');
-CREATE POLICY "Vendeurs peuvent gérer leur profil" ON public.vendors FOR ALL USING (auth.uid() = "userId");
+CREATE POLICY "Vendeurs peuvent gérer leur profil" ON public.vendors FOR ALL USING (auth.uid() = user_id);
 
 -- Politiques Products
 CREATE POLICY "Tout le monde peut voir les produits actifs" ON public.products FOR SELECT USING (status = 'ACTIVE');
-CREATE POLICY "Vendeurs peuvent gérer leurs produits" ON public.products FOR ALL USING (EXISTS (SELECT 1 FROM public.vendors WHERE id = "vendorId" AND "userId" = auth.uid()));
+CREATE POLICY "Vendeurs peuvent gérer leurs produits" ON public.products FOR ALL USING (EXISTS (SELECT 1 FROM public.vendors WHERE id = vendor_id AND user_id = auth.uid()));
 
 -- Politiques Orders
-CREATE POLICY "Clients peuvent voir leurs commandes" ON public.orders FOR SELECT USING (auth.uid() = "userId");
+CREATE POLICY "Clients peuvent voir leurs commandes" ON public.orders FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Vendeurs peuvent voir les commandes de leurs produits" ON public.orders FOR SELECT USING (EXISTS (
     SELECT 1 FROM public.order_items oi 
-    JOIN public.products p ON oi."productId" = p.id 
-    JOIN public.vendors v ON p."vendorId" = v.id 
-    WHERE oi."orderId" = public.orders.id AND v."userId" = auth.uid()
+    JOIN public.products p ON oi.product_id = p.id 
+    JOIN public.vendors v ON p.vendor_id = v.id 
+    WHERE oi.order_id = public.orders.id AND v.user_id = auth.uid()
 ));
 
 -- 6. DONNÉES DE DÉPART (SEED)
 
 -- Catégories master
-INSERT INTO public.categories (name, description, "updatedAt")
+INSERT INTO public.categories (name, description, updated_at)
 VALUES 
   ('Mode & Vêtements', 'Femme, Homme, Enfant, Accessoires, Chaussures', now()),
   ('Électronique & Téléphones', 'Smartphones, Accessoires, Audio, Informatique', now()),

@@ -31,9 +31,10 @@ model User {
   referralsAsReferrer Referral[] @relation("UserReferralsReferrer")
   referralsAsReferred Referral[] @relation("UserReferralsReferred")
   subscriptions Subscription[]
+  transactions  FinanceTransaction[]
   reports       Report[]
   legalLogs     LegalAcceptanceLog[]
-  auditLogs     AuditLog[] @relation("AdminLogs")
+  auditLogs     AdminLog[] @relation("AdminLogs")
 
   @@map("users")
 }
@@ -80,6 +81,9 @@ model Vendor {
   updatedAt   DateTime     @updatedAt @map("updated_at")
 
   // Relations
+  identityDocs IdentityDoc[]
+
+  // Relations
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   products Product[]
   reports  Report[]
@@ -88,7 +92,7 @@ model Vendor {
   @@map("vendors")
 }
 
-model AuditLog {
+model AdminLog {
   id        String   @id @default(uuid())
   adminId   String   @map("admin_id")
   action    String
@@ -98,7 +102,28 @@ model AuditLog {
 
   admin     User     @relation("AdminLogs", fields: [adminId], references: [id])
 
-  @@map("audit_logs")
+  @@map("admin_logs")
+}
+
+model IdentityDoc {
+  id              String   @id @default(uuid())
+  vendorId        String @map("vendor_id")
+  type            String   // 'ID_CARD', 'SELFIE', 'IFU', 'RCCM'
+  url             String
+  status          DocStatus @default(PENDING)
+  rejectionReason String? @map("rejection_reason")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@map("identity_docs")
+}
+
+enum DocStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 model Affiliate {
@@ -366,8 +391,26 @@ model Subscription {
   // Relations
   user   User    @relation(fields: [userId], references: [id])
   vendor Vendor? @relation(fields: [vendorId], references: [id])
+  transaction FinanceTransaction? @relation(fields: [transactionId], references: [id])
+  transactionId String? @map("transaction_id")
 
   @@map("subscriptions")
+}
+
+model FinanceTransaction {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  amount    Float
+  status    String   // 'PENDING', 'SUCCESS', 'FAILED'
+  provider  String   @default("genius_pay")
+  reference String   @unique // The provider's reference (e.g. GeniusPay's transaction ID)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+  subscription Subscription[]
+
+  @@map("finance_transactions")
 }
 
 model ContactMessage {

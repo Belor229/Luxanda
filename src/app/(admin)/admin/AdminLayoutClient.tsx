@@ -4,14 +4,19 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
-    Users,
-    ShoppingBag,
-    Settings,
-    LogOut,
-    Menu,
-    X,
     LayoutDashboard,
-    Store
+    Store,
+    ShoppingBag,
+    Users,
+    Settings,
+    Package,
+    AlertCircle,
+    FileText,
+    LogOut,
+    Zap,
+    CreditCard,
+    Menu,
+    X
 } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 
@@ -33,9 +38,14 @@ export default function AdminLayoutClient({
     const navigation = [
         { name: 'Tableau de bord', href: '/admin', icon: LayoutDashboard },
         { name: 'Vendeurs', href: '/admin/vendors', icon: Store },
-        { name: 'Utilisateurs', href: '/admin/users', icon: Users },
         { name: 'Produits', href: '/admin/products', icon: ShoppingBag },
-        { name: 'Paramètres', href: '/admin/settings', icon: Settings },
+        { name: 'Commandes', href: '/admin/orders', icon: Package },
+        { name: 'Abonnements', href: '/admin/subscriptions', icon: Zap },
+        { name: 'Transactions', href: '/admin/transactions', icon: CreditCard },
+        { name: 'Signalements', href: '/admin/reports', icon: AlertCircle },
+        { name: 'Journal Admin', href: '/admin/logs', icon: FileText },
+        { name: 'Utilisateurs', href: '/admin/users', icon: Users },
+        { name: 'Configuration', href: '/admin/settings', icon: Settings },
     ]
 
     return (

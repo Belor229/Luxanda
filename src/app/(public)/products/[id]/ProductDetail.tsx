@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { MessageCircle, ArrowLeft, ShieldCheck, Truck, AlertTriangle } from 'lucide-react'
+import ReviewList from '@/components/ReviewList'
+import ReviewForm from '@/components/ReviewForm'
 
 interface Product {
     id: string
@@ -191,6 +193,18 @@ export default function ProductDetail({ id }: { id: string }) {
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Reviews Section */}
+                <div className="mt-16 bg-white rounded-[3rem] p-12 border border-gray-100 shadow-sm">
+                    <div className="flex flex-col lg:flex-row gap-16">
+                        <div className="flex-1">
+                            <ReviewList productId={id} />
+                        </div>
+                        <div className="lg:w-1/3">
+                            <ReviewForm productId={id} />
                         </div>
                     </div>
                 </div>

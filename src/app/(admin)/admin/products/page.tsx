@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Trash2, Search, Filter, Eye, Check, ShieldCheck } from 'lucide-react'
+import { Trash2, Search, Filter, Eye, Check, ShieldCheck, X, AlertTriangle } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -79,22 +79,23 @@ function AdminProductsContent() {
         }
     }
 
-    const handleStatusChange = async (id: string, newStatus: string) => {
+    const handleModerationAction = async (productId: string, action: 'approve' | 'reject' | 'suspect', reason?: string) => {
+        if (!confirm(`Confirmer l'action : ${action} sur ce produit ?`)) return
         try {
-            const response = await fetch(`/api/products/${id}`, {
-                method: 'PATCH',
-                credentials: 'include',
+            const response = await fetch(`/api/admin/products`, {
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: newStatus })
+                body: JSON.stringify({ productId, action, reason })
             })
 
             if (response.ok) {
                 fetchProducts()
             } else {
-                alert('Erreur lors du changement de statut')
+                const err = await response.json()
+                alert(err.error || 'Erreur lors de la modération')
             }
         } catch (error) {
-            console.error('Error updating product status:', error)
+            console.error('Error updating product moderation:', error)
         }
     }
 
@@ -247,12 +248,44 @@ function AdminProductsContent() {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <div className="flex gap-2 justify-end">
-                                                <Link href={`/products/${product.id}`} target="_blank" className="text-blue-600 hover:text-blue-900 bg-blue-50 p-1 rounded">
+                                                <Link href={`/products/${product.id}`} target="_blank" className="text-gray-600 hover:text-gray-900 bg-gray-50 p-1.5 rounded-lg border border-gray-100 transition-colors" title="Aperçu">
                                                     <Eye className="h-4 w-4" />
                                                 </Link>
+                                                
+                                                {product.status !== 'ACTIVE' && (
+                                                    <button
+                                                        onClick={() => handleModerationAction(product.id, 'approve')}
+                                                        className="text-green-600 hover:text-green-900 bg-green-50 p-1.5 rounded-lg border border-green-100 transition-colors"
+                                                        title="Approuver"
+                                                    >
+                                                        <Check className="h-4 w-4" />
+                                                    </button>
+                                                )}
+
+                                                {product.status !== 'REJECTED' && (
+                                                    <button
+                                                        onClick={() => handleModerationAction(product.id, 'reject')}
+                                                        className="text-red-600 hover:text-red-900 bg-red-50 p-1.5 rounded-lg border border-red-100 transition-colors"
+                                                        title="Rejeter"
+                                                    >
+                                                        <X className="h-4 w-4" />
+                                                    </button>
+                                                )}
+
+                                                {product.status !== 'SUSPECT' && (
+                                                    <button
+                                                        onClick={() => handleModerationAction(product.id, 'suspect')}
+                                                        className="text-orange-600 hover:text-orange-900 bg-orange-50 p-1.5 rounded-lg border border-orange-100 transition-colors"
+                                                        title="Marquer comme suspect"
+                                                    >
+                                                        <AlertTriangle className="h-4 w-4" />
+                                                    </button>
+                                                )}
+
                                                 <button
                                                     onClick={() => handleDelete(product.id)}
-                                                    className="text-red-600 hover:text-red-900 bg-red-50 p-1 rounded"
+                                                    className="text-gray-400 hover:text-red-600 bg-gray-50 p-1.5 rounded-lg border border-gray-100 transition-colors"
+                                                    title="Supprimer"
                                                 >
                                                     <Trash2 className="h-4 w-4" />
                                                 </button>

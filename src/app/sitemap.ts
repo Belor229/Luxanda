@@ -1,101 +1,44 @@
 import { MetadataRoute } from 'next'
-import { createClient } from '@/utils/supabase/server'
-import { cookies } from 'next/headers'
+import { prisma } from '@/lib/prisma'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-    const cookieStore = cookies()
-    const supabase = createClient(cookieStore)
-    const baseUrl = 'https://luxanda.bj'
+  const baseUrl = 'https://luxanda.com' // À adapter selon le domaine final
 
-    // Récupérer tous les produits actifs
-    const { data: products } = await supabase
-        .from('products')
-        .select('id, updated_at')
-        .eq('status', 'ACTIVE')
+  // 1. Pages statiques
+  const staticPages = [
+    '',
+    '/marketplace',
+    '/products',
+    '/about',
+    '/contact',
+    '/faq',
+  ].map((route) => ({
+    url: `${baseUrl}${route}`,
+    lastModified: new Date(),
+    changeFrequency: 'daily' as const,
+    priority: route === '' ? 1 : 0.8,
+  }))
 
-    // Pages statiques
-    const staticPages: MetadataRoute.Sitemap = [
-        {
-            url: baseUrl,
-            lastModified: new Date(),
-            changeFrequency: 'daily',
-            priority: 1,
-        },
-        {
-            url: `${baseUrl}/products`,
-            lastModified: new Date(),
-            changeFrequency: 'daily',
-            priority: 0.9,
-        },
-        {
-            url: `${baseUrl}/categories`,
-            lastModified: new Date(),
-            changeFrequency: 'weekly',
-            priority: 0.8,
-        },
-        {
-            url: `${baseUrl}/about`,
-            lastModified: new Date(),
-            changeFrequency: 'monthly',
-            priority: 0.5,
-        },
-        {
-            url: `${baseUrl}/contact`,
-            lastModified: new Date(),
-            changeFrequency: 'monthly',
-            priority: 0.5,
-        },
-        {
-            url: `${baseUrl}/faq`,
-            lastModified: new Date(),
-            changeFrequency: 'monthly',
-            priority: 0.5,
-        },
-        {
-            url: `${baseUrl}/terms`,
-            lastModified: new Date(),
-            changeFrequency: 'yearly',
-            priority: 0.3,
-        },
-        {
-            url: `${baseUrl}/privacy`,
-            lastModified: new Date(),
-            changeFrequency: 'yearly',
-            priority: 0.3,
-        },
-        {
-            url: `${baseUrl}/legal`,
-            lastModified: new Date(),
-            changeFrequency: 'yearly',
-            priority: 0.3,
-        },
-        {
-            url: `${baseUrl}/register`,
-            lastModified: new Date(),
-            changeFrequency: 'monthly',
-            priority: 0.7,
-        },
-        {
-            url: `${baseUrl}/login`,
-            lastModified: new Date(),
-            changeFrequency: 'monthly',
-            priority: 0.6,
-        },
-        {
-            url: `${baseUrl}/vendor/register`,
-            lastModified: new Date(),
-            changeFrequency: 'monthly',
-            priority: 0.7,
-        },
-    ]
+  // 2. Catégories dynamiques
+  const categories = await prisma.category.findMany({ select: { id: true, updatedAt: true } })
+  const categoryPages = categories.map((cat) => ({
+    url: `${baseUrl}/products?categoryId=${cat.id}`,
+    lastModified: cat.updatedAt,
+    changeFrequency: 'weekly' as const,
+    priority: 0.6,
+  }))
 
-    // Pages dynamiques des produits
-    const productPages = products?.map(product => ({
-        url: `${baseUrl}/products/${product.id}`,
-        lastModified: product.updated_at ? new Date(product.updated_at) : new Date(),
-        changeFrequency: 'weekly' as const,
-        priority: 0.8,
-    })) || []
+  // 3. Produits dynamiques
+  const products = await prisma.product.findMany({
+    where: { status: 'ACTIVE' },
+    select: { id: true, updatedAt: true }
+  })
+  const productPages = products.map((prod) => ({
+    url: `${baseUrl}/products/${prod.id}`,
+    lastModified: prod.updatedAt,
+    changeFrequency: 'weekly' as const,
+    priority: 0.7,
+  }))
 
-    return [...staticPages, ...productPages]
+  return [...staticPages, ...categoryPages, ...productPages]
 }

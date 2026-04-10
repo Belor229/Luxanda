@@ -1,8 +1,10 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Check, ShieldCheck, Zap, Rocket, Crown, ArrowRight, Gift, MessageCircle } from 'lucide-react'
+import { Check, ShieldCheck, Zap, Rocket, Crown, ArrowRight, Gift, MessageCircle, AlertCircle, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 
 const WHATSAPP_LINK = 'https://wa.me/2290141757559'
 
@@ -15,7 +17,6 @@ const PLANS = [
     color: 'blue',
     features: ['Jusqu\'à 50 produits', 'Support email', 'Statistiques de base', 'Badge vendeur vérifié'],
     description: 'Parfait pour débuter votre activité sur Luxanda.',
-    link: 'https://direct.kkiapay.me/37365/luxanda-plan-starter-Lga521FgK'
   },
   {
     id: 'PRO',
@@ -26,7 +27,6 @@ const PLANS = [
     featured: true,
     features: ['Produits illimités', 'Niveau de priorité élevé', 'Analytics avancés', 'Mise en avant mensuelle', 'Support 7j/7'],
     description: 'La solution optimale pour les boutiques en croissance.',
-    link: 'https://direct.kkiapay.me/37365/luxanda-plan-pro-ga-wXBWyv'
   },
   {
     id: 'PREMIUM',
@@ -36,11 +36,61 @@ const PLANS = [
     color: 'purple',
     features: ['Tout de Business Pro', 'Support téléphonique dédié', 'Formation personnalisée', 'Badge Premium exclusif', 'Mise en avant prioritaire dans les résultats'],
     description: 'L\'expérience ultime pour dominer le marché.',
-    link: 'https://direct.kkiapay.me/37365/luxanda-plan-premium-aUJiQWZGd'
   }
 ]
 
 export default function VendorSubscriptionPage() {
+  const [loading, setLoading] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [vendor, setVendor] = useState<any>(null)
+  const router = useRouter()
+
+  useEffect(() => {
+    fetchVendor()
+  }, [])
+
+  const fetchVendor = async () => {
+    try {
+      const res = await fetch('/api/vendor')
+      if (res.ok) {
+        setVendor(await res.json())
+      }
+    } catch (e) {
+      console.error('Error fetching vendor:', e)
+    }
+  }
+
+  const handlePayment = async (planId: string, amount: number) => {
+    if (!vendor) {
+      setError("Veuillez d'abord finaliser votre profil vendeur.")
+      return
+    }
+
+    try {
+      setLoading(planId)
+      setError(null)
+      const response = await fetch('/api/create-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plan: planId,
+          amount: amount,
+          vendorId: vendor.id
+        })
+      })
+
+      const data = await response.json()
+      if (response.ok && data.payment_url) {
+        window.location.href = data.payment_url
+      } else {
+        setError(data.error || 'Une erreur est survenue lors de l\'initialisation du paiement.')
+      }
+    } catch (err) {
+      setError('Erreur réseau. Veuillez réessayer.')
+    } finally {
+      setLoading(null)
+    }
+  }
   return (
     <div className="min-h-screen bg-gray-50/50 py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
 
@@ -108,18 +158,23 @@ export default function VendorSubscriptionPage() {
                 ))}
               </ul>
 
-              <a
-                href={plan.link}
+              <button
+                disabled={!!loading}
+                onClick={() => handlePayment(plan.id, plan.price)}
                 className={`w-full py-3.5 sm:py-4 px-6 sm:px-8 rounded-xl sm:rounded-2xl text-base sm:text-lg font-black transition-all flex items-center justify-center gap-2 min-h-[52px] ${plan.featured
                   ? 'bg-primary-orange text-white hover:bg-orange-600 shadow-xl shadow-orange-500/20'
                   : 'bg-gray-900 text-white hover:bg-black shadow-xl shadow-black/10'
-                  }`}
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
-                <>
-                  Commencer maintenant
-                  <ArrowRight className="h-5 w-5" />
-                </>
-              </a>
+                {loading === plan.id ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <>
+                    Commencer maintenant
+                    <ArrowRight className="h-5 w-5" />
+                  </>
+                )}
+              </button>
             </div>
           ))}
         </div>
