@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers'
+export const dynamic = 'force-dynamic'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import { prisma } from '@/lib/prisma'

@@ -5,9 +5,18 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export const createClient = (cookieStore: ReturnType<typeof cookies>) => {
+  if (!supabaseUrl || !supabaseKey) {
+    console.warn("Supabase URL or Key is missing. Returning a dummy client for build-time compatibility.");
+    // We return a client with empty values to avoid crashing the build, 
+    // but runtime usage will still fail if not configured.
+    return createServerClient("https://placeholder.supabase.co", "placeholder", {
+      cookies: { getAll: () => [], setAll: () => {} }
+    });
+  }
+
   return createServerClient(
-    supabaseUrl!,
-    supabaseKey!,
+    supabaseUrl,
+    supabaseKey,
     {
       cookies: {
         getAll() {

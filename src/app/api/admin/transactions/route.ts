@@ -4,6 +4,8 @@ import { assertAdmin } from '@/lib/admin-auth'
 import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: Request) {
     try {
         const cookieStore = cookies()

@@ -4,6 +4,8 @@ import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
 import { z } from 'zod'
 
+export const dynamic = 'force-dynamic'
+
 const GENIUS_PAY_API = 'https://pay.genius.ci/api/v1/merchant'
 const GENIUS_PAY_SECRET = process.env.GENIUS_PAY_SECRET_KEY || 'sk_sandbox_9802e5a024746acbecf87c0bc744961d0a24b4f3d60b57ea3f9ca68b6cdb587a'
 
