@@ -93,3 +93,19 @@ WITH CHECK (
     WHERE id = vendor_id AND user_id = auth.uid()
   )
 );
+
+-- 6. Table finance_transactions
+ALTER TABLE public.finance_transactions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Admins can view all transactions" 
+ON public.finance_transactions FOR SELECT 
+USING (
+  EXISTS (
+    SELECT 1 FROM public.users 
+    WHERE id = auth.uid() AND role = 'ADMIN'
+  )
+);
+
+CREATE POLICY "Users can view their own transactions" 
+ON public.finance_transactions FOR SELECT 
+USING (auth.uid() = user_id);
