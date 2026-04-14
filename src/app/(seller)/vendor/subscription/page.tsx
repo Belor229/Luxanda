@@ -7,21 +7,18 @@ const plans = [
         price: 5000,
         features: ['Jusqu\'à 50 produits', 'Support email', 'Statistiques de base', 'Badge vendeur vérifié'],
         recommended: false,
-        kkiapayLink: 'https://direct.kkiapay.me/37365/luxanda-plan-starter-Lga521FgK'
     },
     {
         name: 'Pro',
         price: 15000,
         features: ['Produits illimités', 'Niveau de priorité élevé', 'Analytics avancés', 'Mise en avant mensuelle', 'Support 7j/7'],
         recommended: true,
-        kkiapayLink: 'https://direct.kkiapay.me/37365/luxanda-plan-pro-ga-wXBWyv'
     },
     {
         name: 'Premium',
         price: 30000,
         features: ['Tout de Business Pro', 'Support téléphonique dédié', 'Formation personnalisée', 'Badge Premium exclusif', 'Mise en avant prioritaire dans les résultats'],
         recommended: false,
-        kkiapayLink: 'https://direct.kkiapay.me/37365/luxanda-plan-premium-aUJiQWZGd'
     }
 ]
 
@@ -90,7 +87,9 @@ export default function SubscriptionPage() {
 
                         <div className="p-4 sm:p-6 sm:p-8 bg-gray-50 rounded-b-2xl">
                                 <a
-                                    href={plan.kkiapayLink}
+                                    href={`https://wa.me/2290193389564?text=Bonjour, je souhaite souscrire au plan vendeur ${plan.name} sur Luxanda.`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
                                     className={`w-full block text-center btn ${plan.recommended ? 'btn-primary' : 'btn-primary bg-gray-800 hover:bg-gray-900'} py-2 sm:py-3 text-sm sm:text-lg font-semibold`}
                                 >
                                     Choisir {plan.name}
@@ -102,3 +101,4 @@ export default function SubscriptionPage() {
         </div>
     )
 }
+

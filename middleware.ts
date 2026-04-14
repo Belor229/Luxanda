@@ -49,7 +49,11 @@ export async function middleware(request: NextRequest) {
   // If accessing protected route without session, redirect to login
   if (isProtectedRoute && !session) {
     const redirectUrl = request.nextUrl.clone()
-    redirectUrl.pathname = '/login'
+    if (isAdminRoute) {
+      redirectUrl.pathname = '/admin/login'
+    } else {
+      redirectUrl.pathname = '/login'
+    }
     redirectUrl.searchParams.set('redirect', pathname)
     return NextResponse.redirect(redirectUrl)
   }
@@ -76,6 +80,11 @@ export async function middleware(request: NextRequest) {
           return NextResponse.redirect(new URL('/', request.url))
         }
 
+        // Isolate Admin from viewing public homepage
+        if (role === 'ADMIN' && pathname === '/') {
+          return NextResponse.redirect(new URL('/admin', request.url))
+        }
+
         // Seller access control
         if (isSellerRoute && role !== 'VENDOR' && role !== 'ADMIN') {
           return NextResponse.redirect(new URL('/', request.url))
@@ -96,6 +105,11 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/', request.url))
       }
     }
+  }
+
+  // Admin login route isolation
+  if (pathname === '/admin/login' && session) {
+      return NextResponse.redirect(new URL('/admin', request.url))
   }
 
   return supabaseResponse

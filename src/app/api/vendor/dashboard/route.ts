@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
+import { prisma } from '@/lib/prisma'
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,70 +13,116 @@ export async function GET(request: NextRequest) {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
 
-    // 1. Get Vendor info
-    const { data: vendor, error: vendorError } = await supabase
-      .from('vendors')
-      .select('*')
-      .eq('user_id', session.user.id)
-      .single()
+    // 1. Get Vendor info via Prisma
+    const vendor = await prisma.vendor.findUnique({
+      where: { userId: session.user.id }
+    })
 
-    if (vendorError || !vendor) {
+    if (!vendor) {
       return NextResponse.json({ error: 'Compte vendeur non trouvé' }, { status: 404 })
     }
 
-    // 2. Get Statistics (Using correct field names and capitalized status)
-    const [{ count: totalProducts }, { count: activeProducts }, { count: pendingOrders }, { data: totalSalesData }] = await Promise.all([
-      supabase.from('products').select('*', { count: 'exact', head: true }).eq('vendor_id', vendor.id),
-      supabase.from('products').select('*', { count: 'exact', head: true }).eq('vendor_id', vendor.id).eq('status', 'ACTIVE'),
-      supabase.from('orders').select('*', { count: 'exact', head: true }).eq('vendor_id', vendor.id).eq('status', 'PENDING'),
-      supabase.from('orders').select('total_amount').eq('vendor_id', vendor.id).eq('status', 'DELIVERED')
+    // 2. Statistics
+    const [totalProducts, activeProducts, pendingOrders, deliveredItems] = await Promise.all([
+      prisma.product.count({ where: { vendorId: vendor.id } }),
+      prisma.product.count({ where: { vendorId: vendor.id, status: 'ACTIVE' } }),
+      prisma.order.count({
+        where: {
+          status: 'PENDING',
+          items: { some: { product: { vendorId: vendor.id } } }
+        }
+      }),
+      prisma.orderItem.findMany({
+        where: {
+          product: { vendorId: vendor.id },
+          order: { status: 'DELIVERED' }
+        },
+        select: { total: true }
+      })
     ])
 
-    const totalRevenue = totalSalesData?.reduce((acc, curr) => acc + Number(curr.total_amount), 0) || 0
+    const totalRevenue = deliveredItems.reduce((acc, curr) => acc + curr.total, 0)
 
     // 3. Get Recent Data
-    const [{ data: recentProducts }, { data: recentOrders }] = await Promise.all([
-      supabase.from('products').select('*').eq('vendor_id', vendor.id).order('created_at', { ascending: false }).limit(5),
-      supabase.from('orders').select('*, profile:users(full_name)').eq('vendor_id', vendor.id).order('created_at', { ascending: false }).limit(5)
+    const [recentProducts, rawRecentOrders] = await Promise.all([
+      prisma.product.findMany({
+        where: { vendorId: vendor.id },
+        orderBy: { createdAt: 'desc' },
+        take: 5
+      }),
+      prisma.order.findMany({
+        where: {
+          items: { some: { product: { vendorId: vendor.id } } }
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+        include: {
+          user: {
+            include: { profile: true }
+          },
+          items: {
+             where: { product: { vendorId: vendor.id } }
+          }
+        }
+      })
     ])
 
-    // 4. Get Subscription info (Linked via userId as per schema)
-    const { data: subscription } = await supabase
-      .from('subscriptions')
-      .select('*')
-      .eq('user_id', session.user.id)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single()
+    // Format recent orders so it matches the expected structure in frontend: order.profile?.full_name, order.total_amount
+    const recentOrders = rawRecentOrders.map(order => {
+      const vendorTotal = order.items.reduce((sum, item) => sum + item.total, 0)
+      return {
+        id: order.id,
+        created_at: order.createdAt,
+        status: order.status.toLowerCase(),
+        total_amount: vendorTotal,
+        profile: {
+          full_name: order.user?.profile?.firstName && order.user?.profile?.lastName 
+            ? `${order.user.profile.firstName} ${order.user.profile.lastName}`
+            : order.user?.name || 'Client'
+        }
+      }
+    })
+
+    const dbProducts = recentProducts.map(p => ({
+      id: p.id,
+      title: p.name,
+      price: p.price,
+      stock: p.quantity,
+      image_urls: p.images || []
+    }))
+
+    // 4. Get Subscription info
+    const subscription = await prisma.subscription.findFirst({
+      where: { userId: session.user.id },
+      orderBy: { createdAt: 'desc' }
+    })
 
     // Calculate days left in trial or subscription
     let daysLeft = 0
     let isExpired = false
     const now = new Date()
     
-    // Check trial expiration first
-    if (subscription?.trial_end_date) {
-      const trialEnd = new Date(subscription.trial_end_date)
+    if (subscription?.trialEndDate) {
+      const trialEnd = new Date(subscription.trialEndDate)
       daysLeft = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
       isExpired = daysLeft <= 0
-    } else if (subscription?.end_date) {
-      const end = new Date(subscription.end_date)
+    } else if (subscription?.endDate) {
+      const end = new Date(subscription.endDate)
       daysLeft = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
       isExpired = daysLeft <= 0
     }
 
-    // Force status to EXPIRED if past due date
     if (isExpired && subscription?.status === 'ACTIVE') {
-      await supabase
-        .from('subscriptions')
-        .update({ status: 'EXPIRED' })
-        .eq('id', subscription.id)
+      await prisma.subscription.update({
+        where: { id: subscription.id },
+        data: { status: 'EXPIRED' }
+      })
     }
 
     return NextResponse.json({
       vendor: {
         id: vendor.id,
-        storeName: vendor.store_name,
+        storeName: vendor.storeName,
         status: vendor.status
       },
       stats: {
@@ -90,13 +137,13 @@ export async function GET(request: NextRequest) {
         subscription: subscription ? {
           plan: subscription.plan,
           status: isExpired ? 'EXPIRED' : subscription.status,
-          expiresAt: subscription.end_date || subscription.trial_end_date,
-          isTrial: !!subscription.trial_end_date && subscription.amount === 0,
+          expiresAt: subscription.endDate || subscription.trialEndDate,
+          isTrial: !!subscription.trialEndDate && subscription.amount === 0,
           daysLeft: Math.max(0, daysLeft)
         } : null
       },
-      products: recentProducts || [],
-      orders: recentOrders || []
+      products: dbProducts,
+      orders: recentOrders
     })
 
   } catch (error) {
@@ -104,3 +151,4 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Erreur lors de la récupération des données du dashboard' }, { status: 500 })
   }
 }
+
