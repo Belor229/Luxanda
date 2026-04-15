@@ -1,68 +1,59 @@
 -- ============================================================
--- LUXANDA AUTH SYSTEM MIGRATION
--- Vendor status simplification + Product approval workflow
+-- LUXANDA AUTH SYSTEM MIGRATION (FIXED)
 -- ============================================================
 
--- 1. Add INCOMPLETE to VendorStatus enum
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'INCOMPLETE' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'VendorStatus')) THEN
-    ALTER TYPE "VendorStatus" ADD VALUE 'INCOMPLETE' BEFORE 'PENDING';
-  END IF;
-END $$;
+-- IMPORTANT: RUN THIS SCRIPT IN TWO SEPARATE STEPS
+-- POSTGRES REQUIRE QUE LES NOUVELLES VALEURS D'ENUM SOIENT VALIDÉES 
+-- AVANT D'ÊTRE UTILISÉES DANS UN UPDATE DANS LA MÊME TRANSACTION.
 
--- 2. Migrate intermediary vendor statuses to simpler ones
-UPDATE vendors SET status = 'PENDING' WHERE status::text IN ('APPROVED_REGISTRATION', 'PENDING_ACTIVATION');
-UPDATE vendors SET status = 'SUSPENDED' WHERE status::text = 'SUSPENDED_AUTO';
+-- ============================================================
+-- PARTIE 1 : MISE À JOUR DU SCHÉMA
+-- ============================================================
 
--- 3. Add logo_url to vendors if not exists
+-- 1. Ajouter les valeurs aux Enums (Si elles n'existent pas)
+ALTER TYPE "VendorStatus" ADD VALUE IF NOT EXISTS 'INCOMPLETE';
+ALTER TYPE "ProductStatus" ADD VALUE IF NOT EXISTS 'PENDING';
+ALTER TYPE "ProductStatus" ADD VALUE IF NOT EXISTS 'APPROVED';
+ALTER TYPE "ProductStatus" ADD VALUE IF NOT EXISTS 'REJECTED';
+
+-- 2. Ajouter les colonnes manquantes
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'vendors' AND column_name = 'logo_url') THEN
     ALTER TABLE vendors ADD COLUMN logo_url TEXT;
   END IF;
-END $$;
-
--- 4. Add admin_notes to products if not exists
-DO $$
-BEGIN
+  
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'products' AND column_name = 'admin_notes') THEN
     ALTER TABLE products ADD COLUMN admin_notes TEXT;
   END IF;
 END $$;
 
--- 5. Update ProductStatus enum
--- Add new values first
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'PENDING' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'ProductStatus')) THEN
-    ALTER TYPE "ProductStatus" ADD VALUE 'PENDING';
-  END IF;
-END $$;
-
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'APPROVED' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'ProductStatus')) THEN
-    ALTER TYPE "ProductStatus" ADD VALUE 'APPROVED';
-  END IF;
-END $$;
-
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'REJECTED' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'ProductStatus')) THEN
-    ALTER TYPE "ProductStatus" ADD VALUE 'REJECTED';
-  END IF;
-END $$;
-
--- 6. Migrate existing product data
--- ACTIVE -> APPROVED, DRAFT -> PENDING
-UPDATE products SET status = 'APPROVED' WHERE status = 'ACTIVE';
-UPDATE products SET status = 'PENDING' WHERE status = 'DRAFT';
-
--- Products marked as ARCHIVED stay as-is for now (we keep the enum value but won't use it)
--- If you want to migrate archived products: UPDATE products SET status = 'REJECTED' WHERE status = 'ARCHIVED';
+-- ============================================================
+-- ARRÊT : EXÉCUTEZ LA PARTIE CI-DESSUS D'ABORD, PUIS CELLE CI-DESSOUS
+-- ============================================================
 
 -- ============================================================
--- DONE: Run this in Supabase SQL Editor
--- After running, do `npx prisma db pull` to sync schema
+-- PARTIE 2 : MIGRATION DES DONNÉES
+-- ============================================================
+
+-- 3. Migration des vendeurs (avec cast text pour sécurité)
+UPDATE vendors 
+SET status = 'PENDING'::"VendorStatus" 
+WHERE status::text IN ('APPROVED_REGISTRATION', 'PENDING_ACTIVATION');
+
+UPDATE vendors 
+SET status = 'SUSPENDED'::"VendorStatus" 
+WHERE status::text = 'SUSPENDED_AUTO';
+
+-- 4. Migration des produits
+UPDATE products 
+SET status = 'APPROVED'::"ProductStatus" 
+WHERE status::text = 'ACTIVE';
+
+UPDATE products 
+SET status = 'PENDING'::"ProductStatus" 
+WHERE status::text = 'DRAFT';
+
+-- ============================================================
+-- FIN : Migration terminée
 -- ============================================================
