@@ -1,22 +1,39 @@
 -- ============================================================
--- LUXANDA AUTH SYSTEM MIGRATION (FIXED)
+-- LUXANDA AUTH SYSTEM MIGRATION (DEFINITIVE FIX)
 -- ============================================================
 
--- IMPORTANT: RUN THIS SCRIPT IN TWO SEPARATE STEPS
--- POSTGRES REQUIRE QUE LES NOUVELLES VALEURS D'ENUM SOIENT VALIDÉES 
--- AVANT D'ÊTRE UTILISÉES DANS UN UPDATE DANS LA MÊME TRANSACTION.
+-- Ce script permet de mettre à jour les énumérations et les données
+-- en une seule fois en contournant la restriction "unsafe use of new value".
 
--- ============================================================
--- PARTIE 1 : MISE À JOUR DU SCHÉMA
--- ============================================================
+-- 1. Désactiver temporairement les contraintes de typeEnum
+ALTER TABLE vendors ALTER COLUMN status TYPE text;
+ALTER TABLE products ALTER COLUMN status TYPE text;
 
--- 1. Ajouter les valeurs aux Enums (Si elles n'existent pas)
+-- 2. Mettre à jour les Enums avec les nouvelles valeurs
 ALTER TYPE "VendorStatus" ADD VALUE IF NOT EXISTS 'INCOMPLETE';
 ALTER TYPE "ProductStatus" ADD VALUE IF NOT EXISTS 'PENDING';
 ALTER TYPE "ProductStatus" ADD VALUE IF NOT EXISTS 'APPROVED';
 ALTER TYPE "ProductStatus" ADD VALUE IF NOT EXISTS 'REJECTED';
 
--- 2. Ajouter les colonnes manquantes
+-- 3. Migration des données des VENDEURS
+UPDATE vendors 
+SET status = 'PENDING' 
+WHERE status IN ('APPROVED_REGISTRATION', 'PENDING_ACTIVATION', 'PENDING'); -- PENDING au cas où c'est déjà bon
+
+UPDATE vendors 
+SET status = 'SUSPENDED' 
+WHERE status = 'SUSPENDED_AUTO';
+
+-- 4. Migration des données des PRODUITS
+UPDATE products 
+SET status = 'APPROVED' 
+WHERE status = 'ACTIVE';
+
+UPDATE products 
+SET status = 'PENDING' 
+WHERE status = 'DRAFT';
+
+-- 5. S'assurer que les colonnes additionnelles existent
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'vendors' AND column_name = 'logo_url') THEN
@@ -28,31 +45,12 @@ BEGIN
   END IF;
 END $$;
 
--- ============================================================
--- ARRÊT : EXÉCUTEZ LA PARTIE CI-DESSUS D'ABORD, PUIS CELLE CI-DESSOUS
--- ============================================================
+-- 6. Restaurer les types Enum et les valeurs par défaut
+ALTER TABLE vendors ALTER COLUMN status TYPE "VendorStatus" USING status::"VendorStatus";
+ALTER TABLE vendors ALTER COLUMN status SET DEFAULT 'INCOMPLETE';
 
--- ============================================================
--- PARTIE 2 : MIGRATION DES DONNÉES
--- ============================================================
-
--- 3. Migration des vendeurs (avec cast text pour sécurité)
-UPDATE vendors 
-SET status = 'PENDING'::"VendorStatus" 
-WHERE status::text IN ('APPROVED_REGISTRATION', 'PENDING_ACTIVATION');
-
-UPDATE vendors 
-SET status = 'SUSPENDED'::"VendorStatus" 
-WHERE status::text = 'SUSPENDED_AUTO';
-
--- 4. Migration des produits
-UPDATE products 
-SET status = 'APPROVED'::"ProductStatus" 
-WHERE status::text = 'ACTIVE';
-
-UPDATE products 
-SET status = 'PENDING'::"ProductStatus" 
-WHERE status::text = 'DRAFT';
+ALTER TABLE products ALTER COLUMN status TYPE "ProductStatus" USING status::"ProductStatus";
+ALTER TABLE products ALTER COLUMN status SET DEFAULT 'PENDING';
 
 -- ============================================================
 -- FIN : Migration terminée
