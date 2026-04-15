@@ -11,12 +11,12 @@ DECLARE
 BEGIN
     -- 1. SUPPRESSION DYNAMIQUE DE TOUTES LES POLITIQUES SUR VENDORS ET PRODUCTS
     FOR pol IN (
-        SELECT polname, tablename 
+        SELECT policyname, tablename 
         FROM pg_policies 
         WHERE schemaname = 'public' 
         AND tablename IN ('vendors', 'products')
     ) LOOP
-        EXECUTE format('DROP POLICY IF EXISTS %I ON %I', pol.polname, pol.tablename);
+        EXECUTE format('DROP POLICY IF EXISTS %I ON %I', pol.policyname, pol.tablename);
     END LOOP;
 END $$;
 
