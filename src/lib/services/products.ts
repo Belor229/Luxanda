@@ -4,13 +4,13 @@ import { cookies } from 'next/headers'
 export async function getProducts(filters: {
     category?: string;
     vendorId?: string;
-    status?: 'ACTIVE' | 'DRAFT' | 'ARCHIVED';
+    status?: 'APPROVED' | 'PENDING' | 'REJECTED';
     page?: number;
     limit?: number;
 }) {
     const cookieStore = cookies()
     const supabase = createClient(cookieStore)
-    const { page = 1, limit = 20, category, vendorId, status = 'ACTIVE' } = filters
+    const { page = 1, limit = 20, category, vendorId, status = 'APPROVED' } = filters
     const from = (page - 1) * limit
     const to = from + limit - 1
 
@@ -70,7 +70,7 @@ export async function createProduct(productData: any) {
         .insert([{
             ...productData,
             vendorId: vendor.id,
-            status: 'DRAFT'
+            status: 'PENDING'
         }])
         .select()
         .single()

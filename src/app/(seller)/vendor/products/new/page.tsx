@@ -17,7 +17,7 @@ export default function NewProductPage() {
         price: '',
         categoryId: 'uuid-placeholder', // TODO: Fetch categories
         quantity: '1',
-        status: 'DRAFT'
+        status: 'PENDING'
     })
 
     // Mock category data for now

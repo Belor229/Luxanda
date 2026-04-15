@@ -7,12 +7,12 @@ export const productSchema = z.object({
     category_id: z.string().uuid('ID de catégorie invalide').optional().nullable(),
     image_urls: z.array(z.string().url('URL d\'image invalide')).default([]),
     stock: z.number().int().min(0, 'Le stock ne peut pas être négatif').default(0),
-    status: z.enum(['active', 'draft', 'archived']).default('draft'),
+    status: z.enum(['APPROVED', 'PENDING', 'REJECTED']).default('PENDING'),
     featured: z.boolean().default(false)
 })
 
 export const vendorStatusSchema = z.object({
-    status: z.enum(['APPROVED', 'REJECTED', 'SUSPENDED', 'PENDING'])
+    status: z.enum(['INCOMPLETE', 'PENDING', 'APPROVED', 'REJECTED', 'SUSPENDED'])
 })
 
 export const orderStatusSchema = z.object({

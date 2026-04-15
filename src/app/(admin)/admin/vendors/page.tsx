@@ -2,13 +2,12 @@
 
 import React, { Suspense, useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Check, X, AlertTriangle, MoreVertical, Search, Filter, ShieldCheck, Mail, Phone, Calendar, ShoppingBag, Eye, FileText, User as UserIcon } from 'lucide-react'
+import { Check, X, AlertTriangle, Search, Filter, ShieldCheck, Mail, Phone, Calendar, Eye, FileText, User as UserIcon } from 'lucide-react'
 
 interface Vendor {
     id: string
     storeName: string
-    status: 'PENDING' | 'APPROVED_REGISTRATION' | 'PENDING_ACTIVATION' | 'APPROVED' | 'REJECTED' | 'SUSPENDED'
-    verified: boolean
+    status: 'INCOMPLETE' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED'
     id_card_url: string | null
     selfie_url: string | null
     ifu_url?: string | null
@@ -67,13 +66,14 @@ function AdminVendorsContent() {
         }
     }
 
-    const updateVendorStatus = async (vendorId: string, action: 'approve' | 'reject' | 'suspend' | 'approve_registration' | 'approve_activation', reason?: string) => {
+    const updateVendorStatus = async (vendorId: string, action: 'approve' | 'reject' | 'suspend', reason?: string) => {
         if (action === 'reject' && !reason) {
             alert('Veuillez saisir un motif de rejet.')
             return
         }
 
-        if (!confirm(`Confirmer l'action : ${action === 'approve' ? 'Approuver' : action === 'reject' ? 'Rejeter' : 'Suspendre'} ?`)) return
+        const actionLabel = action === 'approve' ? 'Valider' : action === 'reject' ? 'Refuser' : 'Suspendre'
+        if (!confirm(`Confirmer l'action : ${actionLabel} ?`)) return
 
         try {
             setIsSubmitting(true)
@@ -81,10 +81,10 @@ function AdminVendorsContent() {
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    vendor_id: vendorId, 
-                    action, 
-                    reason 
+                body: JSON.stringify({
+                    vendor_id: vendorId,
+                    action,
+                    reason
                 })
             })
 
@@ -103,24 +103,21 @@ function AdminVendorsContent() {
         }
     }
 
-    const getStatusBadge = (status: string, verified: boolean) => {
-        if (verified && status === 'APPROVED') {
-            return (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800 border border-green-200">
-                    <ShieldCheck className="w-3 h-3 mr-1" />
-                    Vérifié
-                </span>
-            )
-        }
+    const getStatusBadge = (status: string) => {
         switch (status) {
+            case 'APPROVED':
+                return (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800 border border-green-200">
+                        <ShieldCheck className="w-3 h-3 mr-1" />
+                        Vendeur vérifié
+                    </span>
+                )
+            case 'INCOMPLETE':
+                return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-600 border border-gray-200">Profil incomplet</span>
             case 'PENDING':
-                return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800 border border-yellow-200">Nouv. Inscription</span>
-            case 'APPROVED_REGISTRATION':
-                return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 border border-blue-200">Dossier Validé</span>
-            case 'PENDING_ACTIVATION':
-                return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-800 border border-purple-200">À Activer (Admin)</span>
+                return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800 border border-yellow-200">En attente de validation</span>
             case 'REJECTED':
-                return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800 border border-red-200">Rejeté</span>
+                return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800 border border-red-200">Refusé</span>
             case 'SUSPENDED':
                 return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-800 border border-gray-200">Suspendu</span>
             default:
@@ -153,11 +150,10 @@ function AdminVendorsContent() {
                             className="pl-10 pr-10 py-2.5 bg-white border border-gray-200 focus:ring-2 focus:ring-primary-orange focus:border-transparent rounded-xl text-sm font-bold text-gray-700 shadow-sm transition-all"
                         >
                             <option value="">Tous les statuts</option>
-                            <option value="PENDING">Nouvelles Inscriptions</option>
-                            <option value="APPROVED_REGISTRATION">Dossiers Validés</option>
-                            <option value="PENDING_ACTIVATION">En attente d'Activation</option>
-                            <option value="APPROVED">Boutiques Actives</option>
-                            <option value="REJECTED">Rejetés</option>
+                            <option value="INCOMPLETE">Profils incomplets</option>
+                            <option value="PENDING">En attente de validation</option>
+                            <option value="APPROVED">Vendeurs vérifiés</option>
+                            <option value="REJECTED">Refusés</option>
                             <option value="SUSPENDED">Suspendus</option>
                         </select>
                     </div>
@@ -172,15 +168,16 @@ function AdminVendorsContent() {
                                 <th className="px-8 py-5 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Boutique / Gérant</th>
                                 <th className="px-8 py-5 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Contact</th>
                                 <th className="px-8 py-5 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Statut</th>
-                                <th className="px-8 py-5 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Date Adhésion</th>
+                                <th className="px-8 py-5 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Produits</th>
+                                <th className="px-8 py-5 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Date</th>
                                 <th className="px-8 py-5 text-right text-xs font-bold text-gray-400 uppercase tracking-widest">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {loading ? (
-                                <tr><td colSpan={5} className="px-8 py-20 text-center"><div className="animate-spin h-8 w-8 border-4 border-primary-orange border-t-transparent rounded-full mx-auto"></div></td></tr>
+                                <tr><td colSpan={6} className="px-8 py-20 text-center"><div className="animate-spin h-8 w-8 border-4 border-primary-orange border-t-transparent rounded-full mx-auto"></div></td></tr>
                             ) : vendors.length === 0 ? (
-                                <tr><td colSpan={5} className="px-8 py-20 text-center text-gray-400 font-medium">Aucune boutique ne correspond à vos critères.</td></tr>
+                                <tr><td colSpan={6} className="px-8 py-20 text-center text-gray-400 font-medium">Aucune boutique ne correspond à vos critères.</td></tr>
                             ) : (
                                 vendors.map((vendor) => (
                                     <tr key={vendor.id} className="hover:bg-gray-50/50 transition-colors group">
@@ -192,7 +189,7 @@ function AdminVendorsContent() {
                                                 <div className="ml-4">
                                                     <div className="text-base font-extrabold text-gray-900 group-hover:text-primary-blue transition-colors">{vendor.storeName}</div>
                                                     <div className="text-xs text-gray-400 font-medium flex items-center">
-                                                        <ShieldCheck className="w-3 h-3 mr-1" />
+                                                        <UserIcon className="w-3 h-3 mr-1" />
                                                         {vendor.user.name}
                                                     </div>
                                                 </div>
@@ -205,7 +202,10 @@ function AdminVendorsContent() {
                                             </div>
                                         </td>
                                         <td className="px-8 py-6 whitespace-nowrap">
-                                            {getStatusBadge(vendor.status, vendor.verified)}
+                                            {getStatusBadge(vendor.status)}
+                                        </td>
+                                        <td className="px-8 py-6 whitespace-nowrap">
+                                            <span className="text-sm font-bold text-gray-700">{vendor._count.products}</span>
                                         </td>
                                         <td className="px-8 py-6 whitespace-nowrap">
                                             <div className="text-sm font-bold text-gray-700 flex items-center">
@@ -221,16 +221,16 @@ function AdminVendorsContent() {
                                                         setShowDocModal(true)
                                                     }}
                                                     className="flex items-center justify-center h-10 w-10 bg-primary-blue text-white rounded-xl hover:bg-blue-600 shadow-lg shadow-blue-500/20 transition-all font-bold"
-                                                    title="Voir les documents"
+                                                    title="Voir le profil"
                                                 >
                                                     <Eye className="h-5 w-5" />
                                                 </button>
                                                 {vendor.status === 'PENDING' && (
                                                     <>
                                                         <button
-                                                            onClick={() => updateVendorStatus(vendor.id, 'approve_registration')}
-                                                            className="flex items-center justify-center h-10 w-10 bg-blue-500 text-white rounded-xl hover:bg-blue-600 shadow-lg shadow-blue-500/20 transition-all font-bold"
-                                                            title="Valider le dossier d'inscription"
+                                                            onClick={() => updateVendorStatus(vendor.id, 'approve')}
+                                                            className="flex items-center justify-center h-10 w-10 bg-green-500 text-white rounded-xl hover:bg-green-600 shadow-lg shadow-green-500/20 transition-all font-bold"
+                                                            title="Valider le vendeur"
                                                         >
                                                             <Check className="h-5 w-5" />
                                                         </button>
@@ -240,20 +240,11 @@ function AdminVendorsContent() {
                                                                 setShowDocModal(true)
                                                             }}
                                                             className="flex items-center justify-center h-10 w-10 bg-red-500 text-white rounded-xl hover:bg-red-600 shadow-lg shadow-red-500/20 transition-all font-bold"
-                                                            title="Rejeter le dossier"
+                                                            title="Refuser le vendeur"
                                                         >
                                                             <X className="h-5 w-5" />
                                                         </button>
                                                     </>
-                                                )}
-                                                {vendor.status === 'PENDING_ACTIVATION' && (
-                                                    <button
-                                                        onClick={() => updateVendorStatus(vendor.id, 'approve_activation')}
-                                                        className="flex items-center justify-center h-10 w-10 bg-purple-500 text-white rounded-xl hover:bg-purple-600 shadow-lg shadow-purple-500/20 transition-all font-bold"
-                                                        title="Confirmer l'activation finale"
-                                                    >
-                                                        <ShieldCheck className="h-5 w-5" />
-                                                    </button>
                                                 )}
                                                 {vendor.status === 'APPROVED' && (
                                                     <button
@@ -283,23 +274,27 @@ function AdminVendorsContent() {
                 </div>
             </div>
 
-            {/* Document Modal */}
+            {/* Vendor Detail / Review Modal */}
             {showDocModal && selectedVendor && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
                     <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
                         <div className="p-8 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
                             <div>
-                                <h2 className="text-2xl font-black text-gray-900 tracking-tight">Audit Documents : {selectedVendor.storeName}</h2>
-                                <p className="text-sm text-gray-500 font-medium mt-1">Vérification des pièces justificatives KYC</p>
+                                <h2 className="text-2xl font-black text-gray-900 tracking-tight">Profil vendeur : {selectedVendor.storeName}</h2>
+                                <p className="text-sm text-gray-500 font-medium mt-1">
+                                    {selectedVendor.status === 'PENDING' ? 'En attente de votre validation' : 
+                                     selectedVendor.status === 'APPROVED' ? 'Vendeur vérifié' :
+                                     selectedVendor.status === 'REJECTED' ? 'Demande refusée' : selectedVendor.status}
+                                </p>
                             </div>
-                            <button 
+                            <button
                                 onClick={() => setShowDocModal(false)}
                                 className="p-3 bg-white hover:bg-gray-100 rounded-2xl transition-colors shadow-sm"
                             >
                                 <X className="h-6 w-6 text-gray-400" />
                             </button>
                         </div>
-                        
+
                         <div className="p-8 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-8">
                             {/* ID Card */}
                             <div className="space-y-4">
@@ -307,43 +302,35 @@ function AdminVendorsContent() {
                                     <FileText className="w-4 h-4 mr-2" />
                                     Pièce d'identité
                                 </h3>
-                                <div className="aspect-[3/2] bg-gray-100 rounded-3xl overflow-hidden border-2 border-dashed border-gray-200 flex items-center justify-center group relative">
+                                <div className="aspect-[3/2] bg-gray-100 rounded-3xl overflow-hidden border-2 border-dashed border-gray-200 flex items-center justify-center">
                                     {selectedVendor.id_card_url ? (
-                                        <img 
-                                            src={selectedVendor.id_card_url} 
-                                            alt="ID Card" 
-                                            className="w-full h-full object-contain"
-                                        />
+                                        <img src={selectedVendor.id_card_url} alt="ID Card" className="w-full h-full object-contain" />
                                     ) : (
                                         <div className="text-center p-6">
                                             <div className="w-12 h-12 bg-gray-200 rounded-2xl mx-auto mb-3 flex items-center justify-center">
                                                 <X className="w-6 h-6 text-gray-400" />
                                             </div>
-                                            <p className="text-sm font-bold text-gray-400">Aucun document chargé</p>
+                                            <p className="text-sm font-bold text-gray-400">Aucun document</p>
                                         </div>
                                     )}
                                 </div>
                             </div>
 
-                            {/* Selfie / Photo Boutique */}
+                            {/* Selfie */}
                             <div className="space-y-4">
                                 <h3 className="flex items-center text-sm font-black text-gray-400 uppercase tracking-widest">
                                     <UserIcon className="w-4 h-4 mr-2" />
                                     Selfie de vérification
                                 </h3>
-                                <div className="aspect-[3/2] bg-gray-100 rounded-3xl overflow-hidden border-2 border-dashed border-gray-200 flex items-center justify-center group relative">
+                                <div className="aspect-[3/2] bg-gray-100 rounded-3xl overflow-hidden border-2 border-dashed border-gray-200 flex items-center justify-center">
                                     {selectedVendor.selfie_url ? (
-                                        <img 
-                                            src={selectedVendor.selfie_url} 
-                                            alt="Selfie" 
-                                            className="w-full h-full object-contain"
-                                        />
+                                        <img src={selectedVendor.selfie_url} alt="Selfie" className="w-full h-full object-contain" />
                                     ) : (
                                         <div className="text-center p-6">
                                             <div className="w-12 h-12 bg-gray-200 rounded-2xl mx-auto mb-3 flex items-center justify-center">
                                                 <X className="w-6 h-6 text-gray-400" />
                                             </div>
-                                            <p className="text-sm font-bold text-gray-400">Aucun document chargé</p>
+                                            <p className="text-sm font-bold text-gray-400">Aucun document</p>
                                         </div>
                                     )}
                                 </div>
@@ -384,11 +371,11 @@ function AdminVendorsContent() {
                             {selectedVendor.status === 'PENDING' && (
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="block text-sm font-bold text-gray-700 mb-2">Motif en cas de rejet (obligatoire pour rejeter)</label>
+                                        <label className="block text-sm font-bold text-gray-700 mb-2">Motif en cas de refus (obligatoire pour refuser)</label>
                                         <textarea
                                             value={rejectionReason}
                                             onChange={(e) => setRejectionReason(e.target.value)}
-                                            placeholder="Ex: Pièce d'identité illisible, Selfie non conforme..."
+                                            placeholder="Ex: Informations de boutique incomplètes, Description insuffisante..."
                                             className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-primary-orange focus:border-transparent transition-all outline-none"
                                             rows={3}
                                         />
@@ -399,34 +386,16 @@ function AdminVendorsContent() {
                                             disabled={isSubmitting || !rejectionReason.trim()}
                                             className="px-8 py-4 bg-red-50 text-red-600 rounded-2xl font-black hover:bg-red-100 transition-colors disabled:opacity-50"
                                         >
-                                            {isSubmitting ? 'Traitement...' : 'Rejeter l\'inscription'}
+                                            {isSubmitting ? 'Traitement...' : 'Refuser'}
                                         </button>
                                         <button
-                                            onClick={() => updateVendorStatus(selectedVendor.id, 'approve_registration')}
+                                            onClick={() => updateVendorStatus(selectedVendor.id, 'approve')}
                                             disabled={isSubmitting}
-                                            className="px-8 py-4 bg-blue-500 text-white rounded-2xl font-black hover:bg-blue-600 shadow-xl shadow-blue-500/20 transition-all disabled:opacity-50"
+                                            className="px-8 py-4 bg-green-500 text-white rounded-2xl font-black hover:bg-green-600 shadow-xl shadow-green-500/20 transition-all disabled:opacity-50"
                                         >
-                                            {isSubmitting ? 'Traitement...' : 'Valider l\'inscription'}
+                                            {isSubmitting ? 'Traitement...' : 'Valider le vendeur ✓'}
                                         </button>
                                     </div>
-                                </div>
-                            )}
-                            {selectedVendor.status === 'PENDING_ACTIVATION' && (
-                                <div className="flex justify-end gap-3">
-                                    <button
-                                        onClick={() => updateVendorStatus(selectedVendor.id, 'reject', 'Activation refusée')}
-                                        disabled={isSubmitting}
-                                        className="px-8 py-4 bg-red-50 text-red-600 rounded-2xl font-black hover:bg-red-100 transition-colors disabled:opacity-50"
-                                    >
-                                        {isSubmitting ? 'Traitement...' : 'Refuser l\'activation'}
-                                    </button>
-                                    <button
-                                        onClick={() => updateVendorStatus(selectedVendor.id, 'approve_activation')}
-                                        disabled={isSubmitting}
-                                        className="px-8 py-4 bg-purple-500 text-white rounded-2xl font-black hover:bg-purple-600 shadow-xl shadow-purple-500/20 transition-all disabled:opacity-50"
-                                    >
-                                        {isSubmitting ? 'Traitement...' : 'Activer définitivement'}
-                                    </button>
                                 </div>
                             )}
                             {selectedVendor.status !== 'PENDING' && (

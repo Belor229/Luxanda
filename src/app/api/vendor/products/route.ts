@@ -89,12 +89,12 @@ export async function POST(request: NextRequest) {
                 categoryId,
                 quantity,
                 images,
-                status: 'ACTIVE',
+                status: 'PENDING',
                 featured: false
             }
         })
 
-        return NextResponse.json({ message: 'Produit créé avec succès', product }, { status: 201 })
+        return NextResponse.json({ message: 'Produit créé avec succès. Il sera visible après validation par un administrateur.', product }, { status: 201 })
     } catch (error) {
         console.error('Create product error:', error)
         return NextResponse.json({ error: 'Erreur lors de la création du produit' }, { status: 500 })

@@ -27,17 +27,13 @@ export async function PATCH(
             return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
         }
 
-        if (!['ACTIVE', 'DRAFT', 'ARCHIVED', 'INACTIVE'].includes(status)) {
-            // Note: 'INACTIVE' might be mapped to 'ARCHIVED' or 'DRAFT' depending on business logic
-            // But let's check the enum in schema.prisma: DRAFT, ACTIVE, ARCHIVED
+        if (!['APPROVED', 'PENDING', 'REJECTED'].includes(status)) {
+            return NextResponse.json({ error: 'Statut invalide' }, { status: 400 })
         }
-
-        // Mapping 'INACTIVE' to 'ARCHIVED' if that's what's intended in the UI
-        const finalStatus = status === 'INACTIVE' ? 'ARCHIVED' : status
 
         const product = await prisma.product.update({
             where: { id },
-            data: { status: finalStatus as any }
+            data: { status: status as any }
         })
 
         return NextResponse.json({ message: 'Statut du produit mis à jour', product })

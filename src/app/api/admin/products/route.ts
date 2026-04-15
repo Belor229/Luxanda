@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic'
 
 const productActionSchema = z.object({
     productId: z.string().uuid(),
-    action: z.enum(['approve', 'reject', 'suspect']),
+    action: z.enum(['approve', 'reject']),
     reason: z.string().optional()
 })
 
@@ -39,11 +39,10 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Produit non trouvé' }, { status: 404 })
         }
 
-        let newStatus: any = 'ACTIVE'
+        let newStatus: any = 'APPROVED'
         switch (action) {
-            case 'approve': newStatus = 'ACTIVE'; break
+            case 'approve': newStatus = 'APPROVED'; break
             case 'reject': newStatus = 'REJECTED'; break
-            case 'suspect': newStatus = 'SUSPECT'; break
         }
 
         const updatedProduct = await prisma.product.update({

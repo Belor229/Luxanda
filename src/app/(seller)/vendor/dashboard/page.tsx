@@ -50,24 +50,6 @@ function VendorDashboardContent() {
     }
   }
 
-  const handleActivate = async () => {
-    try {
-      setLoading(true)
-      const response = await fetch('/api/vendor/activate', { method: 'POST' })
-      if (response.ok) {
-        await fetchVendorData()
-        router.replace('/vendor/dashboard?activation=requested')
-      } else {
-        const err = await response.json()
-        alert(err.error || 'Erreur lors de l\'activation')
-      }
-    } catch (error) {
-      console.error('Error activating vendor account:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
@@ -78,7 +60,6 @@ function VendorDashboardContent() {
 
   const sanitizeImageUrl = (url: string) => {
     if (!url) return ''
-    // Stricter check for URL components to satisfy Snyk
     const protocolRegex = /^(https?:\/\/|data:image\/|\/)/i
     if (typeof url === 'string' && protocolRegex.test(url)) {
       return url
@@ -104,127 +85,119 @@ function VendorDashboardContent() {
   }
 
   const showSubmissionSuccess = searchParams.get('submission') === 'success'
-  const showActivationSuccess = searchParams.get('activation') === 'requested'
+  const showProfileComplete = searchParams.get('profile') === 'complete'
 
-  if (data.vendor.status === 'PENDING' || data.vendor.status === 'APPROVED_REGISTRATION' || data.vendor.status === 'PENDING_ACTIVATION') {
+  // ── INCOMPLETE: profile not completed yet ──
+  if (data.vendor.status === 'INCOMPLETE') {
     return (
       <div className="min-h-[80vh] flex items-center justify-center p-6">
         <div className="bg-white rounded-[40px] shadow-2xl shadow-gray-200/50 border border-gray-100 p-12 max-w-2xl w-full text-center relative overflow-hidden">
           <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary-orange/5 rounded-full blur-3xl"></div>
           <div className="relative z-10 font-sans">
             <div className="bg-orange-50 w-24 h-24 rounded-3xl flex items-center justify-center mx-auto mb-8">
-              <ShieldCheck className="h-12 w-12 text-primary-orange" />
+              <AlertCircle className="h-12 w-12 text-primary-orange" />
             </div>
+            <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">Complétez votre profil</h2>
+            <p className="text-gray-500 font-medium text-lg leading-relaxed mb-10 max-w-md mx-auto">
+              Pour activer votre boutique sur Luxanda, vous devez d'abord compléter votre profil vendeur avec les informations essentielles.
+            </p>
+            <Link
+              href="/vendor/complete-profile"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-primary-orange text-white px-10 py-5 rounded-2xl font-black text-lg transition-all hover:bg-orange-600 shadow-xl shadow-orange-500/20 active:scale-95"
+            >
+              Compléter mon profil
+              <ArrowRight className="h-6 w-6" />
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── PENDING: awaiting admin validation ──
+  if (data.vendor.status === 'PENDING') {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center p-6">
+        <div className="bg-white rounded-[40px] shadow-2xl shadow-gray-200/50 border border-gray-100 p-12 max-w-2xl w-full text-center relative overflow-hidden">
+          <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary-orange/5 rounded-full blur-3xl"></div>
+          <div className="relative z-10 font-sans">
+            <div className="bg-yellow-50 w-24 h-24 rounded-3xl flex items-center justify-center mx-auto mb-8">
+              <ShieldCheck className="h-12 w-12 text-yellow-600" />
+            </div>
+            {showProfileComplete && (
+              <div className="mb-6 bg-green-50 text-green-700 p-4 rounded-2xl font-bold text-sm">
+                Votre profil vendeur a bien été soumis pour validation.
+              </div>
+            )}
             {showSubmissionSuccess && (
               <div className="mb-6 bg-green-50 text-green-700 p-4 rounded-2xl font-bold text-sm">
                 Votre dossier vendeur a bien été envoyé à l&apos;administration.
               </div>
             )}
-            {showActivationSuccess && (
-              <div className="mb-6 bg-purple-50 text-purple-700 p-4 rounded-2xl font-bold text-sm">
-                Votre demande d&apos;activation a bien été transmise à l&apos;administration.
-              </div>
-            )}
-
-            {data?.vendor.status === 'PENDING' ? (
-              <>
-                <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">Inscription en cours</h2>
-                <p className="text-gray-500 font-medium text-lg leading-relaxed mb-6 max-w-md mx-auto">
-                  Votre dossier est en cours de révision par l'équipe Luxanda. Nous vérifions vos documents pour assurer la sécurité de la marketplace.
-                </p>
-                <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-2xl mb-6">
-                  <p className="text-sm text-yellow-800 font-bold text-center">
-                    ⏰ Délai de validation : 24-48 heures
-                  </p>
-                </div>
-                <div className="animate-pulse flex items-center justify-center gap-2 text-primary-orange font-bold uppercase tracking-widest text-xs">
-                  <Package className="w-4 h-4" /> Analyse documents en cours...
-                </div>
-              </>
-            ) : data?.vendor.status === 'APPROVED_REGISTRATION' ? (
-              <>
-                <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">Inscription confirmée ! 🎉</h2>
-                <p className="text-gray-500 font-medium text-lg leading-relaxed mb-10 max-w-md mx-auto">
-                  Bonne nouvelle ! Votre dossier a été validé par l'administrateur. 
-                  <br />
-                  <span className="text-gray-900 font-black">Activez maintenant votre boutique pour commencer à vendre.</span>
-                </p>
-                <button
-                  onClick={handleActivate}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-purple-600 text-white px-10 py-5 rounded-2xl font-black text-lg transition-all hover:bg-purple-700 shadow-xl shadow-purple-500/20 active:scale-95"
-                >
-                  Activer ma boutique
-                  <ArrowRight className="h-6 w-6" />
-                </button>
-              </>
-            ) : data?.vendor.status === 'PENDING_ACTIVATION' ? (
-              <>
-                <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">Activation en attente...</h2>
-                <p className="text-gray-500 font-medium text-lg leading-relaxed mb-10 max-w-md mx-auto">
-                  Vous avez demandé l'activation de votre boutique. Un administrateur effectue la validation finale.
-                </p>
-                <div className="bg-purple-50 text-purple-700 p-4 rounded-2xl font-bold text-sm">
-                  L'activation est généralement confirmée sous 24h.
-                </div>
-              </>
-            ) : (
-                <>
-                    <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">Activez votre compte vendeur</h2>
-                    <p className="text-gray-500 font-medium text-lg leading-relaxed mb-10 max-w-md mx-auto">
-                    Pour commencer à vendre sur Luxanda et accéder à votre tableau de bord, vous devez choisir un plan d'abonnement.
-                    <br />
-                    <span className="text-primary-orange font-bold">14 jours d'essai offerts pour tout nouveau compte !</span>
-                    </p>
-                    <Link
-                    href="/vendor/subscription"
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-primary-orange text-white px-10 py-5 rounded-2xl font-black text-lg transition-all hover:bg-orange-600 shadow-xl shadow-orange-500/20 active:scale-95"
-                    >
-                    Voir les abonnements
-                    <ArrowRight className="h-6 w-6" />
-                    </Link>
-                </>
-            )}
-            
+            <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">Votre compte est en cours de validation</h2>
+            <p className="text-gray-500 font-medium text-lg leading-relaxed mb-6 max-w-md mx-auto">
+              Notre équipe examine votre profil pour assurer la sécurité de la marketplace. Vous serez notifié dès que votre compte sera validé.
+            </p>
+            <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-2xl mb-6">
+              <p className="text-sm text-yellow-800 font-bold text-center">
+                ⏰ Délai de validation : 24 à 48 heures
+              </p>
+            </div>
+            <div className="animate-pulse flex items-center justify-center gap-2 text-primary-orange font-bold uppercase tracking-widest text-xs">
+              <Package className="w-4 h-4" /> Validation en cours...
+            </div>
           </div>
         </div>
       </div>
     )
   }
 
-  // If approved but no active subscription, show subscription plans
-  if (!data.stats.subscription || data.stats.subscription.status !== 'ACTIVE') {
+  // ── REJECTED ──
+  if (data.vendor.status === 'REJECTED') {
     return (
       <div className="min-h-[80vh] flex items-center justify-center p-6">
         <div className="bg-white rounded-[40px] shadow-2xl shadow-gray-200/50 border border-gray-100 p-12 max-w-2xl w-full text-center relative overflow-hidden">
-          <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary-orange/5 rounded-full blur-3xl"></div>
           <div className="relative z-10 font-sans">
-            <div className="bg-orange-50 w-24 h-24 rounded-3xl flex items-center justify-center mx-auto mb-8">
-              <ShieldCheck className="h-12 w-12 text-primary-orange" />
+            <div className="bg-red-50 w-24 h-24 rounded-3xl flex items-center justify-center mx-auto mb-8">
+              <AlertCircle className="h-12 w-12 text-red-500" />
             </div>
-            <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">Activez votre compte vendeur</h2>
-            <p className="text-gray-500 font-medium text-lg leading-relaxed mb-10 max-w-md mx-auto">
-              Bonne nouvelle ! Votre compte est approuvé. Pour commencer à vendre sur Luxanda et accéder à votre tableau de bord, vous devez maintenant choisir un plan d'abonnement.
-              <br />
-              <span className="text-primary-orange font-bold text-sm mt-4 inline-block">14 jours d'essai offerts pour tout nouveau compte !</span>
+            <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">Demande refusée</h2>
+            <p className="text-gray-500 font-medium text-lg leading-relaxed mb-6 max-w-md mx-auto">
+              Votre demande de compte vendeur a été refusée par notre équipe. Si vous pensez qu'il s'agit d'une erreur, veuillez nous contacter.
             </p>
             <Link
-              href="/vendor/subscription"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-primary-orange text-white px-10 py-5 rounded-2xl font-black text-lg transition-all hover:bg-orange-600 shadow-xl shadow-orange-500/20 active:scale-95"
+              href="/contact"
+              className="inline-flex items-center justify-center gap-2 bg-gray-900 text-white px-8 py-4 rounded-2xl font-black transition-all hover:bg-black"
             >
-              Voir les abonnements
-              <ArrowRight className="h-6 w-6" />
+              Contacter le support
             </Link>
-            <div className="mt-12 flex items-center justify-center gap-6 grayscale opacity-30">
-              <img src="/images/kkiapay-logo.png" alt="Kkiapay" className="h-6" />
-              <img src="/images/mtn-momo.png" alt="MTN" className="h-6" />
-              <img src="/images/moov.png" alt="Moov" className="h-6" />
-            </div>
           </div>
         </div>
       </div>
     )
   }
 
+  // ── SUSPENDED ──
+  if (data.vendor.status === 'SUSPENDED') {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center p-6">
+        <div className="bg-white rounded-[40px] shadow-2xl shadow-gray-200/50 border border-gray-100 p-12 max-w-2xl w-full text-center">
+          <div className="bg-gray-100 w-24 h-24 rounded-3xl flex items-center justify-center mx-auto mb-8">
+            <AlertCircle className="h-12 w-12 text-gray-500" />
+          </div>
+          <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">Compte suspendu</h2>
+          <p className="text-gray-500 font-medium text-lg mb-6 max-w-md mx-auto">
+            Votre compte vendeur a été temporairement suspendu. Veuillez contacter le support pour plus d'informations.
+          </p>
+          <Link href="/contact" className="inline-flex items-center gap-2 bg-gray-900 text-white px-8 py-4 rounded-2xl font-black hover:bg-black">
+            Contacter le support
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  // ── APPROVED: Full dashboard ──
   const isTrialActive = data.stats.subscription?.isTrial && data.stats.subscription.daysLeft > 0
 
   return (
@@ -234,9 +207,10 @@ function VendorDashboardContent() {
         <div>
           <div className="flex items-center gap-3 mb-1">
             <h1 className="text-3xl font-black text-gray-900 tracking-tight">{data.vendor.storeName}</h1>
-            {data.vendor.status === 'APPROVED' && (
-              <ShieldCheck className="h-6 w-6 text-primary-orange" />
-            )}
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black bg-green-100 text-green-700 border border-green-200">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              Vendeur vérifié
+            </span>
           </div>
           <p className="text-gray-500 font-medium">
             Votre centre d'affaires en ligne
@@ -247,9 +221,6 @@ function VendorDashboardContent() {
           <Link href="/products" className="text-sm font-bold text-primary-blue hover:text-blue-700 flex items-center transition-colors">
             Voir ma boutique <ArrowRight className="ml-1 h-4 w-4" />
           </Link>
-          <div className={`px-4 py-1.5 rounded-2xl text-xs font-black uppercase tracking-wider shadow-sm border ${data.vendor.status === 'APPROVED' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-yellow-50 text-yellow-700 border-yellow-100'}`}>
-            {data.vendor.status === 'APPROVED' ? 'Vérifié' : 'Validation en cours'}
-          </div>
         </div>
       </div>
 
@@ -273,21 +244,6 @@ function VendorDashboardContent() {
         </div>
       )}
 
-      {/* Validation Alert */}
-      {data.vendor.status === 'PENDING' && !isTrialActive && (
-        <div className="bg-yellow-50 border border-yellow-200 p-5 rounded-2xl flex items-start gap-4 shadow-sm">
-          <AlertCircle className="h-6 w-6 text-yellow-500 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm text-yellow-800 font-bold leading-relaxed">
-              Votre boutique est en cours de révision par l'équipe Luxanda.
-            </p>
-            <p className="text-xs text-yellow-700 mt-1">
-              Dès validation, vos produits deviendront visibles par les milliers d'utilisateurs de la plateforme.
-            </p>
-          </div>
-        </div>
-      )}
-
       {/* Stats Grid */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {/* Revenue Card */}
@@ -296,7 +252,6 @@ function VendorDashboardContent() {
             <div className="p-3 bg-green-50 rounded-2xl group-hover:scale-110 transition-transform">
               <TrendingUp className="h-6 w-6 text-green-600" />
             </div>
-            <span className="text-xs font-black text-green-600 bg-green-50 px-2 py-1 rounded-lg">+12.5%</span>
           </div>
           <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Revenue</p>
           <p className="text-2xl font-black text-gray-900 mt-1">{formatPrice(data.stats.orders.revenue)}</p>
@@ -325,7 +280,7 @@ function VendorDashboardContent() {
           </div>
           <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Produits</p>
           <p className="text-2xl font-black text-gray-900 mt-1">{data.stats.products.total}</p>
-          <p className="text-xs text-orange-500 font-bold mt-2">{data.stats.products.active} articles actifs</p>
+          <p className="text-xs text-orange-500 font-bold mt-2">{data.stats.products.active} articles approuvés</p>
         </div>
 
         {/* Subscription Card */}
@@ -398,9 +353,9 @@ function VendorDashboardContent() {
               <div key={product.id} className="flex items-center space-x-4 group">
                 <div className="w-14 h-14 bg-gray-50 rounded-2xl flex-shrink-0 flex items-center justify-center overflow-hidden border border-gray-100 group-hover:scale-105 transition-transform">
                   {product.image_urls?.[0] ? (
-                    <img 
-                      src={sanitizeImageUrl(product.image_urls[0])} 
-                      alt={product.title} 
+                    <img
+                      src={sanitizeImageUrl(product.image_urls[0])}
+                      alt={product.title}
                       className="object-cover w-full h-full"
                       loading="lazy"
                     />

@@ -103,7 +103,7 @@ export async function PATCH(
                 categoryId: body.categoryId,
                 images: body.images,
                 quantity: body.quantity ? parseInt(body.quantity) : undefined,
-                status: body.status, // e.g. ACTIVE, DRAFT, ARCHIVED
+                status: body.status, // e.g. APPROVED, PENDING, REJECTED
                 featured: role === 'ADMIN' ? body.featured : undefined // Only admin can feature?
             }
         })

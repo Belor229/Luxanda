@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     // 2. Statistics
     const [totalProducts, activeProducts, pendingOrders, deliveredItems] = await Promise.all([
       prisma.product.count({ where: { vendorId: vendor.id } }),
-      prisma.product.count({ where: { vendorId: vendor.id, status: 'ACTIVE' } }),
+      prisma.product.count({ where: { vendorId: vendor.id, status: 'APPROVED' } }),
       prisma.order.count({
         where: {
           status: 'PENDING',

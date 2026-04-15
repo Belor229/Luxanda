@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
         // Products stats
         const totalProducts = await prisma.product.count()
         const activeProducts = await prisma.product.count({
-            where: { status: 'ACTIVE' }
+            where: { status: 'APPROVED' }
         })
         const featuredProducts = await prisma.product.count({
             where: { featured: true }

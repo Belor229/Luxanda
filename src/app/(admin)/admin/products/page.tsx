@@ -231,9 +231,15 @@ function AdminProductsContent() {
                                             <div className="text-xs text-gray-500">Stock: {product.quantity}</div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${product.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                                            <span className={`px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full ${
+                                                product.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
+                                                product.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                                                product.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
+                                                'bg-gray-100 text-gray-800'
                                                 }`}>
-                                                {product.status}
+                                                {product.status === 'APPROVED' ? 'Approuvé' : 
+                                                 product.status === 'PENDING' ? 'En attente' : 
+                                                 product.status === 'REJECTED' ? 'Refusé' : product.status}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
@@ -252,7 +258,7 @@ function AdminProductsContent() {
                                                     <Eye className="h-4 w-4" />
                                                 </Link>
                                                 
-                                                {product.status !== 'ACTIVE' && (
+                                                {product.status !== 'APPROVED' && (
                                                     <button
                                                         onClick={() => handleModerationAction(product.id, 'approve')}
                                                         className="text-green-600 hover:text-green-900 bg-green-50 p-1.5 rounded-lg border border-green-100 transition-colors"
@@ -266,19 +272,9 @@ function AdminProductsContent() {
                                                     <button
                                                         onClick={() => handleModerationAction(product.id, 'reject')}
                                                         className="text-red-600 hover:text-red-900 bg-red-50 p-1.5 rounded-lg border border-red-100 transition-colors"
-                                                        title="Rejeter"
+                                                        title="Refuser"
                                                     >
                                                         <X className="h-4 w-4" />
-                                                    </button>
-                                                )}
-
-                                                {product.status !== 'SUSPECT' && (
-                                                    <button
-                                                        onClick={() => handleModerationAction(product.id, 'suspect')}
-                                                        className="text-orange-600 hover:text-orange-900 bg-orange-50 p-1.5 rounded-lg border border-orange-100 transition-colors"
-                                                        title="Marquer comme suspect"
-                                                    >
-                                                        <AlertTriangle className="h-4 w-4" />
                                                     </button>
                                                 )}
 

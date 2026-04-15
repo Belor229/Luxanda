@@ -65,11 +65,12 @@ model Vendor {
   whatsapp    String?
   city        String?
   category    String?
+  logo_url       String?
   id_card_url    String?
   selfie_url     String?
   trial_start_date DateTime?
   trial_end_date   DateTime?
-  status      VendorStatus @default(PENDING)
+  status      VendorStatus @default(INCOMPLETE)
   rejectionReason String? @map("rejection_reason")
   admin_notes    String? @map("admin_notes")
   ifu_url        String?
@@ -153,10 +154,11 @@ model Product {
   barcode      String?
   quantity     Int           @default(0)
   weight       Float?
-  status       ProductStatus @default(DRAFT)
+  status       ProductStatus @default(PENDING)
   featured     Boolean       @default(false)
   tags         String[]
   images       String[]
+  admin_notes  String?
   createdAt    DateTime      @default(now()) @map("created_at")
   updatedAt    DateTime      @updatedAt @map("updated_at")
 
@@ -458,13 +460,11 @@ enum Gender {
 }
 
 enum VendorStatus {
+  INCOMPLETE
   PENDING
-  APPROVED_REGISTRATION
-  PENDING_ACTIVATION
   APPROVED
   REJECTED
   SUSPENDED
-  SUSPENDED_AUTO
 }
 
 enum AffiliateStatus {
@@ -474,9 +474,9 @@ enum AffiliateStatus {
 }
 
 enum ProductStatus {
-  DRAFT
-  ACTIVE
-  ARCHIVED
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum OrderStatus {

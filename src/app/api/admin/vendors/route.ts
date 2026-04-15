@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic'
 
 const adminActionSchema = z.object({
     vendor_id: z.string().uuid(),
-    action: z.enum(['approve', 'reject', 'suspend', 'approve_activation']),
+    action: z.enum(['approve', 'reject', 'suspend']),
     reason: z.string().optional()
 })
 
@@ -51,7 +51,9 @@ export async function POST(request: Request) {
                     status: 'APPROVED',
                     registrationConfirmedAt: new Date(),
                     activationConfirmedAt: new Date(),
-                    admin_notes: reason || 'Approuvé par admin'
+                    trial_start_date: new Date(),
+                    trial_end_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days
+                    admin_notes: reason || 'Approuvé par admin — essai 14 jours activé'
                 }
                 subscriptionStatus = 'ACTIVE'
                 break
@@ -71,17 +73,6 @@ export async function POST(request: Request) {
                     admin_notes: reason || 'Suspendu par admin'
                 }
                 subscriptionStatus = 'EXPIRED'
-                break
-
-            case 'approve_activation':
-                updateData = {
-                    status: 'APPROVED',
-                    activationConfirmedAt: new Date(),
-                    trial_start_date: new Date(),
-                    trial_end_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days
-                    admin_notes: reason || 'Essai 14 jours activé par admin'
-                }
-                subscriptionStatus = 'ACTIVE'
                 break
         }
 

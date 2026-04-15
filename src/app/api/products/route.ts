@@ -32,7 +32,7 @@ export async function GET(request: Request) {
         vendor:vendors!inner(store_name, user_id, city),
         category:categories(name)
       `, { count: 'exact' })
-      .eq('status', 'ACTIVE')
+      .eq('status', 'APPROVED')
 
     if (search) {
       query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`)
@@ -132,7 +132,7 @@ export async function POST(request: Request) {
         category_id: validatedData.category_id,
         image_urls: validatedData.image_urls,
         quantity: validatedData.stock,
-        status: 'ACTIVE',
+        status: 'PENDING',
         featured: false
       })
 
