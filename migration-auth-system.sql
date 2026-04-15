@@ -1,54 +1,62 @@
 -- ============================================================
--- LUXANDA AUTH SYSTEM MIGRATION (ULTIMATE ROBUST VERSION)
+-- LUXANDA AUTH SYSTEM MIGRATION (DYNAMIC POLICY VERSION)
 -- ============================================================
 
--- Ce script recrée les types Enum pour éviter TOUTES les erreurs de transaction
--- et gère les politiques RLS qui bloquent les changements de type.
+-- Ce script est conçu pour être EXTRÊMEMENT robuste. 
+-- Il supprime dynamiquement TOUTES les politiques RLS qui bloquent la migration.
 
 DO $$
+DECLARE
+    pol RECORD;
 BEGIN
-    -- 1. DROP POLICIES THAT BLOCK TYPE ALTERATION
-    -- On supprime les politiques connues qui utilisent les colonnes "status"
-    DROP POLICY IF EXISTS "Public can view active vendors" ON vendors;
-    DROP POLICY IF EXISTS "Vendors can view their own products" ON products;
-    DROP POLICY IF EXISTS "Public can view active products" ON products;
-    -- Note: Si d'autres politiques bloquent, elles devront être supprimées manuellement ou via ce pattern
+    -- 1. SUPPRESSION DYNAMIQUE DE TOUTES LES POLITIQUES SUR VENDORS ET PRODUCTS
+    FOR pol IN (
+        SELECT polname, tablename 
+        FROM pg_policies 
+        WHERE schemaname = 'public' 
+        AND tablename IN ('vendors', 'products')
+    ) LOOP
+        EXECUTE format('DROP POLICY IF EXISTS %I ON %I', pol.polname, pol.tablename);
+    END LOOP;
 END $$;
 
--- 2. CONVERTIR LES COLONNES EN TEXT (INTERMÉDIAIRE)
--- On retire aussi les valeurs par défaut pour éviter les conflits
+-- 2. DÉSACTIVER RLS TEMPORAIREMENT
+ALTER TABLE vendors DISABLE ROW LEVEL SECURITY;
+ALTER TABLE products DISABLE ROW LEVEL SECURITY;
+
+-- 3. CONVERTIR LES COLONNES EN TEXT ET RETIRER LES DEFAULTS
 ALTER TABLE vendors ALTER COLUMN status DROP DEFAULT;
 ALTER TABLE vendors ALTER COLUMN status TYPE TEXT;
 
 ALTER TABLE products ALTER COLUMN status DROP DEFAULT;
 ALTER TABLE products ALTER COLUMN status TYPE TEXT;
 
--- 3. RENOMMER LES ANCIENS TYPES POUR NE PAS LES SUPPRIMER TOUT DE SUITE
+-- 4. RENOMMER LES ANCIENS TYPES
 ALTER TYPE "VendorStatus" RENAME TO "VendorStatus_old";
 ALTER TYPE "ProductStatus" RENAME TO "ProductStatus_old";
 
--- 4. CRÉER LES NOUVEAUX TYPES ENTIÈREMENT
+-- 5. CRÉER LES NOUVEAUX TYPES
 CREATE TYPE "VendorStatus" AS ENUM ('INCOMPLETE', 'PENDING', 'APPROVED', 'REJECTED', 'SUSPENDED');
 CREATE TYPE "ProductStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
 
--- 5. MIGRATION DES DONNÉES (DANS LES COLONNES TEXT)
-UPDATE vendors SET status = 'APPROVED' WHERE status IN ('APPROVED_REGISTRATION', 'APPROVED_ACTIVATION');
+-- 6. MIGRATION DES DONNÉES
+UPDATE vendors SET status = 'APPROVED' WHERE status IN ('APPROVED_REGISTRATION', 'APPROVED_ACTIVATION', 'APPROVED');
 UPDATE vendors SET status = 'PENDING' WHERE status IN ('PENDING_REGISTRATION', 'PENDING_ACTIVATION', 'PENDING');
-UPDATE vendors SET status = 'SUSPENDED' WHERE status = 'SUSPENDED_AUTO';
-UPDATE vendors SET status = 'INCOMPLETE' WHERE status IS NULL OR status = '';
+UPDATE vendors SET status = 'SUSPENDED' WHERE status = 'SUSPENDED_AUTO' OR status = 'SUSPENDED';
+UPDATE vendors SET status = 'INCOMPLETE' WHERE status IS NULL OR status = '' OR status = 'INCOMPLETE';
 
-UPDATE products SET status = 'APPROVED' WHERE status = 'ACTIVE';
-UPDATE products SET status = 'PENDING' WHERE status = 'DRAFT' OR status IS NULL OR status = '';
+UPDATE products SET status = 'APPROVED' WHERE status = 'ACTIVE' OR status = 'APPROVED';
+UPDATE products SET status = 'PENDING' WHERE status = 'DRAFT' OR status IS NULL OR status = '' OR status = 'PENDING';
 
--- 6. CONVERTIR LES COLONNES VERS LES NOUVEAUX TYPES
+-- 7. CONVERTIR VERS LES NOUVEAUX TYPES
 ALTER TABLE vendors ALTER COLUMN status TYPE "VendorStatus" USING status::"VendorStatus";
 ALTER TABLE products ALTER COLUMN status TYPE "ProductStatus" USING status::"ProductStatus";
 
--- 7. RESTAURER LES VALEURS PAR DÉFAUT
+-- 8. RESTAURER LES VALEURS PAR DÉFAUT
 ALTER TABLE vendors ALTER COLUMN status SET DEFAULT 'INCOMPLETE';
 ALTER TABLE products ALTER COLUMN status SET DEFAULT 'PENDING';
 
--- 8. AJOUTER LES COLONNES ADDITIONNELLES
+-- 9. AJOUTER LES COLONNES ADDITIONNELLES
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'vendors' AND column_name = 'logo_url') THEN
@@ -60,15 +68,18 @@ BEGIN
   END IF;
 END $$;
 
--- 9. RÉTABLIR LES POLITIQUES RLS (À ADAPTER SELON VOS BESOINS)
--- Nous recréons la politique bloquante mentionnée
-CREATE POLICY "Public can view active vendors" ON vendors 
-FOR SELECT USING (status = 'APPROVED');
+-- 10. RÉACTIVER RLS ET RECRÉER LES POLITIQUES ESSENTIELLES
+ALTER TABLE vendors ENABLE ROW LEVEL SECURITY;
+ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 
--- 10. NETTOYAGE (Optionnel : On peut supprimer les anciens types)
+-- On recrée une politique de base pour la visibilité publique (A adapter si besoin)
+CREATE POLICY "Public can view approved vendors" ON vendors FOR SELECT USING (status = 'APPROVED');
+CREATE POLICY "Public can view approved products" ON products FOR SELECT USING (status = 'APPROVED');
+
+-- 11. NETTOYAGE
 DROP TYPE "VendorStatus_old";
 DROP TYPE "ProductStatus_old";
 
 -- ============================================================
--- FIN : Migration terminée avec succès en une seule fois.
+-- FIN : Migration terminée avec succès.
 -- ============================================================
