@@ -1,39 +1,52 @@
 -- ============================================================
--- LUXANDA AUTH SYSTEM MIGRATION (DEFINITIVE FIX)
+-- LUXANDA AUTH SYSTEM MIGRATION (CONSOLIDATED & ATOMIC)
 -- ============================================================
 
--- Ce script permet de mettre à jour les énumérations et les données
--- en une seule fois en contournant la restriction "unsafe use of new value".
+-- Ce script utilise RENAME VALUE pour une migration atomique. 
+-- Cela évite les erreurs de RLS et les restrictions de transaction.
 
--- 1. Désactiver temporairement les contraintes de typeEnum
-ALTER TABLE vendors ALTER COLUMN status TYPE text;
-ALTER TABLE products ALTER COLUMN status TYPE text;
+DO $$
+BEGIN
+    -- 1. Mise à jour de VendorStatus
+    -- On renomme les anciens statuts vers les nouveaux (si ils existent)
+    
+    IF EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'APPROVED_REGISTRATION' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'VendorStatus')) THEN
+        ALTER TYPE "VendorStatus" RENAME VALUE 'APPROVED_REGISTRATION' TO 'APPROVED';
+    END IF;
 
--- 2. Mettre à jour les Enums avec les nouvelles valeurs
-ALTER TYPE "VendorStatus" ADD VALUE IF NOT EXISTS 'INCOMPLETE';
-ALTER TYPE "ProductStatus" ADD VALUE IF NOT EXISTS 'PENDING';
-ALTER TYPE "ProductStatus" ADD VALUE IF NOT EXISTS 'APPROVED';
-ALTER TYPE "ProductStatus" ADD VALUE IF NOT EXISTS 'REJECTED';
+    IF EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'SUSPENDED_AUTO' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'VendorStatus')) THEN
+        ALTER TYPE "VendorStatus" RENAME VALUE 'SUSPENDED_AUTO' TO 'SUSPENDED';
+    END IF;
 
--- 3. Migration des données des VENDEURS
+    -- Ajouter INCOMPLETE si il manque
+    IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'INCOMPLETE' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'VendorStatus')) THEN
+        ALTER TYPE "VendorStatus" ADD VALUE 'INCOMPLETE' BEFORE 'PENDING';
+    END IF;
+
+    -- 2. Mise à jour de ProductStatus
+    
+    IF EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'ACTIVE' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'ProductStatus')) THEN
+        ALTER TYPE "ProductStatus" RENAME VALUE 'ACTIVE' TO 'APPROVED';
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'DRAFT' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'ProductStatus')) THEN
+        ALTER TYPE "ProductStatus" RENAME VALUE 'DRAFT' TO 'PENDING';
+    END IF;
+
+    -- Ajouter REJECTED si il manque
+    IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'REJECTED' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'ProductStatus')) THEN
+        ALTER TYPE "ProductStatus" ADD VALUE 'REJECTED';
+    END IF;
+
+END $$;
+
+-- 3. Gérer les cas restants via UPDATE (Maintenant safe car les types sont déjà à jour)
+-- Les vendeurs qui étaient en PENDING_ACTIVATION ou autres sont ramenés vers PENDING
 UPDATE vendors 
-SET status = 'PENDING' 
-WHERE status IN ('APPROVED_REGISTRATION', 'PENDING_ACTIVATION', 'PENDING'); -- PENDING au cas où c'est déjà bon
+SET status = 'PENDING'::"VendorStatus" 
+WHERE status::text IN ('PENDING_REGISTRATION', 'PENDING_ACTIVATION', 'APPROVED_ACTIVATION');
 
-UPDATE vendors 
-SET status = 'SUSPENDED' 
-WHERE status = 'SUSPENDED_AUTO';
-
--- 4. Migration des données des PRODUITS
-UPDATE products 
-SET status = 'APPROVED' 
-WHERE status = 'ACTIVE';
-
-UPDATE products 
-SET status = 'PENDING' 
-WHERE status = 'DRAFT';
-
--- 5. S'assurer que les colonnes additionnelles existent
+-- 4. Ajouter les colonnes manquantes
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'vendors' AND column_name = 'logo_url') THEN
@@ -45,11 +58,8 @@ BEGIN
   END IF;
 END $$;
 
--- 6. Restaurer les types Enum et les valeurs par défaut
-ALTER TABLE vendors ALTER COLUMN status TYPE "VendorStatus" USING status::"VendorStatus";
+-- 5. S'assurer que les valeurs par défaut sont correctes
 ALTER TABLE vendors ALTER COLUMN status SET DEFAULT 'INCOMPLETE';
-
-ALTER TABLE products ALTER COLUMN status TYPE "ProductStatus" USING status::"ProductStatus";
 ALTER TABLE products ALTER COLUMN status SET DEFAULT 'PENDING';
 
 -- ============================================================
